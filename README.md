@@ -109,6 +109,66 @@ The app has:
 - A review detail view showing all indexed outcomes for a selected review.
 - An outcomes-only view sorted by systematic review PMID, with links to the source review.
 
+## Run Remotely Over SSH
+
+If the app is running on a server and you want to view it from your laptop, forward both the frontend and backend ports. From your laptop:
+
+```bash
+ssh -L 5174:localhost:5174 -L 8080:localhost:8080 pd@10.0.0.193
+```
+
+On the server, start the API so it accepts the forwarded frontend origin:
+
+```bash
+cd ~/grade-inconsistency/grade-inconsistency
+source .venv/bin/activate
+
+CORS_ALLOW_ORIGINS=http://localhost:5174,http://localhost:5173,http://localhost:3000 \
+uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
+```
+
+In another server terminal, start the frontend on the forwarded port:
+
+```bash
+cd ~/grade-inconsistency/grade-inconsistency/frontend
+
+VITE_API_BASE=http://localhost:8080 \
+npx vite --host 127.0.0.1 --port 5174 --strictPort
+```
+
+Then open this URL on your laptop:
+
+```text
+http://localhost:5174
+```
+
+To run the API and frontend in the background on the server:
+
+```bash
+cd ~/grade-inconsistency/grade-inconsistency
+
+setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency && CORS_ALLOW_ORIGINS=http://localhost:5174,http://localhost:5173,http://localhost:3000 .venv/bin/uvicorn pipeline.api:app --host 127.0.0.1 --port 8080 >>/tmp/grade-inconsistency-api.log 2>&1'
+
+setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && VITE_API_BASE=http://localhost:8080 npx vite --host 127.0.0.1 --port 5174 --strictPort >>/tmp/grade-inconsistency-frontend.log 2>&1'
+```
+
+Useful checks on the server:
+
+```bash
+curl http://127.0.0.1:8080/api/reviews
+curl http://127.0.0.1:5174/
+ss -ltnp | grep -E ':(5174|8080)\b'
+tail -f /tmp/grade-inconsistency-api.log
+tail -f /tmp/grade-inconsistency-frontend.log
+```
+
+To stop the remote dev servers:
+
+```bash
+pkill -f 'uvicorn pipeline.api:app'
+pkill -f 'vite --host 127.0.0.1 --port 5174'
+```
+
 ## Existing Parser CLI
 
 The original standalone summary script remains available:
