@@ -96,7 +96,7 @@ npm install
 npx npm start
 ```
 
-The frontend defaults to `http://localhost:8080` for the API. To use another API URL:
+The frontend defaults to same-origin `/api` requests. During Vite development, `/api` is proxied to `http://127.0.0.1:8080`. To use another API URL:
 
 ```bash
 cd frontend
@@ -111,19 +111,18 @@ The app has:
 
 ## Run Remotely Over SSH
 
-If the app is running on a server and you want to view it from your laptop, forward both the frontend and backend ports. From your laptop:
+If the app is running on a server and you want to view it from your laptop, forward the frontend port. Vite proxies `/api` to the backend on the server.
 
 ```bash
-ssh -L 5174:localhost:5174 -L 8080:localhost:8080 pd@10.0.0.193
+ssh -L 5174:localhost:5174 pd@10.0.0.193
 ```
 
-On the server, start the API so it accepts the forwarded frontend origin:
+On the server, start the API:
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
 source .venv/bin/activate
 
-CORS_ALLOW_ORIGINS=http://localhost:5174,http://localhost:5173,http://localhost:3000 \
 uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
 ```
 
@@ -132,7 +131,6 @@ In another server terminal, start the frontend on the forwarded port:
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency/frontend
 
-VITE_API_BASE=http://localhost:8080 \
 npx vite --host 127.0.0.1 --port 5174 --strictPort
 ```
 
@@ -147,9 +145,9 @@ To run the API and frontend in the background on the server:
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
 
-setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency && CORS_ALLOW_ORIGINS=http://localhost:5174,http://localhost:5173,http://localhost:3000 .venv/bin/uvicorn pipeline.api:app --host 127.0.0.1 --port 8080 >>/tmp/grade-inconsistency-api.log 2>&1'
+setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency && .venv/bin/uvicorn pipeline.api:app --host 127.0.0.1 --port 8080 >>/tmp/grade-inconsistency-api.log 2>&1'
 
-setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && VITE_API_BASE=http://localhost:8080 npx vite --host 127.0.0.1 --port 5174 --strictPort >>/tmp/grade-inconsistency-frontend.log 2>&1'
+setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && npx vite --host 127.0.0.1 --port 5174 --strictPort >>/tmp/grade-inconsistency-frontend.log 2>&1'
 ```
 
 Useful checks on the server:

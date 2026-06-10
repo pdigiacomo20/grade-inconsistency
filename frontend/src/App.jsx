@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ExternalLink, FileText, ListFilter, Search } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 async function fetchJson(path) {
   const response = await fetch(`${API_BASE}${path}`);
