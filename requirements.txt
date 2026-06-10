@@ -1,0 +1,5 @@
+boto3>=1.34
+fastapi>=0.111
+PyYAML>=6.0
+requests>=2.31
+uvicorn[standard]>=0.30

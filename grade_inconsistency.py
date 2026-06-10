@@ -192,6 +192,88 @@ def extract_downgrade_categories(footnote_text: str) -> set[str]:
     return categories
 
 
+def extract_inconsistency_reason(footnotes: dict[str, str]) -> str:
+    reasons: list[str] = []
+    for text in footnotes.values():
+        lowered = normalize_space(text).lower()
+        if "inconsistency" in lowered or "heterogeneity" in lowered or "inconsistent" in lowered:
+            reasons.append(text)
+    return " ".join(dict.fromkeys(reasons))
+
+
+def extract_subgroup_differences(footnotes: dict[str, str]) -> int:
+    for text in footnotes.values():
+        lowered = normalize_space(text).lower()
+        has_subgroup_signal = (
+            "subgroup" in lowered
+            or "sub-group" in lowered
+            or "subpopulation" in lowered
+            or "population difference" in lowered
+            or "differences between groups" in lowered
+        )
+        if has_subgroup_signal and (
+            "not downgrad" in lowered
+            or "indirectness" in lowered
+            or "inconsistency" in lowered
+            or "heterogeneity" in lowered
+        ):
+            return 1
+    return 0
+
+
+def find_header_labels(rows: list[ParsedRow], certainty_col: int) -> dict[int, str]:
+    labels: dict[int, str] = {}
+    for row in rows[:5]:
+        if certainty_col < len(row.cells):
+            cell = row.cells[certainty_col]
+            if cell and (
+                "certainty of the evidence" in cell.text.lower()
+                or "quality of the evidence" in cell.text.lower()
+            ):
+                for idx, header_cell in enumerate(row.cells):
+                    if header_cell and header_cell.text:
+                        labels[idx] = header_cell.text
+                break
+    return labels
+
+
+def build_outcome_question(section_title: str, outcome_name: str) -> str:
+    context = re.sub(r"(?i)\bsummary of findings\b", "", section_title).strip(" :-")
+    if context:
+        return f"What is the effect on {outcome_name} for {context}?"
+    return f"What is the effect on {outcome_name}?"
+
+
+def extract_consensus_answer(
+    row: ParsedRow,
+    headers: dict[int, str],
+    certainty_col: int,
+) -> str:
+    consensus_parts: list[str] = []
+    excluded_header_terms = (
+        "outcome",
+        "certainty",
+        "quality",
+        "grade",
+        "participants",
+        "studies",
+        "follow-up",
+        "number of",
+    )
+    for idx, cell in enumerate(row.cells):
+        if idx == 0 or idx == certainty_col or not cell:
+            continue
+        header = headers.get(idx, "").lower()
+        if any(term in header for term in excluded_header_terms):
+            continue
+        text = cell.text
+        if not text:
+            continue
+        if text not in consensus_parts:
+            consensus_parts.append(text)
+    return " | ".join(consensus_parts)
+
+
 def find_certainty_column(rows: list[ParsedRow]) -> int | None:
     for row in rows[:5]:
         for idx, cell in enumerate(row.cells):
@@ -253,6 +335,7 @@ def analyze_summary_section(section_title: str, section_html: str) -> list[dict]
     if certainty_col is None:
         return []
 
+    headers = find_header_labels(rows, certainty_col)
     footnote_map = parse_footnote_map(section_html)
     extracted: list[dict] = []
 
@@ -286,14 +369,20 @@ def analyze_summary_section(section_title: str, section_html: str) -> list[dict]
             footnotes_used[label] = footnote_text
             categories.update(extract_downgrade_categories(footnote_text))
 
+        inconsistency = 1 if "inconsistency" in categories else 0
         extracted.append(
             {
                 "table_title": section_title,
                 "outcome": outcome_name,
+                "question": build_outcome_question(section_title, outcome_name),
+                "consensus_answer": extract_consensus_answer(row, headers, certainty_col),
                 "certainty": certainty_cell.text,
                 "footnote_labels": footnote_labels,
                 "footnotes": footnotes_used,
                 "downgrade_categories": sorted(categories),
+                "inconsistency": inconsistency,
+                "subgroup_differences": 0 if inconsistency else extract_subgroup_differences(footnotes_used),
+                "inconsistency_reason": extract_inconsistency_reason(footnotes_used),
             }
         )
 
@@ -306,9 +395,24 @@ def chunked(values: list[str], size: int) -> Iterable[list[str]]:
 
 
 def fetch_json(session: requests.Session, url: str, params: dict) -> dict:
-    response = session.get(url, params=params, timeout=60)
-    response.raise_for_status()
-    return response.json()
+    last_error = ""
+    for attempt in range(5):
+        try:
+            response = session.get(url, params=params, timeout=60)
+            if response.status_code == 429 or response.status_code >= 500:
+                retry_after = response.headers.get("Retry-After")
+                if retry_after and retry_after.isdigit():
+                    time.sleep(float(retry_after))
+                else:
+                    time.sleep(2.0 * (attempt + 1))
+                last_error = f"HTTP {response.status_code}"
+                continue
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            last_error = str(exc)
+            time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError(f"{url} ({last_error})")
 
 
 def fetch_text(session: requests.Session, url: str) -> str:
@@ -373,15 +477,19 @@ def fetch_pubmed_summaries(session: requests.Session, pmids: list[str]) -> dict[
 def lookup_pmcids(session: requests.Session, pmids: list[str]) -> dict[str, str]:
     mapping: dict[str, str] = {}
     for chunk in chunked(pmids, 200):
-        data = fetch_json(
-            session,
-            PMC_IDCONV_URL,
-            {
-                "ids": ",".join(chunk),
-                "format": "json",
-                "tool": "grade-inconsistency",
-            },
-        )
+        try:
+            data = fetch_json(
+                session,
+                PMC_IDCONV_URL,
+                {
+                    "ids": ",".join(chunk),
+                    "format": "json",
+                    "tool": "grade-inconsistency",
+                },
+            )
+        except RuntimeError as exc:
+            print(f"PMCID lookup failed for {','.join(chunk)}: {exc}", file=sys.stderr)
+            continue
         for record in data.get("records", []):
             pmid = str(record.get("pmid") or record.get("requested-id") or "")
             pmcid = record.get("pmcid")
