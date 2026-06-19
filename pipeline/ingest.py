@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 import requests
 
@@ -22,6 +24,7 @@ from grade_inconsistency import (
 )
 from pipeline.config import PipelineConfig, load_config
 from pipeline.dynamodb import DynamoStore
+from pipeline.openai_extraction import extract_review_with_openai
 from pipeline.study_enrichment import (
     classify_study,
     extract_study_labels,
@@ -100,9 +103,53 @@ def build_outcome_items(pmid: str, outcomes: list[dict[str, Any]]) -> list[dict[
                 "inconsistency_reason": outcome.get("inconsistency_reason", ""),
                 "footnote_labels": outcome.get("footnote_labels", []),
                 "footnotes": outcome.get("footnotes", {}),
+                "extraction_method": outcome.get("extraction_method", "deterministic"),
+                "extraction_model": outcome.get("extraction_model", ""),
+                "extraction_notes": outcome.get("extraction_notes", ""),
+                "openai_forest_plot_url": outcome.get("openai_forest_plot_url", ""),
+                "openai_forest_plot_caption": outcome.get("openai_forest_plot_caption", ""),
+                "openai_agreeing_study_labels": outcome.get("openai_agreeing_study_labels", []),
+                "openai_opposing_study_labels": outcome.get("openai_opposing_study_labels", []),
             }
         )
     return items
+
+
+def extract_review_outcomes(
+    *,
+    config: PipelineConfig,
+    article_url: str,
+    article_html: str,
+    pmid: str,
+    title: str,
+) -> tuple[list[dict[str, Any]], int, str, str | None]:
+    mode = config.extraction_mode.lower().strip()
+    if mode in {"openai", "hybrid"} and config.openai_api_key:
+        try:
+            result = extract_review_with_openai(
+                api_key=config.openai_api_key,
+                model=config.openai_model,
+                article_url=article_url,
+                pmid=pmid,
+                title_hint=title,
+                timeout_seconds=config.openai_timeout_seconds,
+                use_web_search=config.openai_web_search,
+            )
+            outcomes = result.get("outcomes", [])
+            if outcomes:
+                return outcomes, int(result.get("summary_tables", 0) or 0), "openai", None
+            if mode == "openai":
+                return [], int(result.get("summary_tables", 0) or 0), "openai", "OpenAI returned no outcomes"
+        except (json.JSONDecodeError, requests.RequestException, RuntimeError, KeyError, TypeError, ValueError) as exc:
+            if mode == "openai":
+                return [], 0, "openai_failed", str(exc)
+            print(f"PMID {pmid} OpenAI extraction failed; falling back to deterministic parser: {exc}", file=sys.stderr)
+
+    summary_sections = extract_summary_sections(article_html)
+    outcomes: list[dict[str, Any]] = []
+    for section_title, section_html in summary_sections:
+        outcomes.extend(analyze_summary_section(section_title, section_html))
+    return outcomes, len(summary_sections), "deterministic", None
 
 
 def index_reviews(config: PipelineConfig) -> dict[str, int]:
@@ -189,26 +236,31 @@ def index_reviews(config: PipelineConfig) -> dict[str, int]:
             print(f"[{index}/{len(pmids)}] PMID {pmid} protocol skipped", file=sys.stderr)
             continue
 
-        summary_sections = extract_summary_sections(article_html)
-        outcomes: list[dict[str, Any]] = []
-        for section_title, section_html in summary_sections:
-            outcomes.extend(analyze_summary_section(section_title, section_html))
+        outcomes, summary_table_count, extraction_method, extraction_error = extract_review_outcomes(
+            config=config,
+            article_url=article_url,
+            article_html=article_html,
+            pmid=pmid,
+            title=title,
+        )
 
+        review_status = "extraction_failed" if extraction_error and not outcomes else "review_processed"
         store.put_review(
             build_review_item(
                 pmid=pmid,
                 summary=summary,
                 pmcid=pmcid,
                 title=title,
-                status="review_processed",
-                summary_tables=len(summary_sections),
+                status=review_status,
+                summary_tables=summary_table_count,
+                fetch_error=extraction_error,
             )
         )
         store.replace_outcomes(pmid, build_outcome_items(pmid, outcomes))
         stats["indexed"] += 1
         print(
-            f"[{index}/{len(pmids)}] PMID {pmid} indexed tables={len(summary_sections)} "
-            f"outcomes={len(outcomes)}",
+            f"[{index}/{len(pmids)}] PMID {pmid} indexed via={extraction_method} "
+            f"tables={summary_table_count} outcomes={len(outcomes)}",
             file=sys.stderr,
         )
 
@@ -223,6 +275,36 @@ def _needs_study_enrichment(outcome: dict[str, Any], force: bool) -> bool:
     if force:
         return _flagged_for_study_enrichment(outcome)
     return _flagged_for_study_enrichment(outcome) and not outcome.get("study_enrichment_status")
+
+
+def _openai_study_labels(outcome: dict[str, Any], key: str) -> list[dict[str, str]]:
+    labels: list[dict[str, str]] = []
+    for item in outcome.get(key, []) or []:
+        if isinstance(item, dict) and item.get("label"):
+            labels.append({"label": str(item["label"]), "context": str(item.get("rationale", ""))})
+        elif isinstance(item, str) and item:
+            labels.append({"label": item, "context": ""})
+    return labels
+
+
+def _resolve_study_labels(
+    *,
+    session: requests.Session,
+    store: DynamoStore,
+    labels: list[dict[str, str]],
+    study_cache: dict[str, dict[str, Any]],
+    force: bool,
+) -> list[str]:
+    study_ids: list[str] = []
+    for label in labels:
+        study_id = study_id_for_label(label["label"])
+        study = study_cache.get(study_id) or store.get_study(study_id)
+        if not study or force:
+            study = resolve_study(session, label["label"])
+            store.put_study(study)
+        study_cache[study_id] = study
+        study_ids.append(str(study["study_id"]))
+    return study_ids
 
 
 def enrich_flagged_outcomes(config: PipelineConfig) -> dict[str, int]:
@@ -284,6 +366,70 @@ def enrich_flagged_outcomes(config: PipelineConfig) -> dict[str, int]:
             if pmid not in html_cache:
                 html_cache[pmid] = fetch_article_html(session, article_url, config.pause_seconds)
             article_html = html_cache[pmid]
+
+            openai_agreeing_labels = _openai_study_labels(outcome, "openai_agreeing_study_labels")
+            openai_opposing_labels = _openai_study_labels(outcome, "openai_opposing_study_labels")
+            openai_plot_url = str(outcome.get("openai_forest_plot_url") or "").strip()
+            if openai_plot_url or openai_agreeing_labels or openai_opposing_labels:
+                saved_plot = None
+                if openai_plot_url:
+                    saved_plot = save_forest_plot(
+                        session,
+                        forest_plot={"image_url": urljoin(article_url, openai_plot_url)},
+                        output_dir=config.forest_plots_dir,
+                        pmid=pmid,
+                        outcome_id=outcome_id,
+                        force=config.force_study_enrichment,
+                    )
+                agreeing_studies = _resolve_study_labels(
+                    session=session,
+                    store=store,
+                    labels=openai_agreeing_labels,
+                    study_cache=study_cache,
+                    force=config.force_study_enrichment,
+                )
+                opposing_studies = _resolve_study_labels(
+                    session=session,
+                    store=store,
+                    labels=openai_opposing_labels,
+                    study_cache=study_cache,
+                    force=config.force_study_enrichment,
+                )
+                study_ids = agreeing_studies + opposing_studies
+                studies_by_id = store.batch_get_studies(study_ids)
+                outcome.update(
+                    {
+                        "study_enrichment_status": "enriched_openai" if study_ids else "no_studies_parsed",
+                        "forest_plot_path": saved_plot["path"] if saved_plot else None,
+                        "forest_plot_source_url": saved_plot["image_url"] if saved_plot else openai_plot_url or None,
+                        "forest_plot_url": f"/api/forest-plots/{pmid}/{outcome_id}" if saved_plot else None,
+                        "agreeing_studies": agreeing_studies,
+                        "opposing_studies": opposing_studies,
+                        "agreeing_study_refs": [
+                            summarize_study_for_outcome(studies_by_id[study_id])
+                            for study_id in agreeing_studies
+                            if study_id in studies_by_id
+                        ],
+                        "opposing_study_refs": [
+                            summarize_study_for_outcome(studies_by_id[study_id])
+                            for study_id in opposing_studies
+                            if study_id in studies_by_id
+                        ],
+                        "study_enrichment_error": None,
+                    }
+                )
+                store.put_outcome(outcome)
+                if study_ids:
+                    stats["study_enrichment_done"] += 1
+                else:
+                    stats["study_enrichment_no_studies"] += 1
+                print(
+                    f"[study {index}/{len(candidates)}] PMID {pmid} outcome {outcome_id} "
+                    f"openai studies={len(study_ids)}",
+                    file=sys.stderr,
+                )
+                continue
+
             forest_plot = find_forest_plot(article_html, article_url, outcome)
             if not forest_plot:
                 outcome.update(
@@ -317,16 +463,19 @@ def enrich_flagged_outcomes(config: PipelineConfig) -> dict[str, int]:
             opposing_studies: list[str] = []
 
             for label in labels:
-                study_id = study_id_for_label(label["label"])
-                study = study_cache.get(study_id) or store.get_study(study_id)
-                if not study or config.force_study_enrichment:
-                    study = resolve_study(session, label["label"])
-                    store.put_study(study)
-                study_cache[study_id] = study
+                study_ids_for_label = _resolve_study_labels(
+                    session=session,
+                    store=store,
+                    labels=[label],
+                    study_cache=study_cache,
+                    force=config.force_study_enrichment,
+                )
+                if not study_ids_for_label:
+                    continue
                 if classify_study(label, outcome) == "opposing":
-                    opposing_studies.append(str(study["study_id"]))
+                    opposing_studies.extend(study_ids_for_label)
                 else:
-                    agreeing_studies.append(str(study["study_id"]))
+                    agreeing_studies.extend(study_ids_for_label)
 
             study_ids = agreeing_studies + opposing_studies
             studies_by_id = store.batch_get_studies(study_ids)

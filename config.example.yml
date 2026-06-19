@@ -11,3 +11,8 @@ dynamodb_endpoint_url: http://localhost:8000
 reviews_table: reviews
 outcomes_table: outcomes
 studies_table: studies
+
+extraction_mode: openai
+openai_model: gpt-5.5
+openai_web_search: true
+openai_timeout_seconds: 300

@@ -9,7 +9,10 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from pipeline.dynamodb import DynamoStore
+from pipeline.env import load_repo_env
 from pipeline.study_enrichment import summarize_study_for_outcome
+
+load_repo_env()
 
 
 def get_store() -> DynamoStore:

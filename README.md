@@ -42,6 +42,14 @@ Create a config file:
 cp config.example.yml config.yml
 ```
 
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Then set `OPENAI_API_KEY` in `.env`. The pipeline and API load `.env` automatically, including DynamoDB table names, `FOREST_PLOTS_DIR`, and OpenAI settings.
+
 For local DynamoDB, keep:
 
 ```yaml
@@ -70,10 +78,15 @@ Important config fields:
 - `force_study_enrichment`: rerun forest plot and study extraction for already enriched outcomes.
 - `study_enrichment_limit`: maximum number of pending flagged outcomes to enrich in this run, or `null` for all pending flagged outcomes.
 - `forest_plots_dir`: directory where downloaded forest plot images are stored.
+- `extraction_mode`: `openai` uses the OpenAI Responses API with web search for Summary of Findings, forest plot, and agreeing/opposing study extraction; `hybrid` falls back to the deterministic parser if OpenAI extraction fails; `deterministic` uses the legacy parser only.
+- `openai_model`: model used for OpenAI extraction, defaulting to `gpt-5.5` in `.env.example`.
+- `openai_web_search`: enables the Responses API `web_search` tool so the model can inspect PMC pages by URL.
+
+The OpenAI extraction asks the model to inspect the PMC full-text URL rather than sending the full article HTML in context. The model returns structured JSON for outcomes, forest plot links/captions, and agreeing/opposing study labels. The pipeline still resolves study metadata through PubMed/PMC and stores those records in DynamoDB.
 
 ## Run API
 
-Start the backend from the repo root:
+Start the backend from the repo root. The API loads `.env`, so the exports below are optional if `.env` contains these values.
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
