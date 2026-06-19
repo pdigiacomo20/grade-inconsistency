@@ -1,13 +1,9 @@
-limit: 400
+limit: 20
 pause_seconds: 0.8
 create_tables: true
 force_reprocess: false
-force_study_enrichment: false
-study_enrichment_limit: null
-forest_plots_dir: data/forest_plots
 
 aws_region: us-west-2
 dynamodb_endpoint_url: http://localhost:8000
 reviews_table: reviews
 outcomes_table: outcomes
-studies_table: studies

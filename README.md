@@ -73,17 +73,20 @@ Important config fields:
 
 ## Run API
 
-```bash
-uvicorn pipeline.api:app --host 0.0.0.0 --port 8080
-```
-
-Optional API environment variables:
+Start the backend from the repo root:
 
 ```bash
+cd ~/grade-inconsistency/grade-inconsistency
+source .venv/bin/activate
+
 export DYNAMODB_ENDPOINT_URL=http://localhost:8000
 export AWS_REGION=us-west-2
 export REVIEWS_TABLE=reviews
 export OUTCOMES_TABLE=outcomes
+export STUDIES_TABLE=studies
+export FOREST_PLOTS_DIR=data/forest_plots
+
+uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
 ```
 
 API routes:
@@ -96,20 +99,21 @@ API routes:
 
 ## Run Frontend
 
-In a separate terminal:
+Start the frontend in a separate terminal. Use `npm run dev:remote` from the `frontend` directory so npm uses this repo's installed Vite version; do not run `npx vite` from another directory.
 
 ```bash
-cd frontend
+cd ~/grade-inconsistency/grade-inconsistency/frontend
 npm install
-npx npm start
+npm run dev:remote
 ```
 
-The frontend defaults to same-origin `/api` requests. During Vite development, `/api` is proxied to `http://127.0.0.1:8080`. To use another API URL:
+Then open:
 
-```bash
-cd frontend
-VITE_API_BASE=http://localhost:8080 npx npm start
+```text
+http://localhost:5174
 ```
+
+The frontend defaults to same-origin `/api` requests. During Vite development, `/api` is proxied to `http://127.0.0.1:8080`.
 
 The app has:
 
@@ -131,6 +135,13 @@ On the server, start the API:
 cd ~/grade-inconsistency/grade-inconsistency
 source .venv/bin/activate
 
+export DYNAMODB_ENDPOINT_URL=http://localhost:8000
+export AWS_REGION=us-west-2
+export REVIEWS_TABLE=reviews
+export OUTCOMES_TABLE=outcomes
+export STUDIES_TABLE=studies
+export FOREST_PLOTS_DIR=data/forest_plots
+
 uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
 ```
 
@@ -139,7 +150,7 @@ In another server terminal, start the frontend on the forwarded port:
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency/frontend
 
-npx vite --host 127.0.0.1 --port 5174 --strictPort
+npm run dev:remote
 ```
 
 Then open this URL on your laptop:
@@ -155,7 +166,7 @@ cd ~/grade-inconsistency/grade-inconsistency
 
 setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency && .venv/bin/uvicorn pipeline.api:app --host 127.0.0.1 --port 8080 >>/tmp/grade-inconsistency-api.log 2>&1'
 
-setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && npx vite --host 127.0.0.1 --port 5174 --strictPort >>/tmp/grade-inconsistency-frontend.log 2>&1'
+setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && npm run dev:remote >>/tmp/grade-inconsistency-frontend.log 2>&1'
 ```
 
 Useful checks on the server:
@@ -172,6 +183,7 @@ To stop the remote dev servers:
 
 ```bash
 pkill -f 'uvicorn pipeline.api:app'
+pkill -f 'npm run dev:remote'
 pkill -f 'vite --host 127.0.0.1 --port 5174'
 ```
 
