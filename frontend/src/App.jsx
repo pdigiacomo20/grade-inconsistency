@@ -28,6 +28,39 @@ function FullTextLink({ href }) {
   );
 }
 
+function apiHref(path) {
+  return `${API_BASE}${path}`;
+}
+
+function StudyLinks({ studies }) {
+  if (!studies || studies.length === 0) return <span className="muted">None parsed</span>;
+  return (
+    <div className="studyLinks">
+      {studies.map((study) => (
+        <a
+          key={study.study_id}
+          href={apiHref(`/api/studies/${encodeURIComponent(study.study_id)}`)}
+          target="_blank"
+          rel="noreferrer"
+          className={`studyLink ${study.link_status === "pmc_full_text" ? "studyPmc" : study.link_status === "pubmed_abstract" ? "studyAbstract" : "studyMetadata"}`}
+          title={study.title || study.label}
+        >
+          {study.label || study.title || study.study_id}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function ForestPlotLink({ href }) {
+  if (!href) return <span className="muted">Unavailable</span>;
+  return (
+    <a href={apiHref(href)} target="_blank" rel="noreferrer" className="linkIcon">
+      Forest plot <ExternalLink size={14} />
+    </a>
+  );
+}
+
 function OutcomeTable({ outcomes, includeReview }) {
   return (
     <div className="tableWrap">
@@ -42,6 +75,9 @@ function OutcomeTable({ outcomes, includeReview }) {
             <th>Consensus Answer</th>
             <th>Inconsistency</th>
             <th>Subgroup Differences</th>
+            <th>Forest Plot</th>
+            <th>Agreeing Studies</th>
+            <th>Opposing Studies</th>
             <th>Reason</th>
             <th>Certainty</th>
             <th>Table</th>
@@ -64,6 +100,9 @@ function OutcomeTable({ outcomes, includeReview }) {
               <td>{outcome.consensus_answer}</td>
               <td><BoolPill value={outcome.inconsistency} /></td>
               <td><BoolPill value={outcome.subgroup_differences} /></td>
+              <td><ForestPlotLink href={outcome.forest_plot_url} /></td>
+              <td><StudyLinks studies={outcome.agreeing_study_refs} /></td>
+              <td><StudyLinks studies={outcome.opposing_study_refs} /></td>
               <td>{outcome.inconsistency_reason || <span className="muted">None parsed</span>}</td>
               <td>{outcome.certainty}</td>
               <td>{outcome.table_title}</td>
@@ -179,6 +218,8 @@ function OutcomesView() {
         outcome.question,
         outcome.consensus_answer,
         outcome.inconsistency_reason,
+        ...(outcome.agreeing_study_refs || []).map((study) => study.label || study.title),
+        ...(outcome.opposing_study_refs || []).map((study) => study.label || study.title),
       ].some((value) => normalize(value).includes(needle)),
     );
   }, [outcomes, query]);

@@ -22,6 +22,15 @@ from grade_inconsistency import (
 )
 from pipeline.config import PipelineConfig, load_config
 from pipeline.dynamodb import DynamoStore
+from pipeline.study_enrichment import (
+    classify_study,
+    extract_study_labels,
+    find_forest_plot,
+    resolve_study,
+    save_forest_plot,
+    summarize_study_for_outcome,
+    study_id_for_label,
+)
 
 
 def build_session() -> requests.Session:
@@ -102,6 +111,7 @@ def index_reviews(config: PipelineConfig) -> dict[str, int]:
         endpoint_url=config.dynamodb_endpoint_url,
         reviews_table=config.reviews_table,
         outcomes_table=config.outcomes_table,
+        studies_table=config.studies_table,
     )
     if config.create_tables:
         store.ensure_tables()
@@ -205,6 +215,169 @@ def index_reviews(config: PipelineConfig) -> dict[str, int]:
     return stats
 
 
+def _flagged_for_study_enrichment(outcome: dict[str, Any]) -> bool:
+    return bool(int(outcome.get("inconsistency", 0) or 0) or int(outcome.get("subgroup_differences", 0) or 0))
+
+
+def _needs_study_enrichment(outcome: dict[str, Any], force: bool) -> bool:
+    if force:
+        return _flagged_for_study_enrichment(outcome)
+    return _flagged_for_study_enrichment(outcome) and not outcome.get("study_enrichment_status")
+
+
+def enrich_flagged_outcomes(config: PipelineConfig) -> dict[str, int]:
+    store = DynamoStore(
+        region_name=config.aws_region,
+        endpoint_url=config.dynamodb_endpoint_url,
+        reviews_table=config.reviews_table,
+        outcomes_table=config.outcomes_table,
+        studies_table=config.studies_table,
+    )
+    if config.create_tables:
+        store.ensure_tables()
+
+    session = build_session()
+    flagged_outcomes = [outcome for outcome in store.list_outcomes() if _flagged_for_study_enrichment(outcome)]
+    if config.study_enrichment_limit is not None:
+        flagged_outcomes = flagged_outcomes[: max(config.study_enrichment_limit, 0)]
+    candidates = [
+        outcome
+        for outcome in flagged_outcomes
+        if _needs_study_enrichment(outcome, config.force_study_enrichment)
+    ]
+
+    stats = {
+        "study_enrichment_selected": len(candidates),
+        "study_enrichment_done": 0,
+        "study_enrichment_no_plot": 0,
+        "study_enrichment_no_studies": 0,
+        "study_enrichment_failed": 0,
+    }
+    html_cache: dict[str, str] = {}
+    study_cache: dict[str, dict[str, Any]] = {}
+
+    for index, outcome in enumerate(candidates, start=1):
+        pmid = str(outcome["pmid"])
+        outcome_id = int(outcome["outcome_id"])
+        review = store.get_review(pmid) or {}
+        article_url = str(review.get("full_text_url") or "")
+        if not article_url and review.get("pmcid"):
+            article_url = PMC_ARTICLE_URL.format(pmcid=review["pmcid"])
+        if not article_url:
+            outcome.update(
+                {
+                    "study_enrichment_status": "missing_review_full_text",
+                    "agreeing_studies": [],
+                    "opposing_studies": [],
+                    "study_enrichment_error": "review has no PMC full-text URL",
+                }
+            )
+            store.put_outcome(outcome)
+            stats["study_enrichment_failed"] += 1
+            print(
+                f"[study {index}/{len(candidates)}] PMID {pmid} outcome {outcome_id} missing review full text",
+                file=sys.stderr,
+            )
+            continue
+
+        try:
+            if pmid not in html_cache:
+                html_cache[pmid] = fetch_article_html(session, article_url, config.pause_seconds)
+            article_html = html_cache[pmid]
+            forest_plot = find_forest_plot(article_html, article_url, outcome)
+            if not forest_plot:
+                outcome.update(
+                    {
+                        "study_enrichment_status": "no_forest_plot",
+                        "agreeing_studies": [],
+                        "opposing_studies": [],
+                        "forest_plot_path": None,
+                        "forest_plot_source_url": None,
+                        "study_enrichment_error": None,
+                    }
+                )
+                store.put_outcome(outcome)
+                stats["study_enrichment_no_plot"] += 1
+                print(
+                    f"[study {index}/{len(candidates)}] PMID {pmid} outcome {outcome_id} no forest plot",
+                    file=sys.stderr,
+                )
+                continue
+
+            saved_plot = save_forest_plot(
+                session,
+                forest_plot=forest_plot,
+                output_dir=config.forest_plots_dir,
+                pmid=pmid,
+                outcome_id=outcome_id,
+                force=config.force_study_enrichment,
+            )
+            labels = extract_study_labels(forest_plot.get("context_text", ""))
+            agreeing_studies: list[str] = []
+            opposing_studies: list[str] = []
+
+            for label in labels:
+                study_id = study_id_for_label(label["label"])
+                study = study_cache.get(study_id) or store.get_study(study_id)
+                if not study or config.force_study_enrichment:
+                    study = resolve_study(session, label["label"])
+                    store.put_study(study)
+                study_cache[study_id] = study
+                if classify_study(label, outcome) == "opposing":
+                    opposing_studies.append(str(study["study_id"]))
+                else:
+                    agreeing_studies.append(str(study["study_id"]))
+
+            study_ids = agreeing_studies + opposing_studies
+            studies_by_id = store.batch_get_studies(study_ids)
+            outcome.update(
+                {
+                    "study_enrichment_status": "enriched" if study_ids else "no_studies_parsed",
+                    "forest_plot_path": saved_plot["path"],
+                    "forest_plot_source_url": saved_plot["image_url"],
+                    "forest_plot_url": f"/api/forest-plots/{pmid}/{outcome_id}",
+                    "agreeing_studies": agreeing_studies,
+                    "opposing_studies": opposing_studies,
+                    "agreeing_study_refs": [
+                        summarize_study_for_outcome(studies_by_id[study_id])
+                        for study_id in agreeing_studies
+                        if study_id in studies_by_id
+                    ],
+                    "opposing_study_refs": [
+                        summarize_study_for_outcome(studies_by_id[study_id])
+                        for study_id in opposing_studies
+                        if study_id in studies_by_id
+                    ],
+                    "study_enrichment_error": None,
+                }
+            )
+            store.put_outcome(outcome)
+            if study_ids:
+                stats["study_enrichment_done"] += 1
+            else:
+                stats["study_enrichment_no_studies"] += 1
+            print(
+                f"[study {index}/{len(candidates)}] PMID {pmid} outcome {outcome_id} "
+                f"plot studies={len(study_ids)}",
+                file=sys.stderr,
+            )
+        except (RuntimeError, requests.RequestException, OSError) as exc:
+            outcome.update(
+                {
+                    "study_enrichment_status": "failed",
+                    "study_enrichment_error": str(exc),
+                }
+            )
+            store.put_outcome(outcome)
+            stats["study_enrichment_failed"] += 1
+            print(
+                f"[study {index}/{len(candidates)}] PMID {pmid} outcome {outcome_id} failed: {exc}",
+                file=sys.stderr,
+            )
+
+    return stats
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Index Cochrane systematic reviews into DynamoDB.")
     parser.add_argument(
@@ -216,8 +389,9 @@ def main() -> int:
     args = parser.parse_args()
     config = load_config(args.config)
     stats = index_reviews(config)
+    study_stats = enrich_flagged_outcomes(config)
     print(f"PubMed query: {PUBMED_QUERY}")
-    for key, value in stats.items():
+    for key, value in {**stats, **study_stats}.items():
         print(f"{key}: {value}")
     return 0
 

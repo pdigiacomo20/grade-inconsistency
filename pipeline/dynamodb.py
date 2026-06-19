@@ -38,6 +38,7 @@ class DynamoStore:
         endpoint_url: str | None,
         reviews_table: str,
         outcomes_table: str,
+        studies_table: str = "studies",
     ) -> None:
         kwargs: dict[str, Any] = {
             "region_name": region_name,
@@ -48,8 +49,10 @@ class DynamoStore:
         self.resource = boto3.resource("dynamodb", **kwargs)
         self.reviews_table_name = reviews_table
         self.outcomes_table_name = outcomes_table
+        self.studies_table_name = studies_table
         self.reviews = self.resource.Table(reviews_table)
         self.outcomes = self.resource.Table(outcomes_table)
+        self.studies = self.resource.Table(studies_table)
 
     def ensure_tables(self) -> None:
         existing = set(self.resource.meta.client.list_tables()["TableNames"])
@@ -73,8 +76,16 @@ class DynamoStore:
                 ],
                 BillingMode="PAY_PER_REQUEST",
             ).wait_until_exists()
+        if self.studies_table_name not in existing:
+            self.resource.create_table(
+                TableName=self.studies_table_name,
+                KeySchema=[{"AttributeName": "study_id", "KeyType": "HASH"}],
+                AttributeDefinitions=[{"AttributeName": "study_id", "AttributeType": "S"}],
+                BillingMode="PAY_PER_REQUEST",
+            ).wait_until_exists()
         self.reviews = self.resource.Table(self.reviews_table_name)
         self.outcomes = self.resource.Table(self.outcomes_table_name)
+        self.studies = self.resource.Table(self.studies_table_name)
 
     def review_exists(self, pmid: str) -> bool:
         response = self.reviews.get_item(Key={"pmid": str(pmid)}, ProjectionExpression="pmid")
@@ -90,6 +101,12 @@ class DynamoStore:
                 batch.delete_item(Key={"pmid": str(pmid), "outcome_id": int(item["outcome_id"])})
             for item in items:
                 batch.put_item(Item=_to_dynamodb_value(item))
+
+    def put_outcome(self, item: dict[str, Any]) -> None:
+        self.outcomes.put_item(Item=_to_dynamodb_value(item))
+
+    def put_study(self, item: dict[str, Any]) -> None:
+        self.studies.put_item(Item=_to_dynamodb_value(item))
 
     def list_reviews(self) -> list[dict[str, Any]]:
         return sorted(
@@ -119,6 +136,14 @@ class DynamoStore:
             items.extend(response.get("Items", []))
         return [_from_dynamodb_value(item) for item in items]
 
+    def get_outcome(self, pmid: str, outcome_id: int) -> dict[str, Any] | None:
+        try:
+            response = self.outcomes.get_item(Key={"pmid": str(pmid), "outcome_id": int(outcome_id)})
+        except ClientError:
+            return None
+        item = response.get("Item")
+        return _from_dynamodb_value(item) if item else None
+
     def get_review(self, pmid: str) -> dict[str, Any] | None:
         try:
             response = self.reviews.get_item(Key={"pmid": str(pmid)})
@@ -126,6 +151,23 @@ class DynamoStore:
             return None
         item = response.get("Item")
         return _from_dynamodb_value(item) if item else None
+
+    def get_study(self, study_id: str) -> dict[str, Any] | None:
+        try:
+            response = self.studies.get_item(Key={"study_id": str(study_id)})
+        except ClientError:
+            return None
+        item = response.get("Item")
+        return _from_dynamodb_value(item) if item else None
+
+    def batch_get_studies(self, study_ids: list[str]) -> dict[str, dict[str, Any]]:
+        unique_ids = list(dict.fromkeys(str(study_id) for study_id in study_ids if study_id))
+        found: dict[str, dict[str, Any]] = {}
+        for study_id in unique_ids:
+            study = self.get_study(study_id)
+            if study:
+                found[str(study["study_id"])] = study
+        return found
 
     def _scan_all(self, table: Any) -> list[dict[str, Any]]:
         response = table.scan()

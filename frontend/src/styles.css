@@ -126,7 +126,7 @@ nav,
 
 table {
   border-collapse: collapse;
-  min-width: 1180px;
+  min-width: 1560px;
   width: 100%;
 }
 
@@ -190,6 +190,37 @@ a:hover {
   display: inline-flex;
   gap: 5px;
   white-space: nowrap;
+}
+
+.studyLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.studyLink {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.2;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+  padding: 3px 8px;
+}
+
+.studyPmc {
+  color: #0f6b8e;
+}
+
+.studyAbstract {
+  color: #17633a;
+}
+
+.studyMetadata {
+  color: #b42318;
 }
 
 .pill {

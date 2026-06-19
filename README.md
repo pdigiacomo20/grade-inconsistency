@@ -13,7 +13,10 @@ The pipeline writes two DynamoDB tables:
   - Partition key: `pmid`
   - Sort key: `outcome_id`
   - One item per Summary of Findings row.
-  - Columns include `question`, `consensus_answer`, `inconsistency`, `subgroup_differences`, `certainty`, `inconsistency_reason`, `downgrade_categories`, `footnote_labels`, and `footnotes`.
+  - Columns include `question`, `consensus_answer`, `inconsistency`, `subgroup_differences`, `certainty`, `inconsistency_reason`, `downgrade_categories`, `footnote_labels`, `footnotes`, `forest_plot_url`, `agreeing_studies`, and `opposing_studies`.
+- `studies`
+  - Primary key: `study_id`.
+  - Stores study labels parsed from forest plot context plus PubMed/PMC metadata, abstract text, and link availability.
 
 `inconsistency` is `1` when the GRADE footnotes for the outcome identify an inconsistency downgrade. `subgroup_differences` is `1` when the extracted footnotes indicate subgroup-related differences and the row was not downgraded for inconsistency.
 
@@ -52,7 +55,7 @@ For AWS DynamoDB, set `dynamodb_endpoint_url` to `null` and make sure your norma
 
 ## Run Ingestion
 
-The ingestion command uses the PubMed and PMC lookup methods in `grade_inconsistency.py`. Before parsing a review, it checks the `reviews` table for the PMID and skips already indexed reviews unless `force_reprocess: true` is set in the YAML config.
+The ingestion command uses the PubMed and PMC lookup methods in `grade_inconsistency.py`. Before parsing a review, it checks the `reviews` table for the PMID and skips already indexed reviews unless `force_reprocess: true` is set in the YAML config. After that, the same command enriches flagged outcomes (`inconsistency` or `subgroup_differences`) with forest plot images and agreeing/opposing study metadata, skipping outcomes that already have `study_enrichment_status` unless `force_study_enrichment: true`.
 
 ```bash
 python -m pipeline.ingest --config config.yml
@@ -64,6 +67,9 @@ Important config fields:
 - `pause_seconds`: delay between PMC article fetches.
 - `create_tables`: create DynamoDB tables if missing.
 - `force_reprocess`: replace stored review/outcome rows even if the PMID already exists.
+- `force_study_enrichment`: rerun forest plot and study extraction for already enriched outcomes.
+- `study_enrichment_limit`: maximum number of pending flagged outcomes to enrich in this run, or `null` for all pending flagged outcomes.
+- `forest_plots_dir`: directory where downloaded forest plot images are stored.
 
 ## Run API
 
@@ -85,6 +91,8 @@ API routes:
 - `GET /api/reviews`
 - `GET /api/reviews/{pmid}`
 - `GET /api/outcomes`
+- `GET /api/forest-plots/{pmid}/{outcome_id}`
+- `GET /api/studies/{study_id}`
 
 ## Run Frontend
 

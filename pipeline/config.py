@@ -13,10 +13,14 @@ class PipelineConfig:
     pause_seconds: float = 0.8
     create_tables: bool = True
     force_reprocess: bool = False
+    force_study_enrichment: bool = False
+    study_enrichment_limit: int | None = None
+    forest_plots_dir: str = "data/forest_plots"
     aws_region: str = "us-west-2"
     dynamodb_endpoint_url: str | None = "http://localhost:8000"
     reviews_table: str = "reviews"
     outcomes_table: str = "outcomes"
+    studies_table: str = "studies"
 
 
 def load_config(path: str | Path) -> PipelineConfig:
