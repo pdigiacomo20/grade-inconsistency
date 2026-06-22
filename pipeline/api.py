@@ -1,18 +1,34 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import os
-from html import escape
 from pathlib import Path
+from typing import Any
+from urllib.parse import urljoin
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response, StreamingResponse
+from pydantic import BaseModel
+import requests
 
+from grade_inconsistency import fetch_article_html
 from pipeline.dynamodb import DynamoStore
 from pipeline.env import load_repo_env
-from pipeline.study_enrichment import summarize_study_for_outcome
+from pipeline.manual_extraction import (
+    PDF_LINK_RE,
+    PDF_META_RE,
+    build_session,
+    enrich_and_store_article,
+    parse_agree_oppose_extraction,
+    parse_sof_extraction,
+)
 
 load_repo_env()
+
+
+class ExtractionRequest(BaseModel):
+    text: str
 
 
 def get_store() -> DynamoStore:
@@ -21,36 +37,90 @@ def get_store() -> DynamoStore:
         endpoint_url=os.getenv("DYNAMODB_ENDPOINT_URL", "http://localhost:8000"),
         reviews_table=os.getenv("REVIEWS_TABLE", "reviews"),
         outcomes_table=os.getenv("OUTCOMES_TABLE", "outcomes"),
-        studies_table=os.getenv("STUDIES_TABLE", "studies"),
+        articles_table=os.getenv("ARTICLES_TABLE", "articles"),
     )
 
 
-def forest_plots_dir() -> Path:
-    return Path(os.getenv("FOREST_PLOTS_DIR", "data/forest_plots"))
+def _openai_config() -> dict[str, Any]:
+    return {
+        "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        "openai_model": os.getenv("OPENAI_MODEL", "gpt-5.5"),
+        "openai_timeout_seconds": int(os.getenv("OPENAI_TIMEOUT_SECONDS", "300")),
+    }
 
 
-def hydrate_study_refs(store: DynamoStore, outcome: dict) -> dict:
-    agreeing_ids = [str(study_id) for study_id in outcome.get("agreeing_studies", [])]
-    opposing_ids = [str(study_id) for study_id in outcome.get("opposing_studies", [])]
-    studies = store.batch_get_studies(agreeing_ids + opposing_ids)
+def _abstract_dir() -> str:
+    return os.getenv("ABSTRACT_TEXT_DIR", "data/articles/abstracts")
+
+
+def _full_text_dir() -> str:
+    return os.getenv("FULL_TEXT_DIR", "data/articles/full_text")
+
+
+def _review_or_404(store: DynamoStore, review_id: str) -> dict[str, Any]:
+    review = store.get_review(review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return review
+
+
+def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "article_id": article.get("article_id"),
+        "outcome_id": article.get("outcome_id"),
+        "stance": article.get("stance"),
+        "study_label": article.get("study_label"),
+        "citation": article.get("citation"),
+        "pmid": article.get("pmid"),
+        "pmcid": article.get("pmcid"),
+        "title": article.get("title"),
+        "journal": article.get("journal"),
+        "year": article.get("year"),
+        "pubmed_url": article.get("pubmed_url"),
+        "pmc_url": article.get("pmc_url"),
+        "abstract_path": article.get("abstract_path"),
+        "full_text_path": article.get("full_text_path"),
+        "match_status": article.get("match_status"),
+        "enrichment_errors": article.get("enrichment_errors", []),
+    }
+
+
+def _hydrate_outcome(store: DynamoStore, outcome: dict[str, Any]) -> dict[str, Any]:
+    article_ids = list(outcome.get("agreeing_articles", [])) + list(outcome.get("opposing_articles", []))
+    articles = store.batch_get_articles(article_ids)
     return {
         **outcome,
-        "forest_plot_url": f"/api/forest-plots/{outcome['pmid']}/{outcome['outcome_id']}"
-        if outcome.get("forest_plot_path")
-        else outcome.get("forest_plot_url"),
-        "agreeing_study_refs": [
-            summarize_study_for_outcome(studies[study_id]) for study_id in agreeing_ids if study_id in studies
+        "agreeing_article_refs": [
+            _article_summary(articles[article_id])
+            for article_id in outcome.get("agreeing_articles", [])
+            if article_id in articles
         ],
-        "opposing_study_refs": [
-            summarize_study_for_outcome(studies[study_id]) for study_id in opposing_ids if study_id in studies
+        "opposing_article_refs": [
+            _article_summary(articles[article_id])
+            for article_id in outcome.get("opposing_articles", [])
+            if article_id in articles
         ],
     }
 
 
-app = FastAPI(title="Grade Inconsistency API")
+def _find_pdf_url(session: requests.Session, review: dict[str, Any]) -> str:
+    pmc_url = str(review.get("pmc_url") or "")
+    if not pmc_url:
+        return ""
+    html = fetch_article_html(session, pmc_url, 0.0)
+    meta = PDF_META_RE.search(html)
+    if meta:
+        return urljoin(pmc_url, meta.group(1))
+    link = PDF_LINK_RE.search(html)
+    if link:
+        return urljoin(pmc_url, link.group(1))
+    return ""
+
+
+app = FastAPI(title="Grade Inconsistency Manual Extraction API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:5173,http://localhost:3000").split(","),
+    allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,100 +128,148 @@ app.add_middleware(
 
 
 @app.get("/api/reviews")
-def list_reviews() -> dict:
+def list_reviews() -> dict[str, Any]:
     return {"reviews": get_store().list_reviews()}
 
 
-@app.get("/api/reviews/{pmid}")
-def get_review(pmid: str) -> dict:
+@app.get("/api/reviews/{review_id}")
+def get_review(review_id: str) -> dict[str, Any]:
     store = get_store()
-    review = store.get_review(pmid)
-    if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
-    return {"review": review, "outcomes": [hydrate_study_refs(store, item) for item in store.list_outcomes_for_review(pmid)]}
+    review = _review_or_404(store, review_id)
+    outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
+    articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
+    return {"review": review, "outcomes": outcomes, "articles": articles}
 
 
 @app.get("/api/outcomes")
-def list_outcomes() -> dict:
+def list_outcomes() -> dict[str, Any]:
     store = get_store()
     reviews_by_pmid = {review["pmid"]: review for review in store.list_reviews()}
     outcomes = []
     for outcome in store.list_outcomes():
         review = reviews_by_pmid.get(outcome["pmid"], {})
         outcomes.append(
-            hydrate_study_refs(
+            _hydrate_outcome(
                 store,
                 {
                     **outcome,
                     "review_title": review.get("title", ""),
-                    "review_year": review.get("year", ""),
-                    "review_journal": review.get("journal", ""),
-                    "full_text_url": review.get("full_text_url", ""),
+                    "pmc_url": review.get("pmc_url", ""),
                 },
             )
         )
     return {"outcomes": outcomes}
 
 
-@app.get("/api/forest-plots/{pmid}/{outcome_id}")
-def get_forest_plot(pmid: str, outcome_id: int) -> FileResponse:
-    outcome = get_store().get_outcome(pmid, outcome_id)
-    saved_path = Path(str(outcome.get("forest_plot_path"))) if outcome and outcome.get("forest_plot_path") else None
-    if saved_path and saved_path.exists():
-        return FileResponse(saved_path)
-    directory = forest_plots_dir() / str(pmid)
-    matches = list(directory.glob(f"outcome-{outcome_id}.*"))
-    if not matches:
-        raise HTTPException(status_code=404, detail="Forest plot not found")
-    return FileResponse(matches[0])
+@app.post("/api/reviews/{review_id}/extract-sof")
+def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    try:
+        outcomes = parse_sof_extraction(payload.text, pmid=str(review["pmid"]), review_id=str(review["review_id"]))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    store.replace_outcomes(str(review["pmid"]), outcomes)
+    review["sof_extracted_at"] = datetime.now(UTC).isoformat()
+    review["agree_oppose_extracted_at"] = None
+    review["status"] = "no_inconsistency" if not outcomes else "sof_extracted"
+    store.put_review(review)
+    return {"review": review, "outcomes": outcomes, "message": "No inconsistency." if not outcomes else "SoF extracted."}
 
 
-@app.get("/api/studies/{study_id}", response_class=HTMLResponse)
-def get_study(study_id: str) -> HTMLResponse:
-    study = get_store().get_study(study_id)
-    if not study:
-        raise HTTPException(status_code=404, detail="Study not found")
+@app.post("/api/reviews/{review_id}/extract-agree-oppose")
+def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    existing = store.list_outcomes_for_review(str(review["pmid"]))
+    if not existing:
+        raise HTTPException(status_code=400, detail="Extract SoF must be completed before Extract Agree Oppose.")
+    try:
+        parsed = parse_agree_oppose_extraction(payload.text, existing)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    pmc_link = (
-        f'<a href="{escape(str(study["pmc_url"]))}" target="_blank" rel="noreferrer">PMC full text</a>'
-        if study.get("pmc_url")
-        else '<span class="muted">PMC full text unavailable</span>'
-    )
-    pubmed_link = (
-        f'<a href="{escape(str(study["pubmed_url"]))}" target="_blank" rel="noreferrer">PubMed</a>'
-        if study.get("pubmed_url")
-        else '<span class="muted">PubMed match unavailable</span>'
-    )
-    abstract = escape(str(study.get("abstract") or "No abstract was available from PubMed."))
-    html_body = f"""<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>{escape(str(study.get("label") or study_id))}</title>
-    <style>
-      body {{ color: #202124; font-family: system-ui, sans-serif; line-height: 1.5; margin: 32px; max-width: 980px; }}
-      h1 {{ color: #17324d; font-size: 26px; line-height: 1.2; }}
-      dl {{ display: grid; grid-template-columns: 140px 1fr; gap: 8px 18px; }}
-      dt {{ color: #667085; font-weight: 700; }}
-      dd {{ margin: 0; }}
-      a {{ color: #0f6b8e; font-weight: 650; }}
-      .muted {{ color: #667085; }}
-      .abstract {{ background: #f6f7f9; border: 1px solid #d8dee6; border-radius: 8px; padding: 16px; white-space: pre-wrap; }}
-    </style>
-  </head>
-  <body>
-    <h1>{escape(str(study.get("title") or study.get("label") or study_id))}</h1>
-    <dl>
-      <dt>Study label</dt><dd>{escape(str(study.get("label") or ""))}</dd>
-      <dt>PMID</dt><dd>{escape(str(study.get("pmid") or "Unavailable"))}</dd>
-      <dt>PMCID</dt><dd>{escape(str(study.get("pmcid") or "Unavailable"))}</dd>
-      <dt>Journal</dt><dd>{escape(str(study.get("journal") or "Unavailable"))}</dd>
-      <dt>Year</dt><dd>{escape(str(study.get("year") or "Unavailable"))}</dd>
-      <dt>Links</dt><dd>{pmc_link} &nbsp; {pubmed_link}</dd>
-      <dt>Search query</dt><dd>{escape(str(study.get("search_query") or ""))}</dd>
-    </dl>
-    <h2>Abstract</h2>
-    <div class="abstract">{abstract}</div>
-  </body>
-</html>"""
-    return HTMLResponse(html_body)
+    session = build_session()
+    article_count = 0
+    for item in parsed:
+        outcome = item["outcome"]
+        agreeing_ids: list[str] = []
+        opposing_ids: list[str] = []
+        for stance, key, output in (
+            ("agreeing", "agreeing_citations", agreeing_ids),
+            ("opposing", "opposing_citations", opposing_ids),
+        ):
+            for citation in item[key]:
+                article = enrich_and_store_article(
+                    store=store,
+                    session=session,
+                    citation=citation["citation"],
+                    study_label=citation["study_label"],
+                    review=review,
+                    outcome=outcome,
+                    stance=stance,
+                    abstract_dir=_abstract_dir(),
+                    full_text_dir=_full_text_dir(),
+                    **_openai_config(),
+                )
+                output.append(str(article["article_id"]))
+                article_count += 1
+        outcome.update(
+            {
+                "forest_plot_title": item["forest_plot_title"],
+                "agreeing_articles": agreeing_ids,
+                "opposing_articles": opposing_ids,
+                "extraction_status": "agree_oppose_extracted",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        )
+        store.put_outcome(outcome)
+
+    review["agree_oppose_extracted_at"] = datetime.now(UTC).isoformat()
+    review["status"] = "agree_oppose_extracted"
+    store.put_review(review)
+    outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
+    articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
+    return {"review": review, "outcomes": outcomes, "articles": articles, "article_count": article_count}
+
+
+@app.get("/api/reviews/{review_id}/pdf")
+def download_review_pdf(review_id: str) -> Response:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    session = build_session()
+    try:
+        pdf_url = _find_pdf_url(session, review)
+    except (RuntimeError, requests.RequestException) as exc:
+        raise HTTPException(status_code=404, detail=f"PDF lookup failed: {exc}") from exc
+    if not pdf_url:
+        raise HTTPException(status_code=404, detail="No PDF link was found for this PMC review.")
+
+    try:
+        response = session.get(pdf_url, stream=True, timeout=60)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=404, detail=f"PDF download failed: {exc}") from exc
+
+    filename = f"{review['review_id']}.pdf"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(response.iter_content(chunk_size=65536), media_type="application/pdf", headers=headers)
+
+
+@app.get("/api/articles/{article_id}/abstract")
+def get_article_abstract(article_id: str) -> FileResponse:
+    article = get_store().get_article(article_id)
+    path = Path(str(article.get("abstract_path") or "")) if article else None
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="Abstract text file not found")
+    return FileResponse(path, media_type="text/plain")
+
+
+@app.get("/api/articles/{article_id}/full-text")
+def get_article_full_text(article_id: str) -> FileResponse:
+    article = get_store().get_article(article_id)
+    path = Path(str(article.get("full_text_path") or "")) if article else None
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="Full text file not found")
+    return FileResponse(path, media_type="text/plain")

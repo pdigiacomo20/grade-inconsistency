@@ -1,54 +1,55 @@
 # Grade Inconsistency
 
-Pipeline and browser UI for indexing Cochrane systematic reviews, their Summary of Findings outcomes, and whether each outcome was downgraded for inconsistency.
+Browser workflow for semi-automated extraction from 2025 open-access Cochrane systematic reviews.
 
-## Data Model
+## What It Does
 
-The pipeline writes two DynamoDB tables:
+1. Ingests PubMed records for open-access 2025 Cochrane systematic reviews into DynamoDB.
+2. Assigns each review a stable ID: `CSR_0001`, `CSR_0002`, and so on.
+3. Marks protocol-only reviews in the `reviews` table so the frontend can filter them out.
+4. Lets a user open each review detail page, download the review PDF when PMC exposes one, and paste GPT browser outputs into two extraction boxes.
+5. Parses `Extract SoF` first and stores inconsistency-downgraded outcomes in `outcomes`.
+6. Parses `Extract Agree Oppose` second, stores agreeing/opposing article IDs on each outcome, and inserts article rows as `ART_00001`, `ART_00002`, and so on.
+7. Attempts PubMed/PMC enrichment for every extracted article citation, saving abstracts and available full text as `.txt` files outside git.
 
-- `reviews`
-  - Primary key: `pmid`
-  - Columns include `title`, `year`, `journal`, `pmcid`, `full_text_url`, `status`, `summary_tables`, and `indexed_at`.
-- `outcomes`
-  - Partition key: `pmid`
-  - Sort key: `outcome_id`
-  - One item per Summary of Findings row.
-  - Columns include `question`, `consensus_answer`, `inconsistency`, `subgroup_differences`, `certainty`, `inconsistency_reason`, `downgrade_categories`, `footnote_labels`, `footnotes`, `forest_plot_url`, `agreeing_studies`, and `opposing_studies`.
-- `studies`
-  - Primary key: `study_id`.
-  - Stores study labels parsed from forest plot context plus PubMed/PMC metadata, abstract text, and link availability.
+## DynamoDB Tables
 
-`inconsistency` is `1` when the GRADE footnotes for the outcome identify an inconsistency downgrade. `subgroup_differences` is `1` when the extracted footnotes indicate subgroup-related differences and the row was not downgraded for inconsistency.
+`reviews`
+
+- Primary key: `pmid`
+- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`
+
+`outcomes`
+
+- Partition key: `pmid`
+- Sort key: `outcome_id`
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `agreeing_articles`, `opposing_articles`
+
+`articles`
+
+- Primary key: `article_id`
+- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `citation`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`
+
+The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations.
 
 ## Setup
 
-Install Python dependencies:
-
 ```bash
+cd ~/grade-inconsistency/grade-inconsistency
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+cp config.example.yml config.yml
 ```
+
+Set `OPENAI_API_KEY` in `.env`. The key is used only when PubMed matching returns zero or multiple plausible results and the pipeline needs model help choosing a PMID.
 
 Start local DynamoDB:
 
 ```bash
 docker compose up -d dynamodb
 ```
-
-Create a config file:
-
-```bash
-cp config.example.yml config.yml
-```
-
-Create a local environment file:
-
-```bash
-cp .env.example .env
-```
-
-Then set `OPENAI_API_KEY` in `.env`. The pipeline and API load `.env` automatically, including DynamoDB table names, `FOREST_PLOTS_DIR`, and OpenAI settings.
 
 For local DynamoDB, keep:
 
@@ -57,62 +58,52 @@ dynamodb_endpoint_url: http://localhost:8000
 aws_region: us-west-2
 reviews_table: reviews
 outcomes_table: outcomes
+articles_table: articles
 ```
 
-For AWS DynamoDB, set `dynamodb_endpoint_url` to `null` and make sure your normal AWS credentials are available in the environment.
+For AWS DynamoDB, set `dynamodb_endpoint_url: null` and provide normal AWS credentials in the environment.
 
-## Run Ingestion
+## Ingest Reviews
 
-The ingestion command uses the PubMed and PMC lookup methods in `grade_inconsistency.py`. Before parsing a review, it checks the `reviews` table for the PMID and skips already indexed reviews unless `force_reprocess: true` is set in the YAML config. After that, the same command enriches flagged outcomes (`inconsistency` or `subgroup_differences`) with forest plot images and agreeing/opposing study metadata, skipping outcomes that already have `study_enrichment_status` unless `force_study_enrichment: true`.
+This command only populates/updates `reviews`. It does not extract outcomes.
 
 ```bash
 python -m pipeline.ingest --config config.yml
 ```
 
-Important config fields:
+Useful config fields:
 
-- `limit`: number of PubMed records to inspect.
-- `pause_seconds`: delay between PMC article fetches.
-- `create_tables`: create DynamoDB tables if missing.
-- `force_reprocess`: replace stored review/outcome rows even if the PMID already exists.
-- `force_study_enrichment`: rerun forest plot and study extraction for already enriched outcomes.
-- `study_enrichment_limit`: maximum number of pending flagged outcomes to enrich in this run, or `null` for all pending flagged outcomes.
-- `forest_plots_dir`: directory where downloaded forest plot images are stored.
-- `extraction_mode`: `openai` uses the OpenAI Responses API with web search for Summary of Findings, forest plot, and agreeing/opposing study extraction; `hybrid` falls back to the deterministic parser if OpenAI extraction fails; `deterministic` uses the legacy parser only.
-- `openai_model`: model used for OpenAI extraction, defaulting to `gpt-5.5` in `.env.example`.
-- `openai_web_search`: enables the Responses API `web_search` tool so the model can inspect PMC pages by URL.
+- `limit`: number of PubMed results to inspect.
+- `pause_seconds`: delay after PMC article fetches.
+- `create_tables`: create missing DynamoDB tables.
+- `force_reprocess`: refresh existing review metadata while preserving existing `review_id`.
+- `abstract_text_dir`: where article abstracts are saved.
+- `full_text_dir`: where PMC full text `.txt` files are saved.
 
-The OpenAI extraction asks the model to inspect the PMC full-text URL rather than sending the full article HTML in context. The model returns structured JSON for outcomes, forest plot links/captions, and agreeing/opposing study labels. The pipeline still resolves study metadata through PubMed/PMC and stores those records in DynamoDB.
-
-## Run API
-
-Start the backend from the repo root. The API loads `.env`, so the exports below are optional if `.env` contains these values.
+## Run Backend
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
 source .venv/bin/activate
-
-export DYNAMODB_ENDPOINT_URL=http://localhost:8000
-export AWS_REGION=us-west-2
-export REVIEWS_TABLE=reviews
-export OUTCOMES_TABLE=outcomes
-export STUDIES_TABLE=studies
-export FOREST_PLOTS_DIR=data/forest_plots
-
 uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
 ```
 
-API routes:
+The API loads `.env` automatically.
+
+Main routes:
 
 - `GET /api/reviews`
-- `GET /api/reviews/{pmid}`
+- `GET /api/reviews/{CSR_ID}`
+- `GET /api/reviews/{CSR_ID}/pdf`
+- `POST /api/reviews/{CSR_ID}/extract-sof`
+- `POST /api/reviews/{CSR_ID}/extract-agree-oppose`
 - `GET /api/outcomes`
-- `GET /api/forest-plots/{pmid}/{outcome_id}`
-- `GET /api/studies/{study_id}`
+- `GET /api/articles/{ART_ID}/abstract`
+- `GET /api/articles/{ART_ID}/full-text`
+
+The PDF endpoint returns `Content-Disposition: attachment; filename="CSR_XXXX.pdf"`. Browser security does not allow a web app to force `~/Downloads/CSR`; configure the browser download location to that folder if needed.
 
 ## Run Frontend
-
-Start the frontend in a separate terminal. Use `npm run dev:remote` from the `frontend` directory so npm uses this repo's installed Vite version; do not run `npx vite` from another directory.
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency/frontend
@@ -120,23 +111,30 @@ npm install
 npm run dev:remote
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:5174
 ```
 
-The frontend defaults to same-origin `/api` requests. During Vite development, `/api` is proxied to `http://127.0.0.1:8080`.
+The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 
-The app has:
+## Frontend Workflow
 
-- A searchable systematic review list showing PMID, title, publication year, journal, and full-text link.
-- A review detail view showing all indexed outcomes for a selected review.
-- An outcomes-only view sorted by systematic review PMID, with links to the source review.
+1. Use the Reviews table. Keep `Hide protocols only` checked to remove protocol-only rows.
+2. Click the `CSR_XXXX` link to open the detail view.
+3. Click `PMC entry` to inspect the article in a new tab, or `Download PDF` to download `CSR_XXXX.pdf` if PMC exposes a PDF.
+4. Use GPT in a separate browser with the downloaded Cochrane PDF and the `Extract SoF` prompt.
+5. Paste the GPT output into `Extract SoF` and click `Extract SoF`.
+6. Use GPT with the `Extract Agree Oppose` prompt.
+7. Paste the GPT output into `Extract Agree Oppose` and click `Extract Agree/Oppose`.
+8. Review extracted outcomes and associated articles below the input boxes.
+
+The backend rejects `Extract Agree Oppose` if `Extract SoF` has not already produced matching outcome rows.
 
 ## Run Remotely Over SSH
 
-If the app is running on a server and you want to view it from your laptop, forward the frontend port. Vite proxies `/api` to the backend on the server.
+Forward the frontend port from your laptop:
 
 ```bash
 ssh -L 5174:localhost:5174 pd@10.0.0.193
@@ -147,42 +145,31 @@ On the server, start the API:
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
 source .venv/bin/activate
-
-export DYNAMODB_ENDPOINT_URL=http://localhost:8000
-export AWS_REGION=us-west-2
-export REVIEWS_TABLE=reviews
-export OUTCOMES_TABLE=outcomes
-export STUDIES_TABLE=studies
-export FOREST_PLOTS_DIR=data/forest_plots
-
 uvicorn pipeline.api:app --host 127.0.0.1 --port 8080
 ```
 
-In another server terminal, start the frontend on the forwarded port:
+In another server terminal, start the frontend:
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency/frontend
-
 npm run dev:remote
 ```
 
-Then open this URL on your laptop:
+Open this URL on your laptop:
 
 ```text
 http://localhost:5174
 ```
 
-To run the API and frontend in the background on the server:
+To run both in the background on the server:
 
 ```bash
 cd ~/grade-inconsistency/grade-inconsistency
-
 setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency && .venv/bin/uvicorn pipeline.api:app --host 127.0.0.1 --port 8080 >>/tmp/grade-inconsistency-api.log 2>&1'
-
 setsid -f bash -lc 'cd ~/grade-inconsistency/grade-inconsistency/frontend && npm run dev:remote >>/tmp/grade-inconsistency-frontend.log 2>&1'
 ```
 
-Useful checks on the server:
+Useful checks:
 
 ```bash
 curl http://127.0.0.1:8080/api/reviews
@@ -192,18 +179,10 @@ tail -f /tmp/grade-inconsistency-api.log
 tail -f /tmp/grade-inconsistency-frontend.log
 ```
 
-To stop the remote dev servers:
+Stop background servers:
 
 ```bash
 pkill -f 'uvicorn pipeline.api:app'
 pkill -f 'npm run dev:remote'
 pkill -f 'vite --host 127.0.0.1 --port 5174'
-```
-
-## Existing Parser CLI
-
-The original standalone summary script remains available:
-
-```bash
-python grade_inconsistency.py --limit 50 --output-dir .
 ```

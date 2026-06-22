@@ -1,129 +1,54 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ExternalLink, FileText, ListFilter, Search } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-async function fetchJson(path) {
-  const response = await fetch(`${API_BASE}${path}`);
+function apiHref(path) {
+  return `${API_BASE}${path}`;
+}
+
+async function fetchJson(path, options = {}) {
+  const response = await fetch(apiHref(path), {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    throw new Error(data.detail || `Request failed: ${response.status}`);
   }
-  return response.json();
+  return data;
 }
 
 function normalize(value) {
   return String(value || "").toLowerCase();
 }
 
-function BoolPill({ value }) {
-  return <span className={value ? "pill pillYes" : "pill"}>{value ? "1" : "0"}</span>;
+function Pill({ children, tone = "neutral" }) {
+  return <span className={`pill ${tone}`}>{children}</span>;
 }
 
-function FullTextLink({ href }) {
+function LinkOut({ href, children }) {
   if (!href) return <span className="muted">Unavailable</span>;
   return (
     <a href={href} target="_blank" rel="noreferrer" className="linkIcon">
-      Full text <ExternalLink size={14} />
+      {children} <ExternalLink size={14} />
     </a>
   );
 }
 
-function apiHref(path) {
-  return `${API_BASE}${path}`;
-}
-
-function StudyLinks({ studies }) {
-  if (!studies || studies.length === 0) return <span className="muted">None parsed</span>;
-  return (
-    <div className="studyLinks">
-      {studies.map((study) => (
-        <a
-          key={study.study_id}
-          href={apiHref(`/api/studies/${encodeURIComponent(study.study_id)}`)}
-          target="_blank"
-          rel="noreferrer"
-          className={`studyLink ${study.link_status === "pmc_full_text" ? "studyPmc" : study.link_status === "pubmed_abstract" ? "studyAbstract" : "studyMetadata"}`}
-          title={study.title || study.label}
-        >
-          {study.label || study.title || study.study_id}
-        </a>
-      ))}
-    </div>
-  );
-}
-
-function ForestPlotLink({ href }) {
-  if (!href) return <span className="muted">Unavailable</span>;
-  return (
-    <a href={apiHref(href)} target="_blank" rel="noreferrer" className="linkIcon">
-      Forest plot <ExternalLink size={14} />
-    </a>
-  );
-}
-
-function OutcomeTable({ outcomes, includeReview }) {
-  return (
-    <div className="tableWrap">
-      <table>
-        <thead>
-          <tr>
-            {includeReview && <th>PMID</th>}
-            {includeReview && <th>Review</th>}
-            <th>ID</th>
-            <th>Outcome</th>
-            <th>Question</th>
-            <th>Consensus Answer</th>
-            <th>Inconsistency</th>
-            <th>Subgroup Differences</th>
-            <th>Forest Plot</th>
-            <th>Agreeing Studies</th>
-            <th>Opposing Studies</th>
-            <th>Reason</th>
-            <th>Certainty</th>
-            <th>Table</th>
-          </tr>
-        </thead>
-        <tbody>
-          {outcomes.map((outcome) => (
-            <tr key={`${outcome.pmid}-${outcome.outcome_id}`}>
-              {includeReview && (
-                <td>
-                  <a className="pmidLink" href={outcome.full_text_url || "#"} target="_blank" rel="noreferrer">
-                    {outcome.pmid}
-                  </a>
-                </td>
-              )}
-              {includeReview && <td className="titleCell">{outcome.review_title}</td>}
-              <td>{outcome.outcome_id}</td>
-              <td>{outcome.outcome}</td>
-              <td>{outcome.question}</td>
-              <td>{outcome.consensus_answer}</td>
-              <td><BoolPill value={outcome.inconsistency} /></td>
-              <td><BoolPill value={outcome.subgroup_differences} /></td>
-              <td><ForestPlotLink href={outcome.forest_plot_url} /></td>
-              <td><StudyLinks studies={outcome.agreeing_study_refs} /></td>
-              <td><StudyLinks studies={outcome.opposing_study_refs} /></td>
-              <td>{outcome.inconsistency_reason || <span className="muted">None parsed</span>}</td>
-              <td>{outcome.certainty}</td>
-              <td>{outcome.table_title}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {outcomes.length === 0 && <div className="empty">No outcomes found.</div>}
-    </div>
-  );
-}
-
-function ReviewsView({ reviews, query, setQuery, onSelect }) {
+function ReviewsView({ reviews, onOpen }) {
+  const [query, setQuery] = useState("");
+  const [hideProtocols, setHideProtocols] = useState(true);
   const filtered = useMemo(() => {
     const needle = normalize(query);
-    return reviews.filter((review) =>
-      [review.pmid, review.title, review.year, review.journal, review.status].some((value) =>
+    return reviews.filter((review) => {
+      if (hideProtocols && review.is_protocol_only) return false;
+      return [review.review_id, review.pmid, review.title, review.year, review.journal, review.status].some((value) =>
         normalize(value).includes(needle),
-      ),
-    );
-  }, [reviews, query]);
+      );
+    });
+  }, [reviews, query, hideProtocols]);
 
   return (
     <>
@@ -132,117 +57,246 @@ function ReviewsView({ reviews, query, setQuery, onSelect }) {
           <Search size={18} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search reviews" />
         </div>
+        <label className="checkControl">
+          <input type="checkbox" checked={hideProtocols} onChange={(event) => setHideProtocols(event.target.checked)} />
+          Hide protocols only
+        </label>
       </div>
       <div className="tableWrap">
-        <table>
+        <table className="reviewsTable">
           <thead>
             <tr>
-              <th>PMID</th>
+              <th>CSR ID</th>
               <th>Title</th>
               <th>Year</th>
               <th>Journal</th>
-              <th>Full Text</th>
+              <th>PMC</th>
+              <th>Protocol Only</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((review) => (
-              <tr key={review.pmid} onClick={() => onSelect(review.pmid)} className="clickableRow">
-                <td className="pmidLink">{review.pmid}</td>
+              <tr key={review.pmid}>
+                <td>
+                  <button className="linkButton" onClick={() => onOpen(review.review_id || review.pmid)}>
+                    {review.review_id || review.pmid}
+                  </button>
+                </td>
                 <td className="titleCell">{review.title}</td>
                 <td>{review.year}</td>
                 <td>{review.journal}</td>
-                <td onClick={(event) => event.stopPropagation()}><FullTextLink href={review.full_text_url} /></td>
+                <td>
+                  <LinkOut href={review.pmc_url}>PMC</LinkOut>
+                </td>
+                <td>{review.is_protocol_only ? <Pill tone="warn">Yes</Pill> : <Pill>No</Pill>}</td>
                 <td>{review.status}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && <div className="empty">No reviews match the search.</div>}
+        {filtered.length === 0 && <div className="empty">No reviews match the current filters.</div>}
       </div>
     </>
   );
 }
 
-function ReviewDetail({ pmid, onBack }) {
-  const [payload, setPayload] = useState(null);
-  const [error, setError] = useState("");
+function OutcomeTable({ outcomes }) {
+  return (
+    <div className="tableWrap compact">
+      <table>
+        <thead>
+          <tr>
+            <th>Outcome</th>
+            <th>SoF Table</th>
+            <th>Row</th>
+            <th>Medical Question</th>
+            <th>Consensus Answer</th>
+            <th>Certainty</th>
+            <th>Forest Plot</th>
+            <th>Agreeing Articles</th>
+            <th>Opposing Articles</th>
+            <th>Downgrade Reasoning</th>
+          </tr>
+        </thead>
+        <tbody>
+          {outcomes.map((outcome) => (
+            <tr key={outcome.outcome_id}>
+              <td>{outcome.outcome_id}</td>
+              <td>{outcome.sof_table}</td>
+              <td>{outcome.row}</td>
+              <td>{outcome.question}</td>
+              <td>{outcome.consensus_answer}</td>
+              <td>{outcome.certainty}</td>
+              <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
+              <td>{(outcome.agreeing_articles || []).join(", ") || <span className="muted">None</span>}</td>
+              <td>{(outcome.opposing_articles || []).join(", ") || <span className="muted">None</span>}</td>
+              <td>{outcome.downgrade_reasoning}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {outcomes.length === 0 && <div className="empty">No extracted inconsistency outcomes.</div>}
+    </div>
+  );
+}
 
-  useEffect(() => {
-    setPayload(null);
+function ArticlesTable({ articles }) {
+  const [sortByOutcome, setSortByOutcome] = useState(true);
+  const rows = useMemo(() => {
+    const copy = [...articles];
+    if (sortByOutcome) {
+      copy.sort((a, b) => Number(a.outcome_id || 0) - Number(b.outcome_id || 0) || String(a.article_id).localeCompare(String(b.article_id)));
+    }
+    return copy;
+  }, [articles, sortByOutcome]);
+
+  return (
+    <>
+      <div className="sectionHeader">
+        <h2>Associated Articles</h2>
+        <label className="checkControl">
+          <input type="checkbox" checked={sortByOutcome} onChange={(event) => setSortByOutcome(event.target.checked)} />
+          Sort by outcome
+        </label>
+      </div>
+      <div className="tableWrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>Article ID</th>
+              <th>Outcome</th>
+              <th>Stance</th>
+              <th>Study</th>
+              <th>Citation</th>
+              <th>PMID</th>
+              <th>PMCID</th>
+              <th>Files</th>
+              <th>Match</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((article) => (
+              <tr key={article.article_id}>
+                <td>{article.article_id}</td>
+                <td>{article.outcome_id}</td>
+                <td>{article.stance}</td>
+                <td>{article.study_label || <span className="muted">Unlabeled</span>}</td>
+                <td className="titleCell">{article.citation}</td>
+                <td>
+                  <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>
+                </td>
+                <td>
+                  <LinkOut href={article.pmc_url}>{article.pmcid || "PMC"}</LinkOut>
+                </td>
+                <td>
+                  <div className="fileLinks">
+                    {article.abstract_path ? <a href={apiHref(`/api/articles/${article.article_id}/abstract`)}>Abstract</a> : <span className="muted">No abstract</span>}
+                    {article.full_text_path ? <a href={apiHref(`/api/articles/${article.article_id}/full-text`)}>Full text</a> : <span className="muted">No full text</span>}
+                  </div>
+                </td>
+                <td>{article.match_status || <span className="muted">Not matched</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 && <div className="empty">No articles have been extracted for this review.</div>}
+      </div>
+    </>
+  );
+}
+
+function ReviewDetail({ reviewId, onBack }) {
+  const [payload, setPayload] = useState(null);
+  const [sofText, setSofText] = useState("");
+  const [agreeText, setAgreeText] = useState("");
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const load = () => {
     setError("");
-    fetchJson(`/api/reviews/${pmid}`)
+    fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}`)
       .then(setPayload)
       .catch((err) => setError(err.message));
-  }, [pmid]);
+  };
 
-  if (error) return <div className="error">{error}</div>;
-  if (!payload) return <div className="empty">Loading review...</div>;
+  useEffect(load, [reviewId]);
 
-  const { review, outcomes } = payload;
+  const submit = async (kind) => {
+    setBusy(kind);
+    setError("");
+    setMessage("");
+    try {
+      const path = kind === "sof" ? "extract-sof" : "extract-agree-oppose";
+      const text = kind === "sof" ? sofText : agreeText;
+      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/${path}`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      setPayload(result.review ? result : { ...payload, ...result });
+      setMessage(kind === "sof" ? result.message || "SoF extracted." : `Agree/Oppose extracted. Added ${result.article_count || 0} articles.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  if (!payload && !error) return <div className="empty">Loading review...</div>;
+  const review = payload?.review;
+  const outcomes = payload?.outcomes || [];
+  const articles = payload?.articles || [];
+
   return (
     <>
-      <button className="iconButton" onClick={onBack} title="Back to reviews">
+      <button className="iconButton" onClick={onBack}>
         <ArrowLeft size={18} /> Reviews
       </button>
-      <section className="detailHeader">
-        <div>
-          <h2>{review.title}</h2>
-          <p>{review.pmid} · {review.year || "Year unknown"} · {review.journal || "Journal unknown"}</p>
-        </div>
-        <FullTextLink href={review.full_text_url} />
-      </section>
-      <OutcomeTable outcomes={outcomes} includeReview={false} />
-    </>
-  );
-}
-
-function OutcomesView() {
-  const [outcomes, setOutcomes] = useState([]);
-  const [query, setQuery] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetchJson("/api/outcomes")
-      .then((data) => setOutcomes(data.outcomes || []))
-      .catch((err) => setError(err.message));
-  }, []);
-
-  const filtered = useMemo(() => {
-    const needle = normalize(query);
-    return outcomes.filter((outcome) =>
-      [
-        outcome.pmid,
-        outcome.review_title,
-        outcome.outcome,
-        outcome.question,
-        outcome.consensus_answer,
-        outcome.inconsistency_reason,
-        ...(outcome.agreeing_study_refs || []).map((study) => study.label || study.title),
-        ...(outcome.opposing_study_refs || []).map((study) => study.label || study.title),
-      ].some((value) => normalize(value).includes(needle)),
-    );
-  }, [outcomes, query]);
-
-  if (error) return <div className="error">{error}</div>;
-  return (
-    <>
-      <div className="toolbar">
-        <div className="searchBox">
-          <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search outcomes" />
-        </div>
-      </div>
-      <OutcomeTable outcomes={filtered} includeReview />
+      {error && <div className="error">{error}</div>}
+      {message && <div className="notice">{message}</div>}
+      {review && (
+        <>
+          <section className="detailHeader">
+            <div>
+              <h2>{review.review_id}: {review.title}</h2>
+              <p>{review.pmid} · {review.year || "Year unknown"} · {review.journal || "Journal unknown"}</p>
+            </div>
+            <div className="headerActions">
+              <LinkOut href={review.pmc_url}>PMC entry</LinkOut>
+              <a className="buttonLink" href={apiHref(`/api/reviews/${encodeURIComponent(review.review_id || review.pmid)}/pdf`)}>
+                <Download size={16} /> Download PDF
+              </a>
+            </div>
+          </section>
+          <section className="extractGrid">
+            <div className="extractPanel">
+              <h2>Extract SoF</h2>
+              <textarea value={sofText} onChange={(event) => setSofText(event.target.value)} />
+              <button className="primaryButton" disabled={busy === "sof"} onClick={() => submit("sof")}>
+                {busy === "sof" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract SoF
+              </button>
+            </div>
+            <div className="extractPanel">
+              <h2>Extract Agree Oppose</h2>
+              <textarea value={agreeText} onChange={(event) => setAgreeText(event.target.value)} />
+              <button className="primaryButton" disabled={busy === "agree"} onClick={() => submit("agree")}>
+                {busy === "agree" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Agree/Oppose
+              </button>
+            </div>
+          </section>
+          <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
+          <OutcomeTable outcomes={outcomes} />
+          <ArticlesTable articles={articles} />
+        </>
+      )}
     </>
   );
 }
 
 export default function App() {
   const [reviews, setReviews] = useState([]);
-  const [selectedPmid, setSelectedPmid] = useState("");
-  const [view, setView] = useState("reviews");
-  const [query, setQuery] = useState("");
+  const [selectedReview, setSelectedReview] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -256,24 +310,12 @@ export default function App() {
       <header className="appHeader">
         <div>
           <h1>Grade Inconsistency</h1>
-          <p>Cochrane Summary of Findings outcomes indexed from DynamoDB</p>
+          <p>Manual extraction workflow for 2025 open-access Cochrane reviews</p>
         </div>
-        <nav>
-          <button className={view === "reviews" ? "tab active" : "tab"} onClick={() => { setView("reviews"); setSelectedPmid(""); }}>
-            <FileText size={17} /> Reviews
-          </button>
-          <button className={view === "outcomes" ? "tab active" : "tab"} onClick={() => { setView("outcomes"); setSelectedPmid(""); }}>
-            <ListFilter size={17} /> Outcomes
-          </button>
-        </nav>
       </header>
-
       {error && <div className="error">{error}</div>}
-      {!error && selectedPmid && <ReviewDetail pmid={selectedPmid} onBack={() => setSelectedPmid("")} />}
-      {!error && !selectedPmid && view === "reviews" && (
-        <ReviewsView reviews={reviews} query={query} setQuery={setQuery} onSelect={setSelectedPmid} />
-      )}
-      {!error && !selectedPmid && view === "outcomes" && <OutcomesView />}
+      {!error && selectedReview && <ReviewDetail reviewId={selectedReview} onBack={() => setSelectedReview("")} />}
+      {!error && !selectedReview && <ReviewsView reviews={reviews} onOpen={setSelectedReview} />}
     </main>
   );
 }

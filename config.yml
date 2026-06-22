@@ -1,7 +1,7 @@
 limit: 20
 pause_seconds: 0.8
 create_tables: true
-force_reprocess: false
+force_reprocess: true
 
 aws_region: us-west-2
 dynamodb_endpoint_url: http://localhost:8000
