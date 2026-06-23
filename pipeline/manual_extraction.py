@@ -26,17 +26,17 @@ PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
     r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Downgrade reasoning|"
-    r"Forest plot title|Agreeing studies|Opposing studies)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
+    r"Forest plot title|Agreeing studies|Opposing studies|Overall notes)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
     r"Consensus answer|Certainty of evidence|Downgrade reasoning|Forest plot title|Agreeing studies|"
-    r"Opposing studies)\s*:|\Z)"
+    r"Opposing studies|Overall notes)\s*:|\Z)"
 )
 PUBLICATION_RE = re.compile(
     r"(?ims)^\s*Publication\s+\d+\s*:\s*(.*?)(?=^\s*(?:Publication\s+\d+\s*:|Study\s*:|Opposing studies\s*:|"
-    r"Agreeing studies\s*:|SoF table\s*:|Row\s*:)|\Z)"
+    r"Agreeing studies\s*:|Overall notes\s*:|SoF table\s*:|Row\s*:)|\Z)"
 )
 STUDY_BLOCK_RE = re.compile(
     r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Opposing studies\s*:|^\s*Agreeing studies\s*:|"
-    r"^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
+    r"^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
 )
 TITLE_RE = re.compile(r"(?P<title>.+?)\.\s+(?P<journal>[A-Z][^.]+?)\s+(?P<year>(?:19|20)\d{2})[;:]")
 YEAR_RE = re.compile(r"\b((?:19|20)\d{2})\b")
@@ -55,6 +55,19 @@ class ParsedSofOutcome:
     downgrade_reasoning: str
 
 
+@dataclass(frozen=True)
+class ParsedSofExtraction:
+    outcomes: list[dict[str, Any]]
+    overall_notes: str
+    has_inconsistency: bool
+
+
+@dataclass(frozen=True)
+class ParsedAgreeOpposeExtraction:
+    outcomes: list[dict[str, Any]]
+    overall_notes: str
+
+
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
@@ -71,11 +84,23 @@ def _sof_key(sof_table: str, row: str) -> str:
     return f"{_clean(sof_table).lower()}::{_clean(row).lower()}"
 
 
-def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> list[dict[str, Any]]:
+def _extract_overall_notes(text: str) -> str:
+    fields = _fields(text)
+    return _clean("\n\n".join(note for note in fields.get("overall notes", []) if note.strip()))
+
+
+def _is_no_inconsistency(text: str) -> bool:
+    without_notes = re.sub(r"(?ims)^\s*Overall notes\s*:.*\Z", "", text).strip()
+    normalized = without_notes.rstrip(".").strip().lower()
+    return normalized == "no inconsistency"
+
+
+def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofExtraction:
     if not text.strip():
         raise ValueError("Paste the Extract SoF output before extracting.")
-    if text.strip().lower() == "no inconsistency." or text.strip().lower() == "no inconsistency":
-        return []
+    overall_notes = _extract_overall_notes(text)
+    if _is_no_inconsistency(text):
+        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, has_inconsistency=False)
 
     starts = [match.start() for match in re.finditer(r"(?im)^\s*SoF table\s*:", text)]
     if not starts:
@@ -116,12 +141,12 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> list[dict[s
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         )
-    return outcomes
+    return ParsedSofExtraction(outcomes=outcomes, overall_notes=overall_notes, has_inconsistency=True)
 
 
 def _extract_section(text: str, heading: str) -> str:
     match = re.search(
-        rf"(?ims)^\s*{re.escape(heading)}\s*:\s*(.*?)(?=^\s*(?:Agreeing studies|Opposing studies|SoF table|Row)\s*:|\Z)",
+        rf"(?ims)^\s*{re.escape(heading)}\s*:\s*(.*?)(?=^\s*(?:Agreeing studies|Opposing studies|Overall notes|SoF table|Row)\s*:|\Z)",
         text,
     )
     return match.group(1).strip() if match else ""
@@ -145,12 +170,13 @@ def _extract_citations(section: str) -> list[dict[str, str]]:
     return citations
 
 
-def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, Any]]) -> ParsedAgreeOpposeExtraction:
     if not existing_outcomes:
         raise ValueError("Extract SoF must be completed before Extract Agree Oppose.")
     if not text.strip():
         raise ValueError("Paste the Extract Agree Oppose output before extracting.")
 
+    overall_notes = _extract_overall_notes(text)
     starts = [match.start() for match in re.finditer(r"(?im)^\s*SoF table\s*:", text)]
     if not starts:
         raise ValueError("Could not find any 'SoF table:' blocks in the Extract Agree Oppose text.")
@@ -180,7 +206,7 @@ def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, A
                 "opposing_citations": _extract_citations(opposing_section),
             }
         )
-    return parsed
+    return ParsedAgreeOpposeExtraction(outcomes=parsed, overall_notes=overall_notes)
 
 
 def build_session() -> requests.Session:

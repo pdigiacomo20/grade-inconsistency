@@ -166,16 +166,20 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     store = get_store()
     review = _review_or_404(store, review_id)
     try:
-        outcomes = parse_sof_extraction(payload.text, pmid=str(review["pmid"]), review_id=str(review["review_id"]))
+        extraction = parse_sof_extraction(payload.text, pmid=str(review["pmid"]), review_id=str(review["review_id"]))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    outcomes = extraction.outcomes
     store.replace_outcomes(str(review["pmid"]), outcomes)
     review["sof_extracted_at"] = datetime.now(UTC).isoformat()
     review["agree_oppose_extracted_at"] = None
-    review["status"] = "no_inconsistency" if not outcomes else "sof_extracted"
+    review["sof_overall_notes"] = extraction.overall_notes
+    review["agree_oppose_overall_notes"] = ""
+    review["has_inconsistency"] = extraction.has_inconsistency
+    review["status"] = "no_inconsistency" if not extraction.has_inconsistency else "sof_extracted"
     store.put_review(review)
-    return {"review": review, "outcomes": outcomes, "message": "No inconsistency." if not outcomes else "SoF extracted."}
+    return {"review": review, "outcomes": outcomes, "message": "No inconsistency." if not extraction.has_inconsistency else "SoF extracted."}
 
 
 @app.post("/api/reviews/{review_id}/extract-agree-oppose")
@@ -186,13 +190,13 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
     if not existing:
         raise HTTPException(status_code=400, detail="Extract SoF must be completed before Extract Agree Oppose.")
     try:
-        parsed = parse_agree_oppose_extraction(payload.text, existing)
+        extraction = parse_agree_oppose_extraction(payload.text, existing)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     session = build_session()
     article_count = 0
-    for item in parsed:
+    for item in extraction.outcomes:
         outcome = item["outcome"]
         agreeing_ids: list[str] = []
         opposing_ids: list[str] = []
@@ -227,6 +231,7 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
         store.put_outcome(outcome)
 
     review["agree_oppose_extracted_at"] = datetime.now(UTC).isoformat()
+    review["agree_oppose_overall_notes"] = extraction.overall_notes
     review["status"] = "agree_oppose_extracted"
     store.put_review(review)
     outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]

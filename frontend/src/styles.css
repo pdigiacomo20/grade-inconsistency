@@ -69,6 +69,10 @@ p {
   margin: 14px 0;
 }
 
+.toolbar {
+  flex-wrap: wrap;
+}
+
 .searchBox {
   align-items: center;
   background: #ffffff;
@@ -114,7 +118,7 @@ table {
 }
 
 .reviewsTable {
-  min-width: 1080px;
+  min-width: 1180px;
 }
 
 .compact table {
@@ -269,7 +273,15 @@ a:hover,
   margin: 16px 0;
 }
 
-.extractPanel {
+.notesGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+.extractPanel,
+.notesPanel {
   background: #ffffff;
   border: 1px solid #d8dee6;
   border-radius: 8px;
@@ -277,6 +289,12 @@ a:hover,
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+}
+
+.notesPanel p {
+  color: #344054;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 textarea {
@@ -322,7 +340,8 @@ textarea {
     flex-direction: column;
   }
 
-  .extractGrid {
+  .extractGrid,
+  .notesGrid {
     grid-template-columns: 1fr;
   }
 }

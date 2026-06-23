@@ -40,15 +40,17 @@ function LinkOut({ href, children }) {
 function ReviewsView({ reviews, onOpen }) {
   const [query, setQuery] = useState("");
   const [hideProtocols, setHideProtocols] = useState(true);
+  const [hideNoInconsistency, setHideNoInconsistency] = useState(false);
   const filtered = useMemo(() => {
     const needle = normalize(query);
     return reviews.filter((review) => {
       if (hideProtocols && review.is_protocol_only) return false;
+      if (hideNoInconsistency && (review.has_inconsistency === false || review.status === "no_inconsistency")) return false;
       return [review.review_id, review.pmid, review.title, review.year, review.journal, review.status].some((value) =>
         normalize(value).includes(needle),
       );
     });
-  }, [reviews, query, hideProtocols]);
+  }, [reviews, query, hideProtocols, hideNoInconsistency]);
 
   return (
     <>
@@ -61,6 +63,10 @@ function ReviewsView({ reviews, onOpen }) {
           <input type="checkbox" checked={hideProtocols} onChange={(event) => setHideProtocols(event.target.checked)} />
           Hide protocols only
         </label>
+        <label className="checkControl">
+          <input type="checkbox" checked={hideNoInconsistency} onChange={(event) => setHideNoInconsistency(event.target.checked)} />
+          Hide no inconsistency
+        </label>
       </div>
       <div className="tableWrap">
         <table className="reviewsTable">
@@ -72,6 +78,7 @@ function ReviewsView({ reviews, onOpen }) {
               <th>Journal</th>
               <th>PMC</th>
               <th>Protocol Only</th>
+              <th>Inconsistency</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -90,6 +97,7 @@ function ReviewsView({ reviews, onOpen }) {
                   <LinkOut href={review.pmc_url}>PMC</LinkOut>
                 </td>
                 <td>{review.is_protocol_only ? <Pill tone="warn">Yes</Pill> : <Pill>No</Pill>}</td>
+                <td>{review.has_inconsistency === false || review.status === "no_inconsistency" ? <Pill tone="warn">No</Pill> : <Pill>Yes</Pill>}</td>
                 <td>{review.status}</td>
               </tr>
             ))}
@@ -98,6 +106,26 @@ function ReviewsView({ reviews, onOpen }) {
         {filtered.length === 0 && <div className="empty">No reviews match the current filters.</div>}
       </div>
     </>
+  );
+}
+
+function OverallNotes({ review }) {
+  const notes = [
+    { label: "SoF overall notes", value: review?.sof_overall_notes },
+    { label: "Agree/Oppose overall notes", value: review?.agree_oppose_overall_notes },
+  ].filter((item) => String(item.value || "").trim());
+
+  if (!notes.length) return null;
+
+  return (
+    <section className="notesGrid">
+      {notes.map((item) => (
+        <div className="notesPanel" key={item.label}>
+          <h2>{item.label}</h2>
+          <p>{item.value}</p>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -206,7 +234,7 @@ function ArticlesTable({ articles }) {
   );
 }
 
-function ReviewDetail({ reviewId, onBack }) {
+function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [payload, setPayload] = useState(null);
   const [sofText, setSofText] = useState("");
   const [agreeText, setAgreeText] = useState("");
@@ -235,6 +263,7 @@ function ReviewDetail({ reviewId, onBack }) {
         body: JSON.stringify({ text }),
       });
       setPayload(result.review ? result : { ...payload, ...result });
+      if (result.review) onReviewUpdated(result.review);
       setMessage(kind === "sof" ? result.message || "SoF extracted." : `Agree/Oppose extracted. Added ${result.article_count || 0} articles.`);
     } catch (err) {
       setError(err.message);
@@ -285,6 +314,7 @@ function ReviewDetail({ reviewId, onBack }) {
               </button>
             </div>
           </section>
+          <OverallNotes review={review} />
           <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
           <OutcomeTable outcomes={outcomes} />
           <ArticlesTable articles={articles} />
@@ -305,6 +335,12 @@ export default function App() {
       .catch((err) => setError(err.message));
   }, []);
 
+  const updateReview = (updatedReview) => {
+    setReviews((current) =>
+      current.map((review) => (String(review.pmid) === String(updatedReview.pmid) ? { ...review, ...updatedReview } : review)),
+    );
+  };
+
   return (
     <main>
       <header className="appHeader">
@@ -314,7 +350,7 @@ export default function App() {
         </div>
       </header>
       {error && <div className="error">{error}</div>}
-      {!error && selectedReview && <ReviewDetail reviewId={selectedReview} onBack={() => setSelectedReview("")} />}
+      {!error && selectedReview && <ReviewDetail reviewId={selectedReview} onBack={() => setSelectedReview("")} onReviewUpdated={updateReview} />}
       {!error && !selectedReview && <ReviewsView reviews={reviews} onOpen={setSelectedReview} />}
     </main>
   );
