@@ -42,6 +42,11 @@ TITLE_RE = re.compile(r"(?P<title>.+?)\.\s+(?P<journal>[A-Z][^.]+?)\s+(?P<year>(
 YEAR_RE = re.compile(r"\b((?:19|20)\d{2})\b")
 PDF_META_RE = re.compile(r'(?is)<meta\s+name=["\']citation_pdf_url["\']\s+content=["\']([^"\']+)["\']')
 PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']')
+OVERALL_NOTES_RE = re.compile(
+    r"(?ims)^[ \t]*Overall notes[ \t]*:[ \t]*"
+    r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Downgrade reasoning|"
+    r"Forest plot title|Agreeing studies|Opposing studies)[ \t]*:|^[ \t]*No inconsistency[ \t.]*$|\Z)"
+)
 
 
 @dataclass(frozen=True)
@@ -85,12 +90,11 @@ def _sof_key(sof_table: str, row: str) -> str:
 
 
 def _extract_overall_notes(text: str) -> str:
-    fields = _fields(text)
-    return _clean("\n\n".join(note for note in fields.get("overall notes", []) if note.strip()))
+    return _clean("\n\n".join(match.group(1) for match in OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
 
 def _is_no_inconsistency(text: str) -> bool:
-    without_notes = re.sub(r"(?ims)^\s*Overall notes\s*:.*\Z", "", text).strip()
+    without_notes = OVERALL_NOTES_RE.sub("", text).strip()
     normalized = without_notes.rstrip(".").strip().lower()
     return normalized == "no inconsistency"
 
