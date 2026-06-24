@@ -26,17 +26,23 @@ PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
     r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Downgrade reasoning|"
-    r"Forest plot title|Agreeing studies|Opposing studies|Overall notes)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
-    r"Consensus answer|Certainty of evidence|Downgrade reasoning|Forest plot title|Agreeing studies|"
+    r"Forest plot title|Effect measure|Line of no effect|Agreeing studies|Opposing studies|Overall notes)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
+    r"Consensus answer|Certainty of evidence|Downgrade reasoning|Forest plot title|Effect measure|Line of no effect|Agreeing studies|"
     r"Opposing studies|Overall notes)\s*:|\Z)"
 )
 PUBLICATION_RE = re.compile(
-    r"(?ims)^\s*Publication\s+\d+\s*:\s*(.*?)(?=^\s*(?:Publication\s+\d+\s*:|Study\s*:|Opposing studies\s*:|"
+    r"(?ims)^\s*Publication\s+\d+\s*:\s*(.*?)(?=^\s*(?:Publication\s+\d+\s*:|Study\s*:|Effect estimate\s*:|"
+    r"Confidence interval begin\s*:|Confidence interval end\s*:|Confidence interval percentage\s*:|Opposing studies\s*:|"
     r"Agreeing studies\s*:|Overall notes\s*:|SoF table\s*:|Row\s*:)|\Z)"
 )
 STUDY_BLOCK_RE = re.compile(
     r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Opposing studies\s*:|^\s*Agreeing studies\s*:|"
     r"^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
+)
+STUDY_FIELD_RE = re.compile(
+    r"(?ims)^\s*(Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage)\s*:\s*"
+    r"(.*?)(?=^\s*(?:Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|"
+    r"Publication\s+\d+|Study|Opposing studies|Agreeing studies|Overall notes|SoF table|Row)\s*:|\Z)"
 )
 TITLE_RE = re.compile(r"(?P<title>.+?)\.\s+(?P<journal>[A-Z][^.]+?)\s+(?P<year>(?:19|20)\d{2})[;:]")
 YEAR_RE = re.compile(r"\b((?:19|20)\d{2})\b")
@@ -83,6 +89,10 @@ def _fields(text: str) -> dict[str, list[str]]:
         key = match.group(1).lower()
         result.setdefault(key, []).append(match.group(2).strip())
     return result
+
+
+def _study_fields(text: str) -> dict[str, str]:
+    return {match.group(1).lower(): _clean(match.group(2)) for match in STUDY_FIELD_RE.finditer(text)}
 
 
 def _sof_key(sof_table: str, row: str) -> str:
@@ -156,22 +166,58 @@ def _extract_section(text: str, heading: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def _extract_citations(section: str) -> list[dict[str, str]]:
-    citations: list[dict[str, str]] = []
+def _extract_citations(section: str) -> list[dict[str, Any]]:
+    citations: list[dict[str, Any]] = []
     for study_match in STUDY_BLOCK_RE.finditer(section):
         block = study_match.group(1).strip()
         first_line, _, rest = block.partition("\n")
         study_label = _clean(first_line)
+        fields = _study_fields(rest)
         for pub_match in PUBLICATION_RE.finditer(rest):
             citation = _clean(pub_match.group(1))
             if citation:
-                citations.append({"study_label": study_label, "citation": citation})
+                citations.append(
+                    {
+                        "study_label": study_label,
+                        "citation": citation,
+                        "effect_estimate": fields.get("effect estimate", ""),
+                        "confidence_interval_begin": fields.get("confidence interval begin", ""),
+                        "confidence_interval_end": fields.get("confidence interval end", ""),
+                        "confidence_interval_percentage": fields.get("confidence interval percentage", ""),
+                    }
+                )
     if not citations:
         for pub_match in PUBLICATION_RE.finditer(section):
             citation = _clean(pub_match.group(1))
             if citation:
-                citations.append({"study_label": "", "citation": citation})
+                citations.append(
+                    {
+                        "study_label": "",
+                        "citation": citation,
+                        "effect_estimate": "",
+                        "confidence_interval_begin": "",
+                        "confidence_interval_end": "",
+                        "confidence_interval_percentage": "",
+                    }
+                )
     return citations
+
+
+def _validate_effect_citations(citations: list[dict[str, Any]], *, block_index: int, section_name: str) -> None:
+    required = (
+        ("effect_estimate", "Effect estimate"),
+        ("confidence_interval_begin", "Confidence interval begin"),
+        ("confidence_interval_end", "Confidence interval end"),
+        ("confidence_interval_percentage", "Confidence interval percentage"),
+    )
+    for citation_index, citation in enumerate(citations, start=1):
+        missing = [label for key, label in required if not str(citation.get(key) or "").strip()]
+        if missing:
+            study = citation.get("study_label") or f"citation {citation_index}"
+            raise ValueError(
+                f"Extract Agree Oppose block {block_index} {section_name} study '{study}' is missing: "
+                f"{', '.join(missing)}."
+            )
 
 
 def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, Any]]) -> ParsedAgreeOpposeExtraction:
@@ -202,12 +248,27 @@ def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, A
             )
         agreeing_section = _extract_section(block, "Agreeing studies")
         opposing_section = _extract_section(block, "Opposing studies")
+        effect_measure = _clean((fields.get("effect measure") or [""])[0]).lower()
+        line_of_no_effect = _clean((fields.get("line of no effect") or [""])[0])
+        missing_effect_fields = []
+        if not effect_measure:
+            missing_effect_fields.append("Effect measure")
+        if not line_of_no_effect:
+            missing_effect_fields.append("Line of no effect")
+        if missing_effect_fields:
+            raise ValueError(f"Extract Agree Oppose block {index + 1} is missing: {', '.join(missing_effect_fields)}.")
+        agreeing_citations = _extract_citations(agreeing_section)
+        opposing_citations = _extract_citations(opposing_section)
+        _validate_effect_citations(agreeing_citations, block_index=index + 1, section_name="Agreeing studies")
+        _validate_effect_citations(opposing_citations, block_index=index + 1, section_name="Opposing studies")
         parsed.append(
             {
                 "outcome": outcome,
                 "forest_plot_title": _clean((fields.get("forest plot title") or [""])[0]),
-                "agreeing_citations": _extract_citations(agreeing_section),
-                "opposing_citations": _extract_citations(opposing_section),
+                "effect_measure": effect_measure,
+                "line_of_no_effect": line_of_no_effect,
+                "agreeing_citations": agreeing_citations,
+                "opposing_citations": opposing_citations,
             }
         )
     return ParsedAgreeOpposeExtraction(outcomes=parsed, overall_notes=overall_notes)
@@ -407,6 +468,12 @@ def enrich_and_store_article(
     openai_api_key: str | None,
     openai_model: str,
     openai_timeout_seconds: int,
+    effect_measure: str = "",
+    line_of_no_effect: str = "",
+    effect_estimate: str = "",
+    confidence_interval_begin: str = "",
+    confidence_interval_end: str = "",
+    confidence_interval_percentage: str = "",
 ) -> dict[str, Any]:
     article_id = store.next_article_id()
     resolved = resolve_pubmed(
@@ -447,6 +514,12 @@ def enrich_and_store_article(
         "outcome_key": outcome.get("outcome_key", ""),
         "stance": stance,
         "study_label": study_label,
+        "effect_measure": effect_measure or None,
+        "effect_estimate": effect_estimate or None,
+        "confidence_interval_begin": confidence_interval_begin or None,
+        "confidence_interval_end": confidence_interval_end or None,
+        "confidence_interval_percentage": confidence_interval_percentage or None,
+        "line_of_no_effect": line_of_no_effect or None,
         "citation": citation,
         "pmid": pmid or None,
         "pmcid": pmcid or None,

@@ -142,6 +142,8 @@ function OutcomeTable({ outcomes }) {
             <th>Consensus Answer</th>
             <th>Certainty</th>
             <th>Forest Plot</th>
+            <th>Effect Measure</th>
+            <th>Line of No Effect</th>
             <th>Agreeing Articles</th>
             <th>Opposing Articles</th>
             <th>Downgrade Reasoning</th>
@@ -157,6 +159,8 @@ function OutcomeTable({ outcomes }) {
               <td>{outcome.consensus_answer}</td>
               <td>{outcome.certainty}</td>
               <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
+              <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
+              <td>{outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
               <td>{(outcome.agreeing_articles || []).join(", ") || <span className="muted">None</span>}</td>
               <td>{(outcome.opposing_articles || []).join(", ") || <span className="muted">None</span>}</td>
               <td>{outcome.downgrade_reasoning}</td>
@@ -196,6 +200,10 @@ function ArticlesTable({ articles }) {
               <th>Outcome</th>
               <th>Stance</th>
               <th>Study</th>
+              <th>Effect Measure</th>
+              <th>Effect Estimate</th>
+              <th>CI</th>
+              <th>Line of No Effect</th>
               <th>Citation</th>
               <th>PMID</th>
               <th>PMCID</th>
@@ -210,6 +218,19 @@ function ArticlesTable({ articles }) {
                 <td>{article.outcome_id}</td>
                 <td>{article.stance}</td>
                 <td>{article.study_label || <span className="muted">Unlabeled</span>}</td>
+                <td>{article.effect_measure || <span className="muted">Missing</span>}</td>
+                <td>{article.effect_estimate || <span className="muted">Missing</span>}</td>
+                <td>
+                  {article.confidence_interval_begin && article.confidence_interval_end ? (
+                    <>
+                      {article.confidence_interval_begin} to {article.confidence_interval_end}
+                      {article.confidence_interval_percentage ? ` (${article.confidence_interval_percentage}%)` : ""}
+                    </>
+                  ) : (
+                    <span className="muted">Missing</span>
+                  )}
+                </td>
+                <td>{article.line_of_no_effect || <span className="muted">Missing</span>}</td>
                 <td className="titleCell">{article.citation}</td>
                 <td>
                   <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>

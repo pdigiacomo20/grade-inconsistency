@@ -23,12 +23,12 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `agreeing_articles`, `opposing_articles`
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `agreeing_articles`, `opposing_articles`
 
 `articles`
 
 - Primary key: `article_id`
-- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `citation`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`
+- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `line_of_no_effect`, `citation`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`
 
 The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations.
 
@@ -130,7 +130,7 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 7. Paste the GPT output into `Extract Agree Oppose` and click `Extract Agree/Oppose`.
 8. Review extracted outcomes and associated articles below the input boxes.
 
-The backend rejects `Extract Agree Oppose` if `Extract SoF` has not already produced matching outcome rows.
+The backend rejects `Extract Agree Oppose` if `Extract SoF` has not already produced matching outcome rows. The `Extract Agree Oppose` output must include `Effect measure` and `Line of no effect` for each matched outcome, plus `Effect estimate`, `Confidence interval begin`, `Confidence interval end`, and `Confidence interval percentage` for each listed study.
 
 ## Run Remotely Over SSH
 
