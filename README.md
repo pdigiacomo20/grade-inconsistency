@@ -43,7 +43,7 @@ cp .env.example .env
 cp config.example.yml config.yml
 ```
 
-Set `OPENAI_API_KEY` in `.env`. The key is used only when PubMed matching returns zero or multiple plausible results and the pipeline needs model help choosing a PMID.
+Set `OPENAI_API_KEY` in `.env`. The key is used to identify PMIDs for extracted agreeing/opposing article citations with GPT web search before PubMed/PMC metadata and text are fetched.
 
 Start local DynamoDB:
 

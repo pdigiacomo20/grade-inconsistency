@@ -13,10 +13,10 @@ import requests
 from grade_inconsistency import (
     PMC_ARTICLE_URL,
     PMC_IDCONV_URL,
-    PUBMED_SEARCH_URL,
     PUBMED_SUMMARY_URL,
+    NCBI_REQUEST_DELAY_SECONDS,
+    fetch_pmc_xml,
     fetch_json,
-    fetch_text,
     strip_tags,
 )
 from pipeline.dynamodb import DynamoStore
@@ -44,7 +44,10 @@ STUDY_FIELD_RE = re.compile(
     r"(.*?)(?=^\s*(?:Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|"
     r"Publication\s+\d+|Study|Opposing studies|Agreeing studies|Overall notes|SoF table|Row)\s*:|\Z)"
 )
-TITLE_RE = re.compile(r"(?P<title>.+?)\.\s+(?P<journal>[A-Z][^.]+?)\s+(?P<year>(?:19|20)\d{2})[;:]")
+TITLE_RE = re.compile(
+    r"(?P<title>.+?)(?:[.?!])\s+(?P<journal>[A-Z][A-Za-z0-9&().,'’ -]+?)\s+"
+    r"(?P<year>(?:19|20)\d{2})[;:]"
+)
 YEAR_RE = re.compile(r"\b((?:19|20)\d{2})\b")
 PDF_META_RE = re.compile(r'(?is)<meta\s+name=["\']citation_pdf_url["\']\s+content=["\']([^"\']+)["\']')
 PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']')
@@ -81,6 +84,11 @@ class ParsedAgreeOpposeExtraction:
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _normalize_for_match(text: str) -> str:
+    text = text.lower().replace("‐", "-").replace("‑", "-").replace("–", "-").replace("—", "-")
+    return _clean(re.sub(r"[^a-z0-9]+", " ", text))
 
 
 def _fields(text: str) -> dict[str, list[str]]:
@@ -286,14 +294,34 @@ def build_session() -> requests.Session:
 
 
 def _extract_title_year(citation: str) -> tuple[str, str]:
-    match = TITLE_RE.search(citation)
-    if match:
-        return _clean(match.group("title")), match.group("year")
+    title, _journal, year = _extract_citation_metadata(citation)
+    return title, year
+
+
+def _extract_citation_metadata(citation: str) -> tuple[str, str, str]:
+    citation = _clean(citation)
     year_match = YEAR_RE.search(citation)
     year = year_match.group(1) if year_match else ""
-    title = citation.split(". ", 1)[1] if ". " in citation else citation
-    title = title.split(". ")[0]
-    return _clean(title), year
+
+    # Most pasted references are "Authors. Article title. Journal year;...".
+    # Remove the author block first so the title regex cannot consume authors.
+    after_authors = citation.split(". ", 1)[1] if ". " in citation else citation
+    match = TITLE_RE.search(after_authors)
+    if match:
+        return _clean(match.group("title")), _clean(match.group("journal")), match.group("year")
+
+    before_year = after_authors[: year_match.start() - (len(citation) - len(after_authors))] if year_match else after_authors
+    parts = [part.strip() for part in re.split(r"\.\s+", before_year) if part.strip()]
+    if len(parts) >= 2:
+        title = ". ".join(parts[:-1])
+        journal = parts[-1]
+    elif parts:
+        title = parts[0]
+        journal = ""
+    else:
+        title = after_authors
+        journal = ""
+    return _clean(title.rstrip(".?! ")), _clean(journal), year
 
 
 def _extract_abstract(xml_text: str) -> str:
@@ -311,13 +339,27 @@ def _extract_abstract(xml_text: str) -> str:
 
 
 def _fetch_abstract(session: requests.Session, pmid: str) -> str:
-    response = session.get(
-        PUBMED_FETCH_URL,
-        params={"db": "pubmed", "id": pmid, "retmode": "xml", "tool": "grade-inconsistency"},
-        timeout=60,
-    )
-    response.raise_for_status()
-    return _extract_abstract(response.text)
+    params = {"db": "pubmed", "id": pmid, "retmode": "xml", "tool": "grade-inconsistency"}
+    last_error = ""
+    for attempt in range(5):
+        try:
+            response = session.get(PUBMED_FETCH_URL, params=params, timeout=60)
+            if response.status_code == 429 or response.status_code >= 500:
+                retry_after = response.headers.get("Retry-After")
+                if retry_after and retry_after.isdigit():
+                    time.sleep(float(retry_after))
+                else:
+                    time.sleep(2.0 * (attempt + 1))
+                last_error = f"HTTP {response.status_code}"
+                continue
+            response.raise_for_status()
+            abstract = _extract_abstract(response.text)
+            time.sleep(NCBI_REQUEST_DELAY_SECONDS)
+            return abstract
+        except requests.RequestException as exc:
+            last_error = str(exc)
+            time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError(f"{PUBMED_FETCH_URL} ({pmid}: {last_error})")
 
 
 def _lookup_pmcid(session: requests.Session, pmid: str) -> str:
@@ -348,20 +390,30 @@ def _ask_openai_for_pmid(
     api_key: str | None,
     model: str,
     citation: str,
-    candidates: list[dict[str, Any]],
     timeout_seconds: int,
 ) -> str:
     if not api_key:
         return ""
     payload = {
         "model": model,
+        "tools": [
+            {
+                "type": "web_search",
+                "filters": {"allowed_domains": ["pubmed.ncbi.nlm.nih.gov"]},
+                "search_context_size": "medium",
+            }
+        ],
         "input": [
             {
                 "role": "user",
                 "content": (
-                    "Given the citation and PubMed search candidates, return the single best PMID only. "
-                    "Return an empty string if no candidate matches.\n\n"
-                    f"Citation:\n{citation}\n\nCandidates:\n{candidates}"
+                    "Given the following citation, provide the pubmed ID (PMID) corresponding to the article. "
+                    "Use web search to first search only the title of the article. Then, when a candidate PMID is "
+                    "identified, you will end up with a link like https://pubmed.ncbi.nlm.nih.gov/27040313/ where "
+                    "27040313 is the candidate PMID. Ensure that the title, journal, and year of publication all "
+                    "match the original citation provided, or else continue with the web search to find the correct "
+                    'PMID. Return only the PMID or "FAIL" to say that you could not find the PMID.\n\n'
+                    f"Citation:\n{citation}"
                 ),
             }
         ],
@@ -380,10 +432,32 @@ def _ask_openai_for_pmid(
             for item in data.get("output", []):
                 for content in item.get("content", []):
                     output += str(content.get("text") or "")
-        match = re.search(r"\b\d{6,9}\b", output)
+        output = output.strip()
+        if re.fullmatch(r"(?i)fail", output):
+            return ""
+        match = re.fullmatch(r"\d{6,9}", output)
         return match.group(0) if match else ""
     except (requests.RequestException, ValueError):
         return ""
+
+
+def _metadata_matches_citation(citation: str, summary: dict[str, Any]) -> bool:
+    title, journal, year = _extract_citation_metadata(citation)
+    expected_title = _normalize_for_match(title)
+    actual_title = _normalize_for_match(str(summary.get("title") or ""))
+    if expected_title and expected_title != actual_title:
+        return False
+
+    summary_year = str(summary.get("pubdate") or summary.get("epubdate") or "")[:4]
+    if year and summary_year and summary_year != year:
+        return False
+
+    expected_journal = _normalize_for_match(journal)
+    actual_journal = _normalize_for_match(str(summary.get("fulljournalname") or summary.get("source") or ""))
+    if expected_journal and actual_journal and expected_journal not in actual_journal and actual_journal not in expected_journal:
+        return False
+
+    return bool(actual_title)
 
 
 def resolve_pubmed(
@@ -394,49 +468,21 @@ def resolve_pubmed(
     openai_model: str,
     openai_timeout_seconds: int,
 ) -> dict[str, Any]:
-    title, year = _extract_title_year(citation)
-    queries = []
-    if title:
-        queries.append(f'"{title}"[Title]')
-    if title and year:
-        queries.append(f'"{title}"[Title] AND {year}[Date - Publication]')
-    queries.append(citation[:220])
+    pmid = _ask_openai_for_pmid(
+        api_key=openai_api_key,
+        model=openai_model,
+        citation=citation,
+        timeout_seconds=openai_timeout_seconds,
+    )
+    if not pmid:
+        return {"pmid": "", "query": "openai_web_search", "match_status": "openai_fail"}
 
-    last_query = ""
-    for query in queries:
-        last_query = query
-        try:
-            data = fetch_json(
-                session,
-                PUBMED_SEARCH_URL,
-                {"db": "pubmed", "term": query, "retmax": "5", "retmode": "json", "tool": "grade-inconsistency"},
-            )
-        except RuntimeError:
-            continue
-        ids = [str(item) for item in data.get("esearchresult", {}).get("idlist", [])]
-        if len(ids) == 1:
-            return {"pmid": ids[0], "query": query, "match_status": "single"}
-        if len(ids) > 1:
-            summaries = _summaries(session, ids)
-            candidates = [
-                {
-                    "pmid": pmid,
-                    "title": summaries.get(pmid, {}).get("title", ""),
-                    "journal": summaries.get(pmid, {}).get("fulljournalname") or summaries.get(pmid, {}).get("source", ""),
-                    "year": str(summaries.get(pmid, {}).get("pubdate") or "")[:4],
-                }
-                for pmid in ids
-            ]
-            chosen = _ask_openai_for_pmid(
-                api_key=openai_api_key,
-                model=openai_model,
-                citation=citation,
-                candidates=candidates,
-                timeout_seconds=openai_timeout_seconds,
-            )
-            if chosen in ids:
-                return {"pmid": chosen, "query": query, "match_status": "openai_selected"}
-    return {"pmid": "", "query": last_query, "match_status": "unmatched"}
+    summary = _summaries(session, [pmid]).get(pmid, {})
+    if not summary:
+        return {"pmid": "", "query": f"openai_web_search:{pmid}", "match_status": "openai_invalid_pmid"}
+    if not _metadata_matches_citation(citation, summary):
+        return {"pmid": "", "query": f"openai_web_search:{pmid}", "match_status": "openai_metadata_mismatch"}
+    return {"pmid": pmid, "query": f"openai_web_search:{pmid}", "match_status": "openai_web_search"}
 
 
 def _write_text(directory: str | Path, filename: str, text: str) -> str:
@@ -450,8 +496,7 @@ def _write_text(directory: str | Path, filename: str, text: str) -> str:
 
 
 def _fetch_pmc_text(session: requests.Session, pmcid: str) -> str:
-    html = fetch_text(session, PMC_ARTICLE_URL.format(pmcid=pmcid))
-    return strip_tags(html)
+    return strip_tags(fetch_pmc_xml(session, pmcid))
 
 
 def enrich_and_store_article(

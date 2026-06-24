@@ -27,7 +27,7 @@ def _env_int(name: str, default: int | None) -> int | None:
 @dataclass(frozen=True)
 class PipelineConfig:
     limit: int = 25
-    pause_seconds: float = 0.8
+    pause_seconds: float = 0.34
     create_tables: bool = True
     force_reprocess: bool = False
     abstract_text_dir: str = "data/articles/abstracts"

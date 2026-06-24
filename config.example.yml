@@ -1,5 +1,5 @@
 limit: 25
-pause_seconds: 0.8
+pause_seconds: 0.34
 create_tables: true
 force_reprocess: false
 abstract_text_dir: data/articles/abstracts

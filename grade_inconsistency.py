@@ -19,6 +19,8 @@ PUBMED_SEARCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 PUBMED_SUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 PMC_IDCONV_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
 PMC_ARTICLE_URL = "https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
+PMC_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+NCBI_REQUEST_DELAY_SECONDS = 0.34
 
 PUBMED_QUERY = (
     '"Cochrane Database Syst Rev"[jour] '
@@ -60,6 +62,10 @@ FOOTNOTE_RE = re.compile(
     r"(?is)<sup>\s*([^<]+?)\s*</sup>\s*(.*?)(?=(?:<sup>\s*[^<]+?\s*</sup>)|$)"
 )
 TITLE_META_RE = re.compile(r'(?is)<meta\s+name="citation_title"\s+content="([^"]*)"')
+ARTICLE_TITLE_RE = re.compile(r"(?is)<article-title\b[^>]*>(.*?)</article-title>")
+PMC_ID_RE = re.compile(r"\bPMC\d+\b", re.I)
+PMC_XML_RE = re.compile(r"(?is)<(?:pmc-articleset|article)\b")
+RECAPTCHA_RE = re.compile(r"(?is)recaptcha|challengepage|google\.com/recaptcha")
 SPACE_RE = re.compile(r"\s+")
 
 
@@ -304,15 +310,19 @@ def extract_article_title(article_html: str, fallback: str = "") -> str:
     match = TITLE_META_RE.search(article_html)
     if match:
         return html.unescape(match.group(1)).strip()
+    match = ARTICLE_TITLE_RE.search(article_html)
+    if match:
+        return strip_tags(match.group(1))
     return fallback
 
 
 def is_protocol_article(article_html: str) -> bool:
     match = DESCRIPTION_RE.search(article_html)
-    if not match:
-        return False
-    description = html.unescape(match.group(1)).strip().lower()
-    return "this is a protocol for a cochrane review" in description
+    if match:
+        description = html.unescape(match.group(1)).strip().lower()
+        if "this is a protocol for a cochrane review" in description:
+            return True
+    return "this is a protocol for a cochrane review" in strip_tags(article_html).lower()
 
 
 def extract_summary_sections(article_html: str) -> list[tuple[str, str]]:
@@ -408,7 +418,9 @@ def fetch_json(session: requests.Session, url: str, params: dict) -> dict:
                 last_error = f"HTTP {response.status_code}"
                 continue
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            time.sleep(NCBI_REQUEST_DELAY_SECONDS)
+            return data
         except requests.RequestException as exc:
             last_error = str(exc)
             time.sleep(2.0 * (attempt + 1))
@@ -421,6 +433,47 @@ def fetch_text(session: requests.Session, url: str) -> str:
     return response.text
 
 
+def has_article_markers(text: str) -> bool:
+    return bool(DESCRIPTION_RE.search(text) or TITLE_META_RE.search(text) or PMC_XML_RE.search(text))
+
+
+def pmcid_from_url(url: str) -> str:
+    match = PMC_ID_RE.search(url)
+    return match.group(0).upper() if match else ""
+
+
+def fetch_pmc_xml(session: requests.Session, pmcid: str) -> str:
+    params = {
+        "db": "pmc",
+        "id": pmcid,
+        "retmode": "xml",
+        "tool": "grade-inconsistency",
+    }
+    last_error = ""
+    for attempt in range(5):
+        try:
+            response = session.get(PMC_FETCH_URL, params=params, timeout=60)
+            if response.status_code == 429 or response.status_code >= 500:
+                retry_after = response.headers.get("Retry-After")
+                if retry_after and retry_after.isdigit():
+                    time.sleep(float(retry_after))
+                else:
+                    time.sleep(2.0 * (attempt + 1))
+                last_error = f"HTTP {response.status_code}"
+                continue
+            response.raise_for_status()
+            data = response.text
+            if not has_article_markers(data):
+                last_error = "missing expected article markers"
+                continue
+            time.sleep(NCBI_REQUEST_DELAY_SECONDS)
+            return data
+        except requests.RequestException as exc:
+            last_error = str(exc)
+            time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError(f"{PMC_FETCH_URL} ({pmcid}: {last_error})")
+
+
 def fetch_article_html(session: requests.Session, url: str, pause_seconds: float) -> str:
     last_error = "missing expected article markers"
     for attempt in range(5):
@@ -428,12 +481,20 @@ def fetch_article_html(session: requests.Session, url: str, pause_seconds: float
             response = session.get(url, timeout=60)
             response.raise_for_status()
             article_html = response.text
-            if DESCRIPTION_RE.search(article_html) or TITLE_META_RE.search(article_html):
+            if has_article_markers(article_html):
                 time.sleep(pause_seconds)
                 return article_html
-            last_error = "missing expected article markers"
+            last_error = "recaptcha challenge page" if RECAPTCHA_RE.search(article_html) else "missing expected article markers"
         except requests.RequestException as exc:
             last_error = str(exc)
+        pmcid = pmcid_from_url(url)
+        if pmcid:
+            try:
+                article_xml = fetch_pmc_xml(session, pmcid)
+                time.sleep(pause_seconds)
+                return article_xml
+            except (RuntimeError, requests.RequestException) as exc:
+                last_error = str(exc)
         time.sleep(max(pause_seconds, 1.0) * (attempt + 1))
     raise RuntimeError(f"{url} ({last_error})")
 
