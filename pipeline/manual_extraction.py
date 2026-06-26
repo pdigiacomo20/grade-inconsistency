@@ -13,6 +13,7 @@ import requests
 from grade_inconsistency import (
     PMC_ARTICLE_URL,
     PMC_IDCONV_URL,
+    PUBMED_SEARCH_URL,
     PUBMED_SUMMARY_URL,
     NCBI_REQUEST_DELAY_SECONDS,
     fetch_pmc_xml,
@@ -35,6 +36,7 @@ PUBLICATION_RE = re.compile(
     r"Confidence interval begin\s*:|Confidence interval end\s*:|Confidence interval percentage\s*:|Opposing studies\s*:|"
     r"Agreeing studies\s*:|Overall notes\s*:|SoF table\s*:|Row\s*:)|\Z)"
 )
+PUBLICATION_META_RE = re.compile(r"(?ims)^\s*(Title|Relaxed search)\s*:\s*(.*?)(?=^\s*(?:Title|Relaxed search)\s*:|\Z)")
 STUDY_BLOCK_RE = re.compile(
     r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Opposing studies\s*:|^\s*Agreeing studies\s*:|"
     r"^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
@@ -84,11 +86,6 @@ class ParsedAgreeOpposeExtraction:
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
-
-
-def _normalize_for_match(text: str) -> str:
-    text = text.lower().replace("‐", "-").replace("‑", "-").replace("–", "-").replace("—", "-")
-    return _clean(re.sub(r"[^a-z0-9]+", " ", text))
 
 
 def _fields(text: str) -> dict[str, list[str]]:
@@ -182,12 +179,14 @@ def _extract_citations(section: str) -> list[dict[str, Any]]:
         study_label = _clean(first_line)
         fields = _study_fields(rest)
         for pub_match in PUBLICATION_RE.finditer(rest):
-            citation = _clean(pub_match.group(1))
+            citation, title, relaxed_search = _extract_publication(pub_match.group(1))
             if citation:
                 citations.append(
                     {
                         "study_label": study_label,
                         "citation": citation,
+                        "title": title,
+                        "relaxed_search": relaxed_search,
                         "effect_estimate": fields.get("effect estimate", ""),
                         "confidence_interval_begin": fields.get("confidence interval begin", ""),
                         "confidence_interval_end": fields.get("confidence interval end", ""),
@@ -196,12 +195,14 @@ def _extract_citations(section: str) -> list[dict[str, Any]]:
                 )
     if not citations:
         for pub_match in PUBLICATION_RE.finditer(section):
-            citation = _clean(pub_match.group(1))
+            citation, title, relaxed_search = _extract_publication(pub_match.group(1))
             if citation:
                 citations.append(
                     {
                         "study_label": "",
                         "citation": citation,
+                        "title": title,
+                        "relaxed_search": relaxed_search,
                         "effect_estimate": "",
                         "confidence_interval_begin": "",
                         "confidence_interval_end": "",
@@ -280,6 +281,17 @@ def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, A
             }
         )
     return ParsedAgreeOpposeExtraction(outcomes=parsed, overall_notes=overall_notes)
+
+
+def _extract_publication(block: str) -> tuple[str, str, str]:
+    metadata = {match.group(1).lower(): _clean(match.group(2)) for match in PUBLICATION_META_RE.finditer(block)}
+    first_meta = PUBLICATION_META_RE.search(block)
+    citation = _clean(block[: first_meta.start()] if first_meta else block)
+    title = metadata.get("title", "")
+    relaxed_search = metadata.get("relaxed search", "")
+    if not title and citation:
+        title, _year = _extract_title_year(citation)
+    return citation, title, relaxed_search
 
 
 def build_session() -> requests.Session:
@@ -385,104 +397,36 @@ def _summaries(session: requests.Session, pmids: list[str]) -> dict[str, dict[st
     return {pmid: result.get(pmid, {}) for pmid in result.get("uids", [])}
 
 
-def _ask_openai_for_pmid(
-    *,
-    api_key: str | None,
-    model: str,
-    citation: str,
-    timeout_seconds: int,
-) -> str:
-    if not api_key:
+def _search_pubmed_first(session: requests.Session, query: str) -> str:
+    query = query.strip()
+    if not query:
         return ""
-    payload = {
-        "model": model,
-        "tools": [
-            {
-                "type": "web_search",
-                "filters": {"allowed_domains": ["pubmed.ncbi.nlm.nih.gov"]},
-                "search_context_size": "medium",
-            }
-        ],
-        "input": [
-            {
-                "role": "user",
-                "content": (
-                    "Given the following citation, provide the pubmed ID (PMID) corresponding to the article. "
-                    "Use web search to first search only the title of the article. Then, when a candidate PMID is "
-                    "identified, you will end up with a link like https://pubmed.ncbi.nlm.nih.gov/27040313/ where "
-                    "27040313 is the candidate PMID. Ensure that the title, journal, and year of publication all "
-                    "match the original citation provided, or else continue with the web search to find the correct "
-                    'PMID. Return only the PMID or "FAIL" to say that you could not find the PMID.\n\n'
-                    f"Citation:\n{citation}"
-                ),
-            }
-        ],
-    }
-    try:
-        response = requests.post(
-            "https://api.openai.com/v1/responses",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json=payload,
-            timeout=timeout_seconds,
-        )
-        response.raise_for_status()
-        data = response.json()
-        output = data.get("output_text") or ""
-        if not output:
-            for item in data.get("output", []):
-                for content in item.get("content", []):
-                    output += str(content.get("text") or "")
-        output = output.strip()
-        if re.fullmatch(r"(?i)fail", output):
-            return ""
-        match = re.fullmatch(r"\d{6,9}", output)
-        return match.group(0) if match else ""
-    except (requests.RequestException, ValueError):
-        return ""
-
-
-def _metadata_matches_citation(citation: str, summary: dict[str, Any]) -> bool:
-    title, journal, year = _extract_citation_metadata(citation)
-    expected_title = _normalize_for_match(title)
-    actual_title = _normalize_for_match(str(summary.get("title") or ""))
-    if expected_title and expected_title != actual_title:
-        return False
-
-    summary_year = str(summary.get("pubdate") or summary.get("epubdate") or "")[:4]
-    if year and summary_year and summary_year != year:
-        return False
-
-    expected_journal = _normalize_for_match(journal)
-    actual_journal = _normalize_for_match(str(summary.get("fulljournalname") or summary.get("source") or ""))
-    if expected_journal and actual_journal and expected_journal not in actual_journal and actual_journal not in expected_journal:
-        return False
-
-    return bool(actual_title)
-
-
-def resolve_pubmed(
-    session: requests.Session,
-    citation: str,
-    *,
-    openai_api_key: str | None,
-    openai_model: str,
-    openai_timeout_seconds: int,
-) -> dict[str, Any]:
-    pmid = _ask_openai_for_pmid(
-        api_key=openai_api_key,
-        model=openai_model,
-        citation=citation,
-        timeout_seconds=openai_timeout_seconds,
+    data = fetch_json(
+        session,
+        PUBMED_SEARCH_URL,
+        {"db": "pubmed", "term": query, "retmax": "1", "retmode": "json", "tool": "grade-inconsistency"},
     )
-    if not pmid:
-        return {"pmid": "", "query": "openai_web_search", "match_status": "openai_fail"}
+    time.sleep(NCBI_REQUEST_DELAY_SECONDS)
+    ids = data.get("esearchresult", {}).get("idlist", [])
+    return str(ids[0]) if ids else ""
 
-    summary = _summaries(session, [pmid]).get(pmid, {})
-    if not summary:
-        return {"pmid": "", "query": f"openai_web_search:{pmid}", "match_status": "openai_invalid_pmid"}
-    if not _metadata_matches_citation(citation, summary):
-        return {"pmid": "", "query": f"openai_web_search:{pmid}", "match_status": "openai_metadata_mismatch"}
-    return {"pmid": pmid, "query": f"openai_web_search:{pmid}", "match_status": "openai_web_search"}
+
+def _title_query(title: str) -> str:
+    normalized = _clean(title).replace('"', "")
+    return f'"{normalized}"[Title]' if normalized else ""
+
+
+def lookup_pmid_for_article(session: requests.Session, *, title: str, relaxed_search: str = "") -> tuple[str, str, str]:
+    title_query = _title_query(title)
+    if title_query:
+        pmid = _search_pubmed_first(session, title_query)
+        if pmid:
+            return pmid, title_query, "pubmed_title_match"
+    if relaxed_search.strip():
+        pmid = _search_pubmed_first(session, relaxed_search)
+        if pmid:
+            return pmid, relaxed_search.strip(), "pubmed_relaxed_match"
+    return "", relaxed_search.strip() or title_query, "pmid_pending"
 
 
 def _write_text(directory: str | Path, filename: str, text: str) -> str:
@@ -499,57 +443,26 @@ def _fetch_pmc_text(session: requests.Session, pmcid: str) -> str:
     return strip_tags(fetch_pmc_xml(session, pmcid))
 
 
-def enrich_and_store_article(
+def create_and_store_article(
     *,
     store: DynamoStore,
-    session: requests.Session,
     citation: str,
     study_label: str,
     review: dict[str, Any],
     outcome: dict[str, Any],
     stance: str,
-    abstract_dir: str | Path,
-    full_text_dir: str | Path,
-    openai_api_key: str | None,
-    openai_model: str,
-    openai_timeout_seconds: int,
     effect_measure: str = "",
     line_of_no_effect: str = "",
     effect_estimate: str = "",
     confidence_interval_begin: str = "",
     confidence_interval_end: str = "",
     confidence_interval_percentage: str = "",
+    title: str = "",
+    relaxed_search: str = "",
 ) -> dict[str, Any]:
     article_id = store.next_article_id()
-    resolved = resolve_pubmed(
-        session,
-        citation,
-        openai_api_key=openai_api_key,
-        openai_model=openai_model,
-        openai_timeout_seconds=openai_timeout_seconds,
-    )
-    pmid = resolved["pmid"]
-    summary = _summaries(session, [pmid]).get(pmid, {}) if pmid else {}
-    pmcid = _lookup_pmcid(session, pmid) if pmid else ""
-    abstract = ""
-    full_text = ""
-    abstract_path = ""
-    full_text_path = ""
-    errors: list[str] = []
-
-    if pmid:
-        try:
-            abstract = _fetch_abstract(session, pmid)
-            abstract_path = _write_text(abstract_dir, f"{article_id}_abstract.txt", abstract)
-        except (RuntimeError, requests.RequestException, OSError) as exc:
-            errors.append(f"abstract: {exc}")
-    if pmcid:
-        try:
-            full_text = _fetch_pmc_text(session, pmcid)
-            full_text_path = _write_text(full_text_dir, f"{article_id}_full_text.txt", full_text)
-            time.sleep(0.34)
-        except (RuntimeError, requests.RequestException, OSError) as exc:
-            errors.append(f"full_text: {exc}")
+    extracted_title, year = _extract_title_year(citation)
+    title = _clean(title or extracted_title)
 
     item = {
         "article_id": article_id,
@@ -566,19 +479,130 @@ def enrich_and_store_article(
         "confidence_interval_percentage": confidence_interval_percentage or None,
         "line_of_no_effect": line_of_no_effect or None,
         "citation": citation,
-        "pmid": pmid or None,
-        "pmcid": pmcid or None,
-        "title": str(summary.get("title") or _extract_title_year(citation)[0] or ""),
-        "journal": str(summary.get("fulljournalname") or summary.get("source") or ""),
-        "year": str(summary.get("pubdate") or summary.get("epubdate") or "")[:4],
-        "pubmed_url": PUBMED_ARTICLE_URL.format(pmid=pmid) if pmid else None,
-        "pmc_url": PMC_ARTICLE_URL.format(pmcid=pmcid) if pmcid else None,
-        "abstract_path": abstract_path or None,
-        "full_text_path": full_text_path or None,
-        "pubmed_query": resolved.get("query", ""),
-        "match_status": resolved.get("match_status", ""),
-        "enrichment_errors": errors,
+        "pmid": None,
+        "pmcid": None,
+        "title": title,
+        "journal": "",
+        "year": year,
+        "pubmed_url": None,
+        "pmc_url": None,
+        "abstract_path": None,
+        "full_text_path": None,
+        "pubmed_query": "",
+        "relaxed_search": relaxed_search,
+        "match_status": "pmid_pending",
+        "manual_extraction_failed": False,
+        "enrichment_errors": [],
         "created_at": datetime.now(UTC).isoformat(),
     }
     store.put_article(item)
     return item
+
+
+def copy_enrichment_fields(target: dict[str, Any], source: dict[str, Any], *, match_status: str | None = None) -> dict[str, Any]:
+    for key in (
+        "pmid",
+        "pmcid",
+        "journal",
+        "year",
+        "pubmed_url",
+        "pmc_url",
+        "abstract_path",
+        "full_text_path",
+        "pubmed_query",
+        "enrichment_errors",
+    ):
+        target[key] = source.get(key)
+    target["manual_extraction_failed"] = bool(source.get("manual_extraction_failed", False))
+    target["match_status"] = match_status or source.get("match_status") or target.get("match_status") or "pmid_pending"
+    target["updated_at"] = datetime.now(UTC).isoformat()
+    return target
+
+
+def propagate_article_enrichment(store: DynamoStore, source: dict[str, Any], *, match_status: str = "duplicate_title_copied") -> list[dict[str, Any]]:
+    title = str(source.get("title") or "")
+    review_id = str(source.get("review_id") or "")
+    if not title or not review_id:
+        return []
+    updated: list[dict[str, Any]] = []
+    for duplicate in store.list_articles_for_review_title(review_id, title):
+        if str(duplicate.get("article_id")) == str(source.get("article_id")):
+            continue
+        copy_enrichment_fields(duplicate, source, match_status=match_status)
+        store.put_article(duplicate)
+        updated.append(duplicate)
+    return updated
+
+
+def mark_manual_extraction_failed(*, store: DynamoStore, article: dict[str, Any]) -> dict[str, Any]:
+    article.update(
+        {
+            "pmid": None,
+            "pmcid": None,
+            "pubmed_url": None,
+            "pmc_url": None,
+            "manual_extraction_failed": True,
+            "match_status": "manual_extraction_failed",
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    )
+    store.put_article(article)
+    propagate_article_enrichment(store, article, match_status="duplicate_manual_extraction_failed")
+    return article
+
+
+def enrich_article_with_pmid(
+    *,
+    store: DynamoStore,
+    session: requests.Session,
+    article: dict[str, Any],
+    pmid: str,
+    abstract_dir: str | Path,
+    full_text_dir: str | Path,
+    pubmed_query: str | None = None,
+    match_status: str = "manual_pmid_processed",
+) -> dict[str, Any]:
+    summary = _summaries(session, [pmid]).get(pmid, {})
+    if not summary:
+        raise ValueError(f"No PubMed record found for PMID {pmid}.")
+
+    pmcid = _lookup_pmcid(session, pmid)
+    abstract_path = str(article.get("abstract_path") or "")
+    full_text_path = str(article.get("full_text_path") or "")
+    errors: list[str] = []
+
+    try:
+        abstract = _fetch_abstract(session, pmid)
+        abstract_path = _write_text(abstract_dir, f"{article['article_id']}_abstract.txt", abstract)
+    except (RuntimeError, requests.RequestException, OSError) as exc:
+        errors.append(f"abstract: {exc}")
+
+    if pmcid:
+        try:
+            full_text = _fetch_pmc_text(session, pmcid)
+            full_text_path = _write_text(full_text_dir, f"{article['article_id']}_full_text.txt", full_text)
+            time.sleep(0.34)
+        except (RuntimeError, requests.RequestException, OSError) as exc:
+            errors.append(f"full_text: {exc}")
+
+    article.update(
+        {
+            "pmid": pmid,
+            "pmcid": pmcid or None,
+            "title": str(article.get("title") or summary.get("title") or ""),
+            "journal": str(summary.get("fulljournalname") or summary.get("source") or ""),
+            "year": str(summary.get("pubdate") or summary.get("epubdate") or "")[:4],
+            "pubmed_url": PUBMED_ARTICLE_URL.format(pmid=pmid),
+            "pmc_url": PMC_ARTICLE_URL.format(pmcid=pmcid) if pmcid else None,
+            "abstract_path": abstract_path or None,
+            "full_text_path": full_text_path or None,
+            "pubmed_query": pubmed_query or f"manual_pmid:{pmid}",
+            "match_status": match_status,
+            "manual_extraction_failed": False,
+            "enrichment_errors": errors,
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    )
+    store.put_article(article)
+    propagate_article_enrichment(store, article)
+    return article

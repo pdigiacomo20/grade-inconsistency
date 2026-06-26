@@ -214,6 +214,28 @@ a:hover,
   opacity: 0.7;
 }
 
+.smallButton {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cfd7e2;
+  border-radius: 6px;
+  color: #344054;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.smallButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .pill {
   background: #edf0f3;
   border: 1px solid #cfd7e2;
@@ -314,6 +336,42 @@ textarea {
   flex-direction: column;
   gap: 4px;
   white-space: nowrap;
+}
+
+.pmidCell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.pmidControl {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pmidControl input {
+  border: 1px solid #cfd7e2;
+  border-radius: 6px;
+  color: #202124;
+  font: inherit;
+  min-height: 34px;
+  min-width: 0;
+  outline: 0;
+  padding: 6px 8px;
+  width: 84px;
+}
+
+.warningButton {
+  color: #8a4b08;
+}
+
+.compactError {
+  border-radius: 0;
+  border-width: 1px 0 0;
+  margin: 0;
 }
 
 .spin {

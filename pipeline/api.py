@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import os
 from pathlib import Path
+import re
 from typing import Any
 from urllib.parse import urljoin
 
@@ -19,7 +20,11 @@ from pipeline.manual_extraction import (
     PDF_LINK_RE,
     PDF_META_RE,
     build_session,
-    enrich_and_store_article,
+    copy_enrichment_fields,
+    create_and_store_article,
+    enrich_article_with_pmid,
+    lookup_pmid_for_article,
+    mark_manual_extraction_failed,
     parse_agree_oppose_extraction,
     parse_sof_extraction,
 )
@@ -31,6 +36,10 @@ class ExtractionRequest(BaseModel):
     text: str
 
 
+class ProcessPmidRequest(BaseModel):
+    pmid: str
+
+
 def get_store() -> DynamoStore:
     return DynamoStore(
         region_name=os.getenv("AWS_REGION", "us-west-2"),
@@ -39,14 +48,6 @@ def get_store() -> DynamoStore:
         outcomes_table=os.getenv("OUTCOMES_TABLE", "outcomes"),
         articles_table=os.getenv("ARTICLES_TABLE", "articles"),
     )
-
-
-def _openai_config() -> dict[str, Any]:
-    return {
-        "openai_api_key": os.getenv("OPENAI_API_KEY"),
-        "openai_model": os.getenv("OPENAI_MODEL", "gpt-5.5"),
-        "openai_timeout_seconds": int(os.getenv("OPENAI_TIMEOUT_SECONDS", "300")),
-    }
 
 
 def _abstract_dir() -> str:
@@ -80,6 +81,7 @@ def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
         "pmid": article.get("pmid"),
         "pmcid": article.get("pmcid"),
         "title": article.get("title"),
+        "relaxed_search": article.get("relaxed_search"),
         "journal": article.get("journal"),
         "year": article.get("year"),
         "pubmed_url": article.get("pubmed_url"),
@@ -87,6 +89,7 @@ def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
         "abstract_path": article.get("abstract_path"),
         "full_text_path": article.get("full_text_path"),
         "match_status": article.get("match_status"),
+        "manual_extraction_failed": bool(article.get("manual_extraction_failed", False)),
         "enrichment_errors": article.get("enrichment_errors", []),
     }
 
@@ -123,6 +126,61 @@ def _find_pdf_url(session: requests.Session, review: dict[str, Any]) -> str:
     return ""
 
 
+def _review_payload(store: DynamoStore, review: dict[str, Any], extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
+    articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
+    return {"review": review, "outcomes": outcomes, "articles": articles, **(extra or {})}
+
+
+def _try_auto_process_article(
+    *,
+    store: DynamoStore,
+    session: requests.Session,
+    article: dict[str, Any],
+) -> dict[str, Any]:
+    title = str(article.get("title") or "")
+    review_id = str(article.get("review_id") or "")
+    if title and review_id:
+        for duplicate in store.list_articles_for_review_title(review_id, title):
+            if str(duplicate.get("article_id")) == str(article.get("article_id")):
+                continue
+            if duplicate.get("pmid") or duplicate.get("manual_extraction_failed"):
+                duplicate_status = "duplicate_manual_extraction_failed" if duplicate.get("manual_extraction_failed") else "duplicate_title_copied"
+                copy_enrichment_fields(article, duplicate, match_status=duplicate_status)
+                store.put_article(article)
+                return article
+
+    try:
+        pmid, query, match_status = lookup_pmid_for_article(
+            session,
+            title=title,
+            relaxed_search=str(article.get("relaxed_search") or ""),
+        )
+        if pmid:
+            return enrich_article_with_pmid(
+                store=store,
+                session=session,
+                article=article,
+                pmid=pmid,
+                abstract_dir=_abstract_dir(),
+                full_text_dir=_full_text_dir(),
+                pubmed_query=query,
+                match_status=match_status,
+            )
+        article["pubmed_query"] = query
+        article["match_status"] = match_status
+        article["updated_at"] = datetime.now(UTC).isoformat()
+        store.put_article(article)
+    except (RuntimeError, requests.RequestException) as exc:
+        errors = list(article.get("enrichment_errors", []))
+        errors.append(f"pubmed_lookup: {exc}")
+        article["enrichment_errors"] = errors
+        article["match_status"] = "pubmed_lookup_failed"
+        article["updated_at"] = datetime.now(UTC).isoformat()
+        store.put_article(article)
+    return article
+
+
 app = FastAPI(title="Grade Inconsistency Manual Extraction API")
 app.add_middleware(
     CORSMiddleware,
@@ -142,9 +200,7 @@ def list_reviews() -> dict[str, Any]:
 def get_review(review_id: str) -> dict[str, Any]:
     store = get_store()
     review = _review_or_404(store, review_id)
-    outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
-    articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
-    return {"review": review, "outcomes": outcomes, "articles": articles}
+    return _review_payload(store, review)
 
 
 @app.get("/api/outcomes")
@@ -200,8 +256,8 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    session = build_session()
     article_count = 0
+    session = build_session()
     for item in extraction.outcomes:
         outcome = item["outcome"]
         agreeing_ids: list[str] = []
@@ -211,9 +267,8 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
             ("opposing", "opposing_citations", opposing_ids),
         ):
             for citation in item[key]:
-                article = enrich_and_store_article(
+                article = create_and_store_article(
                     store=store,
-                    session=session,
                     citation=citation["citation"],
                     study_label=citation["study_label"],
                     review=review,
@@ -225,10 +280,10 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
                     confidence_interval_begin=citation.get("confidence_interval_begin", ""),
                     confidence_interval_end=citation.get("confidence_interval_end", ""),
                     confidence_interval_percentage=citation.get("confidence_interval_percentage", ""),
-                    abstract_dir=_abstract_dir(),
-                    full_text_dir=_full_text_dir(),
-                    **_openai_config(),
+                    title=citation.get("title", ""),
+                    relaxed_search=citation.get("relaxed_search", ""),
                 )
+                article = _try_auto_process_article(store=store, session=session, article=article)
                 output.append(str(article["article_id"]))
                 article_count += 1
         outcome.update(
@@ -248,9 +303,51 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
     review["agree_oppose_overall_notes"] = extraction.overall_notes
     review["status"] = "agree_oppose_extracted"
     store.put_review(review)
-    outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
-    articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
-    return {"review": review, "outcomes": outcomes, "articles": articles, "article_count": article_count}
+    return _review_payload(store, review, {"article_count": article_count})
+
+
+@app.post("/api/articles/{article_id}/process-pmid")
+def process_article_pmid(article_id: str, payload: ProcessPmidRequest) -> dict[str, Any]:
+    pmid = payload.pmid.strip()
+    if not re.fullmatch(r"\d{1,9}", pmid):
+        raise HTTPException(status_code=400, detail="PMID must contain only digits.")
+
+    store = get_store()
+    article = store.get_article(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    session = build_session()
+    try:
+        updated = enrich_article_with_pmid(
+            store=store,
+            session=session,
+            article=article,
+            pmid=pmid,
+            abstract_dir=_abstract_dir(),
+            full_text_dir=_full_text_dir(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    review = store.get_review(str(updated.get("review_id") or updated.get("review_pmid") or ""))
+    if not review:
+        return {"article": _article_summary(updated)}
+
+    return _review_payload(store, review, {"article": _article_summary(updated)})
+
+
+@app.post("/api/articles/{article_id}/manual-extraction-failed")
+def manual_article_extraction_failed(article_id: str) -> dict[str, Any]:
+    store = get_store()
+    article = store.get_article(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    updated = mark_manual_extraction_failed(store=store, article=article)
+    review = store.get_review(str(updated.get("review_id") or updated.get("review_pmid") or ""))
+    if not review:
+        return {"article": _article_summary(updated)}
+    return _review_payload(store, review, {"article": _article_summary(updated)})
 
 
 @app.get("/api/reviews/{review_id}/pdf")

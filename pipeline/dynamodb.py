@@ -190,6 +190,13 @@ class DynamoStore:
     def list_articles_for_review(self, review_id: str) -> list[dict[str, Any]]:
         return [item for item in self.list_articles() if str(item.get("review_id")) == str(review_id)]
 
+    def list_articles_for_review_title(self, review_id: str, title: str) -> list[dict[str, Any]]:
+        return [
+            item
+            for item in self.list_articles_for_review(review_id)
+            if str(item.get("title") or "") == str(title or "")
+        ]
+
     def next_article_id(self) -> str:
         return _next_id(self.list_articles(), "article_id", ART_RE, 5, "ART")
 

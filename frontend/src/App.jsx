@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -173,8 +173,11 @@ function OutcomeTable({ outcomes }) {
   );
 }
 
-function ArticlesTable({ articles }) {
+function ArticlesTable({ articles, onProcessPmid, onManualFailed }) {
   const [sortByOutcome, setSortByOutcome] = useState(true);
+  const [pmidInputs, setPmidInputs] = useState({});
+  const [processingArticle, setProcessingArticle] = useState("");
+  const [rowError, setRowError] = useState("");
   const rows = useMemo(() => {
     const copy = [...articles];
     if (sortByOutcome) {
@@ -182,6 +185,36 @@ function ArticlesTable({ articles }) {
     }
     return copy;
   }, [articles, sortByOutcome]);
+
+  const processPmid = async (article) => {
+    const pmid = String(pmidInputs[article.article_id] || article.pmid || "").trim();
+    if (!pmid) {
+      setRowError(`Enter a PMID for ${article.article_id}.`);
+      return;
+    }
+    setProcessingArticle(article.article_id);
+    setRowError("");
+    try {
+      await onProcessPmid(article.article_id, pmid);
+      setPmidInputs((current) => ({ ...current, [article.article_id]: "" }));
+    } catch (err) {
+      setRowError(err.message);
+    } finally {
+      setProcessingArticle("");
+    }
+  };
+
+  const markManualFailed = async (article) => {
+    setProcessingArticle(article.article_id);
+    setRowError("");
+    try {
+      await onManualFailed(article.article_id);
+    } catch (err) {
+      setRowError(err.message);
+    } finally {
+      setProcessingArticle("");
+    }
+  };
 
   return (
     <>
@@ -204,6 +237,7 @@ function ArticlesTable({ articles }) {
               <th>Effect Estimate</th>
               <th>CI</th>
               <th>Line of No Effect</th>
+              <th>Title</th>
               <th>Citation</th>
               <th>PMID</th>
               <th>PMCID</th>
@@ -231,9 +265,40 @@ function ArticlesTable({ articles }) {
                   )}
                 </td>
                 <td>{article.line_of_no_effect || <span className="muted">Missing</span>}</td>
+                <td className="titleCell">{article.title || <span className="muted">Missing</span>}</td>
                 <td className="titleCell">{article.citation}</td>
                 <td>
-                  <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>
+                  <div className="pmidCell">
+                    {article.manual_extraction_failed ? (
+                      <span className="muted">Manual extract failed</span>
+                    ) : (
+                      <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>
+                    )}
+                    <div className="pmidControl">
+                      <input
+                        value={pmidInputs[article.article_id] || ""}
+                        onChange={(event) => setPmidInputs((current) => ({ ...current, [article.article_id]: event.target.value }))}
+                        placeholder="PMID"
+                        inputMode="numeric"
+                      />
+                      <button
+                        className="smallButton"
+                        disabled={processingArticle === article.article_id}
+                        onClick={() => processPmid(article)}
+                      >
+                        {processingArticle === article.article_id ? <RefreshCw size={14} className="spin" /> : null}
+                        Process PMID
+                      </button>
+                      <button
+                        className="smallButton warningButton"
+                        disabled={processingArticle === article.article_id || Boolean(article.pmid)}
+                        onClick={() => markManualFailed(article)}
+                      >
+                        <AlertTriangle size={14} />
+                        Manual extract failed
+                      </button>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <LinkOut href={article.pmc_url}>{article.pmcid || "PMC"}</LinkOut>
@@ -249,6 +314,7 @@ function ArticlesTable({ articles }) {
             ))}
           </tbody>
         </table>
+        {rowError && <div className="error compactError">{rowError}</div>}
         {rows.length === 0 && <div className="empty">No articles have been extracted for this review.</div>}
       </div>
     </>
@@ -291,6 +357,25 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
     } finally {
       setBusy("");
     }
+  };
+
+  const processArticlePmid = async (articleId, pmid) => {
+    const result = await fetchJson(`/api/articles/${encodeURIComponent(articleId)}/process-pmid`, {
+      method: "POST",
+      body: JSON.stringify({ pmid }),
+    });
+    setPayload(result.review ? result : { ...payload, articles: articles.map((article) => (article.article_id === articleId ? result.article : article)) });
+    if (result.review) onReviewUpdated(result.review);
+    setMessage(`Processed PMID ${pmid} for ${articleId}.`);
+  };
+
+  const markArticleManualFailed = async (articleId) => {
+    const result = await fetchJson(`/api/articles/${encodeURIComponent(articleId)}/manual-extraction-failed`, {
+      method: "POST",
+    });
+    setPayload(result.review ? result : { ...payload, articles: articles.map((article) => (article.article_id === articleId ? result.article : article)) });
+    if (result.review) onReviewUpdated(result.review);
+    setMessage(`Marked manual extraction failed for ${articleId}.`);
   };
 
   if (!payload && !error) return <div className="empty">Loading review...</div>;
@@ -338,7 +423,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
           <OverallNotes review={review} />
           <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
           <OutcomeTable outcomes={outcomes} />
-          <ArticlesTable articles={articles} />
+          <ArticlesTable articles={articles} onProcessPmid={processArticlePmid} onManualFailed={markArticleManualFailed} />
         </>
       )}
     </>
