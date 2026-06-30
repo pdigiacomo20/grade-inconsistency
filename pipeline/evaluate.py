@@ -33,6 +33,7 @@ class EvaluationConfig:
     dynamodb_endpoint_url: str | None = "http://localhost:8000"
     outcomes_table: str = "outcomes"
     articles_table: str = "articles"
+    max_questions: int | None = None
     max_outcomes: int | None = None
     max_contexts_per_outcome: int | None = None
     request_timeout_seconds: int = 120
@@ -164,8 +165,9 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
         scan_all(resource.Table(config.outcomes_table)),
         key=lambda item: (str(item.get("review_id") or ""), str(item.get("pmid") or ""), int(item.get("outcome_id", 0))),
     )
-    if config.max_outcomes:
-        outcomes = outcomes[: config.max_outcomes]
+    question_limit = config.max_questions or config.max_outcomes
+    if question_limit:
+        outcomes = outcomes[: question_limit]
     articles = scan_all(resource.Table(config.articles_table))
     articles_by_outcome: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for article in articles:

@@ -8,3 +8,8 @@ aws_region: us-west-2
 dynamodb_endpoint_url: http://localhost:8000
 outcomes_table: outcomes
 articles_table: articles
+
+# Optional smoke-test limits.
+# max_questions limits the number of benchmark questions, starting from the beginning.
+max_questions: 2
+max_contexts_per_outcome: 5

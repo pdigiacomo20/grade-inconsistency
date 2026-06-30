@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "created_at": "2026-06-30T17:49:51.316269+00:00",
+    "filename": "TASK2A-20260630T175223Z.json",
+    "finished_at": "2026-06-30T17:52:23.818908+00:00",
+    "model": "gpt-5.5",
+    "outcomes_table": "outcomes",
+    "provider": "openai",
+    "run_id": "TASK2A",
+    "task": "TASK2A"
+  },
+  "metrics": {
+    "contextual_errors": 9,
+    "contextual_total": 0,
+    "memorization_rate": null,
+    "memorization_rate_by_parametric_answer_and_stance": {},
+    "memorization_rate_by_stance": {},
+    "memory_count": 0,
+    "outcome_count": 2,
+    "parametric_distribution": {
+      "m": {
+        "count": 0,
+        "percentage": null
+      },
+      "n": {
+        "count": 0,
+        "percentage": null
+      },
+      "y": {
+        "count": 0,
+        "percentage": null
+      }
+    },
+    "parametric_total": 0,
+    "source_count": 0
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "VERY LOW",
+      "consensus_answer": "Maybe, but the effect is unclear. The cross-sectional study reported no cases of AIS in the HPV vaccine group; one pre-post vaccine introduction study reported an increase in AIS incidence, while the other reported a reduction.",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00001_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00001",
+          "citation": "Lopez N, Gil-de-Miguel A, Pascual-Garcia R, Gil-Prieto R. Reduction in the burden of hospital admissions due to cervical disease from 2003-2014 in Spain. Human Vaccines & Immunotherapeutics 2018;14(4):917-23.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "29206085",
+          "raw_response": "",
+          "stance": "agreeing",
+          "title": "Reduction in the burden of hospital admissions due to cervical disease from 2003-2014 in Spain."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00002_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00002",
+          "citation": "Dorton BJ, Vitonis AF, Feldman S. Comparing cervical cytology and histology among human papillomavirus-vaccinated and -unvaccinated women in an academic colposcopy clinic. Obstetrics and Gynecology 2015;126(4):785-91.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "26348184",
+          "raw_response": "",
+          "stance": "opposing",
+          "title": "Comparing Cervical Cytology and Histology Among Human Papillomavirus-Vaccinated and -Unvaccinated Women in an Academic Colposcopy Clinic."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00003_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00003",
+          "citation": "Baldur-Felskov B, Munk C, Nielsen TS, Dehlendorff C, Kirschner B, Junge J, et al. Trends in the incidence of cervical cancer and severe precancerous lesions in Denmark, 1997-2012. Cancer Causes & Control 2015;26(8):1105-16.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "26033777",
+          "raw_response": "",
+          "stance": "opposing",
+          "title": "Trends in the incidence of cervical cancer and severe precancerous lesions in Denmark, 1997-2012."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00004_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00004",
+          "citation": "Ring LL, Munk C, Galanakis M, Tota JE, Thomsen LT, Kjaer SK. Incidence of cervical precancerous lesions and cervical cancer in Denmark from 2000 to 2019: population impact of multi-cohort vaccination against human papillomavirus infection. International Journal of Cancer 2023;152(7):1320-7.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "36250312",
+          "raw_response": "",
+          "stance": "opposing",
+          "title": "Incidence of cervical precancerous lesions and cervical cancer in Denmark from 2000 to 2019: Population impact of multi-cohort vaccination against human papillomavirus infection."
+        }
+      ],
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "",
+        "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+        "raw_response": ""
+      },
+      "pmid": "41276264",
+      "question": "Does full or partial series HPV vaccination in the general population reduce adenocarcinoma in situ (AIS) incidence relative to no vaccination?",
+      "review_id": "CSR_0010"
+    },
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "VERY LOW",
+      "consensus_answer": "Maybe, but the effect is unclear. The RCT extension study reported no cases of vulval cancer in vaccinated participants; two pre-post vaccine introduction studies reported decreased vulval cancer incidence, one reported increased incidence, and one reported inconsistent results across ethnic groups.",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00006_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00006",
+          "citation": "Berenson AB, Chang M, Hawk ET, Ramondetta LM, Hoang T. Vulvar cancer incidence in the United States and its relationship to human papillomavirus vaccinations, 2001-2018. Cancer Prevention Research (Philadelphia, Pa.) 2022;15(11):777-84.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "35969832",
+          "raw_response": "",
+          "stance": "agreeing",
+          "title": "Vulvar Cancer Incidence in the United States and its Relationship to Human Papillomavirus Vaccinations, 2001-2018."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00007_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00007",
+          "citation": "Guo F, Adekanmbi V, Hsu CD, Berenson AB. Incidence of human papillomavirus-related cancers among males and females aged 15-34 years in the United States. JNCI Cancer Spectrum 2023;7(2):pkad016.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "36821427",
+          "raw_response": "",
+          "stance": "agreeing",
+          "title": "Incidence of human papillomavirus-related cancers among males and females aged 15-34 years in the United States."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00009_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00009",
+          "citation": "Berenson AB, Chang M, Hawk ET, Ramondetta LM, Hoang T. Vulvar cancer incidence in the United States and its relationship to human papillomavirus vaccinations, 2001-2018. Cancer Prevention Research (Philadelphia, Pa.) 2022;15(11):777-84.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "35969832",
+          "raw_response": "",
+          "stance": "agreeing",
+          "title": "Vulvar Cancer Incidence in the United States and its Relationship to Human Papillomavirus Vaccinations, 2001-2018."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00010_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00010",
+          "citation": "Guo F, Adekanmbi V, Hsu CD, Berenson AB. Incidence of human papillomavirus-related cancers among males and females aged 15-34 years in the United States. JNCI Cancer Spectrum 2023;7(2):pkad016.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "36821427",
+          "raw_response": "",
+          "stance": "agreeing",
+          "title": "Incidence of human papillomavirus-related cancers among males and females aged 15-34 years in the United States."
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00011_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00011",
+          "citation": "Lehtinen M, Lagheden C, Luostarinen T, Eriksson T, Apter D, Bly A, et al. Human papillomavirus vaccine efficacy against invasive, HPV-positive cancers: population-based follow-up of a cluster-randomised trial. BMJ Open 2021;11(12):e050669.",
+          "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+          "pmid": "35149535",
+          "raw_response": "",
+          "stance": "opposing",
+          "title": "Human papillomavirus vaccine efficacy against invasive, HPV-positive cancers: population-based follow-up of a cluster-randomised trial."
+        }
+      ],
+      "outcome_id": 2,
+      "parametric": {
+        "answer": "",
+        "error": "HTTP 429: {\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+        "raw_response": ""
+      },
+      "pmid": "41276264",
+      "question": "Does full or partial series HPV vaccination in the general population reduce invasive vulval cancer incidence relative to no vaccination?",
+      "review_id": "CSR_0010"
+    }
+  ],
+  "task": "TASK2A"
+}

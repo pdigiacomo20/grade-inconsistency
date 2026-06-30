@@ -122,7 +122,8 @@ Key TASK2A config fields:
 - `model`: OpenAI model to evaluate.
 - `provider`: currently `openai`.
 - `evaluations_dir`: directory for run JSON files, default `data/evaluations`.
-- `max_outcomes` and `max_contexts_per_outcome`: optional limits for smoke tests.
+- `max_questions`: optional maximum number of benchmark questions to evaluate, starting from the beginning.
+- `max_contexts_per_outcome`: optional maximum number of article contexts per question for smoke tests.
 
 Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows TASK2A memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
 
