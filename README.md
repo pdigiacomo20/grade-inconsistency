@@ -12,6 +12,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 6. Parses `Extract Agree Oppose` second, stores agreeing/opposing article IDs on each outcome, and inserts article rows as `ART_00001`, `ART_00002`, and so on.
 7. Searches PubMed for each associated article title, falls back to the extracted relaxed search string, and fetches PubMed metadata, abstracts, and available PMC full text when a PMID is found.
 8. Lets the user manually enter a PMID for unresolved associated articles or mark manual extraction as failed.
+9. Runs TASK2A LLM evaluations and displays memorization-ratio results from saved JSON runs.
 
 ## DynamoDB Tables
 
@@ -97,12 +98,33 @@ Main routes:
 - `POST /api/reviews/{CSR_ID}/extract-sof`
 - `POST /api/reviews/{CSR_ID}/extract-agree-oppose`
 - `GET /api/outcomes`
+- `GET /api/evaluations`
+- `GET /api/evaluations/{FILENAME}`
+- `GET /api/reviews/{CSR_ID}/evaluations/{FILENAME}`
 - `POST /api/articles/{ART_ID}/process-pmid`
 - `POST /api/articles/{ART_ID}/manual-extraction-failed`
 - `GET /api/articles/{ART_ID}/abstract`
 - `GET /api/articles/{ART_ID}/full-text`
 
 The PDF endpoint returns `Content-Disposition: attachment; filename="CSR_XXXX.pdf"`. Browser security does not allow a web app to force `~/Downloads/CSR`; configure the browser download location to that folder if needed.
+
+## Run TASK2A Evaluation
+
+Create a TASK2A config from `config.task2a.example.yml`, then run:
+
+```bash
+python -m pipeline.evaluate --config config.task2a.yml
+```
+
+Key TASK2A config fields:
+
+- `run_id`: prefix used for the saved JSON filename.
+- `model`: OpenAI model to evaluate.
+- `provider`: currently `openai`.
+- `evaluations_dir`: directory for run JSON files, default `data/evaluations`.
+- `max_outcomes` and `max_contexts_per_outcome`: optional limits for smoke tests.
+
+Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows TASK2A memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
 
 ## Run Frontend
 

@@ -16,6 +16,7 @@ import requests
 from grade_inconsistency import fetch_article_html
 from pipeline.dynamodb import DynamoStore
 from pipeline.env import load_repo_env
+from pipeline.evaluations import compute_metrics, list_runs, read_run
 from pipeline.manual_extraction import (
     PDF_LINK_RE,
     PDF_META_RE,
@@ -132,6 +133,17 @@ def _review_payload(store: DynamoStore, review: dict[str, Any], extra: dict[str,
     return {"review": review, "outcomes": outcomes, "articles": articles, **(extra or {})}
 
 
+def _evaluation_for_review(run: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
+    pmid = str(review.get("pmid") or "")
+    outcomes = [outcome for outcome in run.get("outcomes", []) if str(outcome.get("pmid") or "") == pmid]
+    return {
+        "filename": run.get("filename") or run.get("metadata", {}).get("filename") or "",
+        "metadata": run.get("metadata", {}),
+        "metrics": compute_metrics({"outcomes": outcomes}),
+        "outcomes": outcomes,
+    }
+
+
 def _try_auto_process_article(
     *,
     store: DynamoStore,
@@ -221,6 +233,32 @@ def list_outcomes() -> dict[str, Any]:
             )
         )
     return {"outcomes": outcomes}
+
+
+@app.get("/api/evaluations")
+def list_evaluations() -> dict[str, Any]:
+    return {"evaluations": list_runs()}
+
+
+@app.get("/api/evaluations/{filename}")
+def get_evaluation(filename: str) -> dict[str, Any]:
+    try:
+        run = read_run(filename)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    run["metrics"] = run.get("metrics") or compute_metrics(run)
+    return run
+
+
+@app.get("/api/reviews/{review_id}/evaluations/{filename}")
+def get_review_evaluation(review_id: str, filename: str) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    try:
+        run = read_run(filename)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _evaluation_for_review(run, review)
 
 
 @app.post("/api/reviews/{review_id}/extract-sof")

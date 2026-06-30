@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -26,6 +26,10 @@ function normalize(value) {
 
 function Pill({ children, tone = "neutral" }) {
   return <span className={`pill ${tone}`}>{children}</span>;
+}
+
+function formatRate(value) {
+  return value === null || value === undefined ? "n/a" : `${(Number(value) * 100).toFixed(1)}%`;
 }
 
 function LinkOut({ href, children }) {
@@ -129,7 +133,7 @@ function OverallNotes({ review }) {
   );
 }
 
-function OutcomeTable({ outcomes }) {
+function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
   return (
     <div className="tableWrap compact">
       <table>
@@ -141,6 +145,7 @@ function OutcomeTable({ outcomes }) {
             <th>Medical Question</th>
             <th>Consensus Answer</th>
             <th>MC Answer</th>
+            <th>Eval Parametric</th>
             <th>Certainty</th>
             <th>Forest Plot</th>
             <th>Effect Measure</th>
@@ -153,12 +158,17 @@ function OutcomeTable({ outcomes }) {
         <tbody>
           {outcomes.map((outcome) => (
             <tr key={outcome.outcome_id}>
+              {(() => {
+                const evalOutcome = evaluationByOutcome[`${outcome.pmid}::${outcome.outcome_id}`] || {};
+                return (
+                  <>
               <td>{outcome.outcome_id}</td>
               <td>{outcome.sof_table}</td>
               <td>{outcome.row}</td>
               <td>{outcome.question}</td>
               <td>{outcome.consensus_answer}</td>
               <td>{outcome.mc_answer || <span className="muted">Missing</span>}</td>
+              <td>{evalOutcome.parametric?.answer || <span className="muted">No run</span>}</td>
               <td>{outcome.certainty}</td>
               <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
               <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
@@ -166,6 +176,9 @@ function OutcomeTable({ outcomes }) {
               <td>{(outcome.agreeing_articles || []).join(", ") || <span className="muted">None</span>}</td>
               <td>{(outcome.opposing_articles || []).join(", ") || <span className="muted">None</span>}</td>
               <td>{outcome.downgrade_reasoning}</td>
+                  </>
+                );
+              })()}
             </tr>
           ))}
         </tbody>
@@ -175,7 +188,7 @@ function OutcomeTable({ outcomes }) {
   );
 }
 
-function ArticlesTable({ articles, onProcessPmid, onManualFailed }) {
+function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByArticle = {} }) {
   const [sortByOutcome, setSortByOutcome] = useState(true);
   const [pmidInputs, setPmidInputs] = useState({});
   const [processingArticle, setProcessingArticle] = useState("");
@@ -245,6 +258,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed }) {
               <th>PMCID</th>
               <th>Files</th>
               <th>Match</th>
+              <th>Eval Context Answer</th>
             </tr>
           </thead>
           <tbody>
@@ -312,6 +326,16 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed }) {
                   </div>
                 </td>
                 <td>{article.match_status || <span className="muted">Not matched</span>}</td>
+                <td>
+                  {evaluationByArticle[article.article_id]?.answer ? (
+                    <>
+                      <Pill>{evaluationByArticle[article.article_id].answer}</Pill>{" "}
+                      <span className="muted">{evaluationByArticle[article.article_id].memorization_label || ""}</span>
+                    </>
+                  ) : (
+                    <span className="muted">No run</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -323,6 +347,112 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed }) {
   );
 }
 
+function MetricsPanel({ metrics }) {
+  if (!metrics) return <div className="empty">No metrics available.</div>;
+  const stanceRates = metrics.memorization_rate_by_stance || {};
+  const distribution = metrics.parametric_distribution || {};
+  const cross = metrics.memorization_rate_by_parametric_answer_and_stance || {};
+  return (
+    <>
+      <section className="metricGrid">
+        <div className="metricPanel">
+          <span>Overall memorization</span>
+          <strong>{formatRate(metrics.memorization_rate)}</strong>
+        </div>
+        <div className="metricPanel">
+          <span>Agreeing articles</span>
+          <strong>{formatRate(stanceRates.agreeing?.memorization_rate)}</strong>
+        </div>
+        <div className="metricPanel">
+          <span>Opposing articles</span>
+          <strong>{formatRate(stanceRates.opposing?.memorization_rate)}</strong>
+        </div>
+        <div className="metricPanel">
+          <span>Context answers</span>
+          <strong>{metrics.contextual_total || 0}</strong>
+        </div>
+      </section>
+      <div className="tableWrap metricsTable">
+        <table>
+          <thead>
+            <tr>
+              <th>Parametric Answer</th>
+              <th>Parametric %</th>
+              <th>Agreeing Memorization</th>
+              <th>Opposing Memorization</th>
+            </tr>
+          </thead>
+          <tbody>
+            {["y", "n", "m"].map((answer) => (
+              <tr key={answer}>
+                <td>{answer}</td>
+                <td>{formatRate(distribution[answer]?.percentage)}</td>
+                <td>{formatRate(cross[answer]?.agreeing?.memorization_rate)}</td>
+                <td>{formatRate(cross[answer]?.opposing?.memorization_rate)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function EvaluationsView() {
+  const [runs, setRuns] = useState([]);
+  const [selected, setSelected] = useState("");
+  const [run, setRun] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchJson("/api/evaluations")
+      .then((data) => {
+        const items = data.evaluations || [];
+        setRuns(items);
+        if (items[0]) setSelected(items[0].filename);
+      })
+      .catch((err) => setError(err.message));
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setRun(null);
+      return;
+    }
+    fetchJson(`/api/evaluations/${encodeURIComponent(selected)}`)
+      .then(setRun)
+      .catch((err) => setError(err.message));
+  }, [selected]);
+
+  return (
+    <>
+      {error && <div className="error">{error}</div>}
+      <div className="sectionHeader">
+        <h2>Evaluations</h2>
+        <select value={selected} onChange={(event) => setSelected(event.target.value)}>
+          <option value="">Select run</option>
+          {runs.map((item) => (
+            <option value={item.filename} key={item.filename}>{item.filename}</option>
+          ))}
+        </select>
+      </div>
+      {run ? (
+        <>
+          <section className="detailHeader">
+            <div>
+              <h2>{run.metadata?.run_id || run.task}: {run.metadata?.model}</h2>
+              <p>{run.metadata?.provider} · {run.metadata?.created_at} · {selected}</p>
+            </div>
+          </section>
+          <MetricsPanel metrics={run.metrics} />
+        </>
+      ) : (
+        <div className="empty">No evaluation runs found.</div>
+      )}
+    </>
+  );
+}
+
 function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [payload, setPayload] = useState(null);
   const [sofText, setSofText] = useState("");
@@ -330,6 +460,9 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [evaluationRuns, setEvaluationRuns] = useState([]);
+  const [selectedEvaluation, setSelectedEvaluation] = useState("");
+  const [reviewEvaluation, setReviewEvaluation] = useState(null);
 
   const load = () => {
     setError("");
@@ -339,6 +472,22 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   };
 
   useEffect(load, [reviewId]);
+
+  useEffect(() => {
+    fetchJson("/api/evaluations")
+      .then((data) => setEvaluationRuns(data.evaluations || []))
+      .catch(() => setEvaluationRuns([]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEvaluation) {
+      setReviewEvaluation(null);
+      return;
+    }
+    fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/evaluations/${encodeURIComponent(selectedEvaluation)}`)
+      .then(setReviewEvaluation)
+      .catch((err) => setError(err.message));
+  }, [reviewId, selectedEvaluation]);
 
   const submit = async (kind) => {
     setBusy(kind);
@@ -384,6 +533,14 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const review = payload?.review;
   const outcomes = payload?.outcomes || [];
   const articles = payload?.articles || [];
+  const evaluationByOutcome = {};
+  const evaluationByArticle = {};
+  for (const outcome of reviewEvaluation?.outcomes || []) {
+    evaluationByOutcome[`${outcome.pmid}::${outcome.outcome_id}`] = outcome;
+    for (const context of outcome.contexts || []) {
+      evaluationByArticle[context.article_id] = context;
+    }
+  }
 
   return (
     <>
@@ -423,9 +580,22 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
             </div>
           </section>
           <OverallNotes review={review} />
+          <section className="evalSelector">
+            <div>
+              <h2>Evaluation Run</h2>
+              <p>{reviewEvaluation ? `${reviewEvaluation.metadata?.model || ""} · ${selectedEvaluation}` : "Select a run to show TASK2A answers for this CSR."}</p>
+            </div>
+            <select value={selectedEvaluation} onChange={(event) => setSelectedEvaluation(event.target.value)}>
+              <option value="">No evaluation selected</option>
+              {evaluationRuns.map((item) => (
+                <option value={item.filename} key={item.filename}>{item.filename}</option>
+              ))}
+            </select>
+          </section>
+          {reviewEvaluation && <MetricsPanel metrics={reviewEvaluation.metrics} />}
           <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
-          <OutcomeTable outcomes={outcomes} />
-          <ArticlesTable articles={articles} onProcessPmid={processArticlePmid} onManualFailed={markArticleManualFailed} />
+          <OutcomeTable outcomes={outcomes} evaluationByOutcome={evaluationByOutcome} />
+          <ArticlesTable articles={articles} onProcessPmid={processArticlePmid} onManualFailed={markArticleManualFailed} evaluationByArticle={evaluationByArticle} />
         </>
       )}
     </>
@@ -435,6 +605,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
 export default function App() {
   const [reviews, setReviews] = useState([]);
   const [selectedReview, setSelectedReview] = useState("");
+  const [activeTab, setActiveTab] = useState("reviews");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -457,9 +628,16 @@ export default function App() {
           <p>Manual extraction workflow for 2025 open-access Cochrane reviews</p>
         </div>
       </header>
+      <nav className="tabs">
+        <button className={activeTab === "reviews" ? "active" : ""} onClick={() => setActiveTab("reviews")}>Reviews</button>
+        <button className={activeTab === "evaluations" ? "active" : ""} onClick={() => { setSelectedReview(""); setActiveTab("evaluations"); }}>
+          <BarChart3 size={16} /> Evaluations
+        </button>
+      </nav>
       {error && <div className="error">{error}</div>}
-      {!error && selectedReview && <ReviewDetail reviewId={selectedReview} onBack={() => setSelectedReview("")} onReviewUpdated={updateReview} />}
-      {!error && !selectedReview && <ReviewsView reviews={reviews} onOpen={setSelectedReview} />}
+      {!error && activeTab === "reviews" && selectedReview && <ReviewDetail reviewId={selectedReview} onBack={() => setSelectedReview("")} onReviewUpdated={updateReview} />}
+      {!error && activeTab === "reviews" && !selectedReview && <ReviewsView reviews={reviews} onOpen={setSelectedReview} />}
+      {!error && activeTab === "evaluations" && <EvaluationsView />}
     </main>
   );
 }

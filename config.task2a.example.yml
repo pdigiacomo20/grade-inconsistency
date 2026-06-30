@@ -1,0 +1,10 @@
+task: TASK2A
+run_id: TASK2A
+provider: openai
+model: gpt-5.5
+evaluations_dir: data/evaluations
+
+aws_region: us-west-2
+dynamodb_endpoint_url: http://localhost:8000
+outcomes_table: outcomes
+articles_table: articles
