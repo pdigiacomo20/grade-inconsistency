@@ -26,9 +26,9 @@ from pipeline.dynamodb import DynamoStore
 PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
-    r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Downgrade reasoning|"
+    r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
     r"Forest plot title|Effect measure|Line of no effect|Agreeing studies|Opposing studies|Overall notes)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
-    r"Consensus answer|Certainty of evidence|Downgrade reasoning|Forest plot title|Effect measure|Line of no effect|Agreeing studies|"
+    r"Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|Forest plot title|Effect measure|Line of no effect|Agreeing studies|"
     r"Opposing studies|Overall notes)\s*:|\Z)"
 )
 PUBLICATION_RE = re.compile(
@@ -55,9 +55,10 @@ PDF_META_RE = re.compile(r'(?is)<meta\s+name=["\']citation_pdf_url["\']\s+conten
 PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']')
 OVERALL_NOTES_RE = re.compile(
     r"(?ims)^[ \t]*Overall notes[ \t]*:[ \t]*"
-    r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Downgrade reasoning|"
+    r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
     r"Forest plot title|Agreeing studies|Opposing studies)[ \t]*:|^[ \t]*No inconsistency[ \t.]*$|\Z)"
 )
+MC_ANSWER_RE = re.compile(r"^[ynm]$")
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ class ParsedSofOutcome:
     question: str
     consensus_answer: str
     certainty: str
+    mc_answer: str
     downgrade_reasoning: str
 
 
@@ -104,6 +106,16 @@ def _sof_key(sof_table: str, row: str) -> str:
     return f"{_clean(sof_table).lower()}::{_clean(row).lower()}"
 
 
+def _normalize_mc_answer(value: str, *, block_index: int) -> str:
+    answer = _clean(value).lower()
+    if not MC_ANSWER_RE.fullmatch(answer):
+        raise ValueError(
+            f"Extract SoF block {block_index} has invalid Multiple choice answer: "
+            "expected a single character, y, n, or m."
+        )
+    return answer
+
+
 def _extract_overall_notes(text: str) -> str:
     return _clean("\n\n".join(match.group(1) for match in OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
@@ -132,7 +144,7 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
         fields = _fields(block)
         missing = [
             label
-            for label in ("sof table", "row", "medical question", "consensus answer", "certainty of evidence")
+            for label in ("sof table", "row", "medical question", "consensus answer", "certainty of evidence", "multiple choice answer")
             if not fields.get(label)
         ]
         if missing:
@@ -151,6 +163,7 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
                 "question": _clean(fields["medical question"][0]),
                 "consensus_answer": _clean(fields["consensus answer"][0]),
                 "certainty": _clean(fields["certainty of evidence"][0]),
+                "mc_answer": _normalize_mc_answer(fields["multiple choice answer"][0], block_index=index + 1),
                 "downgrade_reasoning": _clean((fields.get("downgrade reasoning") or [""])[0]),
                 "forest_plot_title": "",
                 "agreeing_articles": [],

@@ -24,7 +24,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `agreeing_articles`, `opposing_articles`
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `agreeing_articles`, `opposing_articles`
 
 `articles`
 

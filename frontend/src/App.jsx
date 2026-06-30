@@ -140,6 +140,7 @@ function OutcomeTable({ outcomes }) {
             <th>Row</th>
             <th>Medical Question</th>
             <th>Consensus Answer</th>
+            <th>MC Answer</th>
             <th>Certainty</th>
             <th>Forest Plot</th>
             <th>Effect Measure</th>
@@ -157,6 +158,7 @@ function OutcomeTable({ outcomes }) {
               <td>{outcome.row}</td>
               <td>{outcome.question}</td>
               <td>{outcome.consensus_answer}</td>
+              <td>{outcome.mc_answer || <span className="muted">Missing</span>}</td>
               <td>{outcome.certainty}</td>
               <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
               <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>

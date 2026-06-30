@@ -1,4 +1,4 @@
-limit: 40
+limit: 400
 pause_seconds: 0.34
 create_tables: true
 force_reprocess: true
