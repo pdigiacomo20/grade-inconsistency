@@ -105,7 +105,6 @@ def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
             {"role": "system", "content": "Answer medical multiple choice questions with exactly one lowercase character: y, n, or m."},
             {"role": "user", "content": prompt},
         ],
-        "max_output_tokens": 16,
     }
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     last_error = ""

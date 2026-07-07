@@ -11,5 +11,5 @@ articles_table: articles
 
 # Optional smoke-test limits.
 # max_questions limits the number of benchmark questions, starting from the beginning.
-max_questions: 2
-max_contexts_per_outcome: 5
+max_questions: 5
+max_contexts_per_outcome: 10
