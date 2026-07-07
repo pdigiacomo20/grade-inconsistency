@@ -44,7 +44,7 @@ function LinkOut({ href, children }) {
 function ReviewsView({ reviews, onOpen }) {
   const [query, setQuery] = useState("");
   const [hideProtocols, setHideProtocols] = useState(true);
-  const [hideNoInconsistency, setHideNoInconsistency] = useState(false);
+  const [hideNoInconsistency, setHideNoInconsistency] = useState(true);
   const filtered = useMemo(() => {
     const needle = normalize(query);
     return reviews.filter((review) => {
