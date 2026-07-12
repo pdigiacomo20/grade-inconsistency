@@ -32,6 +32,12 @@ function formatRate(value) {
   return value === null || value === undefined ? "n/a" : `${(Number(value) * 100).toFixed(1)}%`;
 }
 
+function formatNumber(value, digits = 2) {
+  if (value === null || value === undefined || value === "") return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(digits) : String(value);
+}
+
 function LinkOut({ href, children }) {
   if (!href) return <span className="muted">Unavailable</span>;
   return (
@@ -252,6 +258,8 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
               <th>Effect Estimate</th>
               <th>CI</th>
               <th>Line of No Effect</th>
+              <th>Z Category</th>
+              <th>Wald Z</th>
               <th>Title</th>
               <th>Citation</th>
               <th>PMID</th>
@@ -281,6 +289,14 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
                   )}
                 </td>
                 <td>{article.line_of_no_effect || <span className="muted">Missing</span>}</td>
+                <td>
+                  {article.wald_z_category ? (
+                    <Pill>{article.wald_z_category}</Pill>
+                  ) : (
+                    <span className="muted">{article.wald_z_error ? "Unclassified" : "Missing"}</span>
+                  )}
+                </td>
+                <td>{formatNumber(article.wald_z) || <span className="muted">{article.wald_z_error || "Missing"}</span>}</td>
                 <td className="titleCell">{article.title || <span className="muted">Missing</span>}</td>
                 <td className="titleCell">{article.citation}</td>
                 <td>
