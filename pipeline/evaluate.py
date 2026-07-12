@@ -20,6 +20,7 @@ from pipeline.evaluations import clean_answer, compute_metrics, evaluations_dir
 
 
 ANSWER_RE = re.compile(r"\b([ynm])\b", re.IGNORECASE)
+GROUND_TRUTH_ANSWER = "m"
 
 
 @dataclass(frozen=True)
@@ -196,6 +197,11 @@ def selected_review_ids(items: list[dict[str, Any]], *, starting_review: str | N
     return set(review_ids)
 
 
+def is_very_low_certainty(value: Any) -> bool:
+    normalized = re.sub(r"[^a-z]+", " ", str(value or "").lower())
+    return "very low" in normalized
+
+
 def article_detail(article: dict[str, Any], detail_type: str) -> tuple[str, str]:
     normalized = detail_type.strip().lower().replace("-", "_")
     if normalized == "full_text":
@@ -236,6 +242,11 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     review_ids = selected_review_ids(outcomes, starting_review=config.starting_review, review_count=config.review_count)
     if review_ids is not None:
         outcomes = [outcome for outcome in outcomes if str(outcome.get("review_id") or "") in review_ids]
+    before_certainty_filter = len(outcomes)
+    outcomes = [outcome for outcome in outcomes if is_very_low_certainty(outcome.get("certainty"))]
+    skipped_for_certainty = before_certainty_filter - len(outcomes)
+    if skipped_for_certainty:
+        print(f"Skipping {skipped_for_certainty} outcomes without very low certainty.")
     question_limit = config.max_questions or config.max_outcomes
     if question_limit:
         outcomes = outcomes[: question_limit]
@@ -249,7 +260,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     for index, outcome in enumerate(outcomes, start=1):
         question = str(outcome.get("question") or "")
-        print(f"[{index}/{len(outcomes)}] PMID {outcome.get('pmid')} outcome {outcome.get('outcome_id')} parametric")
+        print(f"[{index}/{len(outcomes)}] PMID {outcome.get('pmid')} outcome {outcome.get('outcome_id')} accuracy target={GROUND_TRUTH_ANSWER}")
         parametric = model_answer(prompt_parametric(question), config=config)
         contexts: list[dict[str, Any]] = []
         source_articles = [
@@ -284,6 +295,8 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
                         "pmid": article.get("pmid"),
                         "abstract_path": article.get("abstract_path"),
                         "full_text_path": article.get("full_text_path"),
+                        "wald_z": article.get("wald_z"),
+                        "wald_z_category": article.get("wald_z_category"),
                         "detail_exposure_type": detail_type,
                         "irrelevant_doc_count": len(distractors),
                         **answer,
@@ -295,7 +308,9 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
                 "review_id": outcome.get("review_id"),
                 "outcome_id": outcome.get("outcome_id"),
                 "question": question,
-                "benchmark_mc_answer": outcome.get("mc_answer"),
+                "ground_truth_answer": GROUND_TRUTH_ANSWER,
+                "benchmark_mc_answer": GROUND_TRUTH_ANSWER,
+                "source_mc_answer": outcome.get("mc_answer"),
                 "consensus_answer": outcome.get("consensus_answer"),
                 "certainty": outcome.get("certainty"),
                 "parametric": parametric,
@@ -321,6 +336,9 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
             "articles_table": config.articles_table,
             "starting_review": config.starting_review,
             "review_count": config.review_count,
+            "target_certainty": "very low",
+            "ground_truth_answer": GROUND_TRUTH_ANSWER,
+            "skipped_outcomes_not_very_low": skipped_for_certainty,
             "detail_exposure_types": list(config.detail_exposure_types),
             "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
         },

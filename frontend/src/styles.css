@@ -382,6 +382,129 @@ a:hover,
   min-width: 760px;
 }
 
+.accuracyExplorer {
+  align-items: stretch;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  margin: 14px 0;
+}
+
+.filterPanel,
+.accuracyResult,
+.chartPanel {
+  background: #ffffff;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.filterGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  margin-top: 14px;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+legend,
+.selectControl {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.categoryChecks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+
+.selectControl {
+  display: grid;
+  gap: 8px;
+}
+
+.selectControl select {
+  min-width: 0;
+  width: 100%;
+}
+
+.accuracyResult {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.accuracyResult span {
+  color: #667085;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.accuracyResult strong {
+  color: #17324d;
+  font-size: 34px;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+.chartGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 14px 0;
+}
+
+.barChart {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.barRow {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 70px minmax(96px, 1fr) 52px 44px;
+}
+
+.barLabel,
+.barValue,
+.barCount {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.barValue,
+.barCount {
+  text-align: right;
+}
+
+.barCount {
+  color: #667085;
+}
+
+.barTrack {
+  background: #e8edf2;
+  border-radius: 4px;
+  height: 18px;
+  overflow: hidden;
+}
+
+.barFill {
+  background: #0f6b8e;
+  height: 100%;
+}
+
 .extractPanel,
 .notesPanel {
   background: #ffffff;
@@ -481,7 +604,10 @@ textarea {
 
   .extractGrid,
   .notesGrid,
-  .metricGrid {
+  .metricGrid,
+  .accuracyExplorer,
+  .filterGrid,
+  .chartGrid {
     grid-template-columns: 1fr;
   }
 

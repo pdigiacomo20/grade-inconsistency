@@ -363,53 +363,130 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
   );
 }
 
-function MetricsPanel({ metrics }) {
-  if (!metrics) return <div className="empty">No metrics available.</div>;
-  const stanceRates = metrics.memorization_rate_by_stance || {};
-  const distribution = metrics.parametric_distribution || {};
-  const cross = metrics.memorization_rate_by_parametric_answer_and_stance || {};
+const WALD_Z_CATEGORIES = ["COM-Z2+", "COM-Z1", "COM-Z0", "INT-Z0", "INT-Z1", "INT-Z2+"];
+const PARAMETRIC_ANSWERS = ["y", "n", "m"];
+
+function answerValue(value) {
+  const answer = String(value || "").trim().toLowerCase();
+  return PARAMETRIC_ANSWERS.includes(answer) ? answer : "";
+}
+
+function evaluationRows(run) {
+  const rows = [];
+  for (const outcome of run?.outcomes || []) {
+    const parametricAnswer = answerValue(outcome.parametric?.answer);
+    for (const context of outcome.contexts || []) {
+      rows.push({
+        articleId: context.article_id,
+        answer: answerValue(context.answer),
+        parametricAnswer,
+        waldZCategory: context.wald_z_category || "",
+        waldZ: context.wald_z,
+      });
+    }
+  }
+  return rows;
+}
+
+function accuracySummary(rows, selectedCategories, selectedParametric) {
+  const selected = rows.filter((row) => selectedCategories.includes(row.waldZCategory) && row.parametricAnswer === selectedParametric && row.answer);
+  const correct = selected.filter((row) => row.answer === "m").length;
+  return {
+    correct,
+    total: selected.length,
+    accuracy: selected.length ? correct / selected.length : null,
+  };
+}
+
+function EvaluationAccuracyExplorer({ run }) {
+  const rows = useMemo(() => evaluationRows(run), [run]);
+  const [selectedCategories, setSelectedCategories] = useState(WALD_Z_CATEGORIES);
+  const [selectedParametric, setSelectedParametric] = useState("m");
+  const summary = useMemo(
+    () => accuracySummary(rows, selectedCategories, selectedParametric),
+    [rows, selectedCategories, selectedParametric],
+  );
+  const chartData = useMemo(() => {
+    return PARAMETRIC_ANSWERS.map((parametricAnswer) => ({
+      parametricAnswer,
+      bars: WALD_Z_CATEGORIES.map((category) => ({
+        category,
+        ...accuracySummary(rows, [category], parametricAnswer),
+      })),
+    }));
+  }, [rows]);
+
+  const toggleCategory = (category) => {
+    setSelectedCategories((current) => (
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category]
+    ));
+  };
+
+  if (!run) return <div className="empty">No evaluation data available.</div>;
+
   return (
     <>
-      <section className="metricGrid">
-        <div className="metricPanel">
-          <span>Overall memorization</span>
-          <strong>{formatRate(metrics.memorization_rate)}</strong>
+      <section className="accuracyExplorer">
+        <div className="filterPanel">
+          <div>
+            <h2>Accuracy Filters</h2>
+            <p>Accuracy is the share of contextual answers equal to m.</p>
+          </div>
+          <div className="filterGrid">
+            <fieldset>
+              <legend>Wald-Z Category</legend>
+              <div className="categoryChecks">
+                {WALD_Z_CATEGORIES.map((category) => (
+                  <label className="checkControl" key={category}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category)}
+                      onChange={() => toggleCategory(category)}
+                    />
+                    {category}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <label className="selectControl">
+              Parametric Answer
+              <select value={selectedParametric} onChange={(event) => setSelectedParametric(event.target.value)}>
+                {PARAMETRIC_ANSWERS.map((answer) => (
+                  <option value={answer} key={answer}>{answer}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
-        <div className="metricPanel">
-          <span>Agreeing articles</span>
-          <strong>{formatRate(stanceRates.agreeing?.memorization_rate)}</strong>
-        </div>
-        <div className="metricPanel">
-          <span>Opposing articles</span>
-          <strong>{formatRate(stanceRates.opposing?.memorization_rate)}</strong>
-        </div>
-        <div className="metricPanel">
-          <span>Context answers</span>
-          <strong>{metrics.contextual_total || 0}</strong>
+
+        <div className="accuracyResult">
+          <span>Filtered Accuracy</span>
+          <strong>{formatRate(summary.accuracy)}</strong>
+          <p>{summary.correct} m answers / {summary.total} contextual answers</p>
         </div>
       </section>
-      <div className="tableWrap metricsTable">
-        <table>
-          <thead>
-            <tr>
-              <th>Parametric Answer</th>
-              <th>Parametric %</th>
-              <th>Agreeing Memorization</th>
-              <th>Opposing Memorization</th>
-            </tr>
-          </thead>
-          <tbody>
-            {["y", "n", "m"].map((answer) => (
-              <tr key={answer}>
-                <td>{answer}</td>
-                <td>{formatRate(distribution[answer]?.percentage)}</td>
-                <td>{formatRate(cross[answer]?.agreeing?.memorization_rate)}</td>
-                <td>{formatRate(cross[answer]?.opposing?.memorization_rate)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+
+      <section className="chartGrid">
+        {chartData.map((chart) => (
+          <div className="chartPanel" key={chart.parametricAnswer}>
+            <h2>Parametric {chart.parametricAnswer}</h2>
+            <div className="barChart">
+              {chart.bars.map((bar) => (
+                <div className="barRow" key={bar.category}>
+                  <span className="barLabel">{bar.category}</span>
+                  <div className="barTrack">
+                    <div className="barFill" style={{ width: `${Math.max(0, Number(bar.accuracy || 0) * 100)}%` }} />
+                  </div>
+                  <span className="barValue">{formatRate(bar.accuracy)}</span>
+                  <span className="barCount">{bar.correct}/{bar.total}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
     </>
   );
 }
@@ -460,7 +537,7 @@ function EvaluationsView() {
               <p>{run.metadata?.provider} · {run.metadata?.created_at} · {selected}</p>
             </div>
           </section>
-          <MetricsPanel metrics={run.metrics} />
+          <EvaluationAccuracyExplorer run={run} />
         </>
       ) : (
         <div className="empty">No evaluation runs found.</div>
@@ -608,7 +685,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
               ))}
             </select>
           </section>
-          {reviewEvaluation && <MetricsPanel metrics={reviewEvaluation.metrics} />}
+          {reviewEvaluation && <EvaluationAccuracyExplorer run={reviewEvaluation} />}
           <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
           <OutcomeTable outcomes={outcomes} evaluationByOutcome={evaluationByOutcome} />
           <ArticlesTable articles={articles} onProcessPmid={processArticlePmid} onManualFailed={markArticleManualFailed} evaluationByArticle={evaluationByArticle} />

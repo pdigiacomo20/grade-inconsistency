@@ -61,7 +61,7 @@ def list_runs(directory: str | Path | None = None) -> list[dict[str, Any]]:
                 "model": metadata.get("model") or data.get("model") or "",
                 "provider": metadata.get("provider") or data.get("provider") or "",
                 "created_at": metadata.get("created_at") or data.get("created_at") or "",
-                "metrics": data.get("metrics") or compute_metrics(data),
+                "metrics": compute_metrics(data),
             }
         )
     return runs
@@ -74,29 +74,48 @@ def _rate(memory_count: int, source_count: int) -> float | None:
     return memory_count / denominator
 
 
+def _fraction(numerator: int, denominator: int) -> float | None:
+    if denominator == 0:
+        return None
+    return numerator / denominator
+
+
 def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
     memory = 0
     source = 0
     by_stance: dict[str, Counter[str]] = defaultdict(Counter)
     by_parametric_and_stance: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    accuracy_by_stance: dict[str, Counter[str]] = defaultdict(Counter)
     parametric_counts: Counter[str] = Counter()
     parametric_total = 0
+    parametric_correct = 0
     contextual_total = 0
+    contextual_correct = 0
     contextual_errors = 0
 
     for outcome in run.get("outcomes", []):
+        ground_truth_answer = clean_answer(outcome.get("ground_truth_answer")) or "m"
         parametric_answer = clean_answer((outcome.get("parametric") or {}).get("answer"))
         if parametric_answer:
             parametric_counts[parametric_answer] += 1
             parametric_total += 1
+            if parametric_answer == ground_truth_answer:
+                parametric_correct += 1
         for item in outcome.get("contexts", []):
             contextual_answer = clean_answer(item.get("answer"))
-            if not contextual_answer or not parametric_answer:
+            if not contextual_answer:
                 contextual_errors += 1
                 continue
             contextual_total += 1
-            label = "memory" if contextual_answer == parametric_answer else "source"
+            is_correct = contextual_answer == ground_truth_answer
+            if is_correct:
+                contextual_correct += 1
+            item["accuracy_label"] = "correct" if is_correct else "incorrect"
             stance = str(item.get("stance") or "unknown")
+            accuracy_by_stance[stance]["correct" if is_correct else "incorrect"] += 1
+            if not parametric_answer:
+                continue
+            label = "memory" if contextual_answer == parametric_answer else "source"
             by_stance[stance][label] += 1
             by_parametric_and_stance[parametric_answer or "unknown"][stance][label] += 1
             if label == "memory":
@@ -112,6 +131,14 @@ def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
             "memorization_rate": _rate(counts["memory"], counts["source"]),
         }
         for stance, counts in sorted(by_stance.items())
+    }
+    stance_accuracy = {
+        stance: {
+            "correct_count": counts["correct"],
+            "incorrect_count": counts["incorrect"],
+            "accuracy": _fraction(counts["correct"], counts["correct"] + counts["incorrect"]),
+        }
+        for stance, counts in sorted(accuracy_by_stance.items())
     }
     cross_product = {
         answer: {
@@ -134,12 +161,17 @@ def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
     return {
         "outcome_count": len(run.get("outcomes", [])),
         "parametric_total": parametric_total,
+        "parametric_correct": parametric_correct,
+        "parametric_accuracy": _fraction(parametric_correct, parametric_total),
         "contextual_total": contextual_total,
+        "contextual_correct": contextual_correct,
+        "contextual_accuracy": _fraction(contextual_correct, contextual_total),
         "contextual_errors": contextual_errors,
         "memory_count": memory,
         "source_count": source,
         "memorization_rate": _rate(memory, source),
         "memorization_rate_by_stance": stance_rates,
+        "accuracy_by_stance": stance_accuracy,
         "parametric_distribution": parametric_distribution,
         "memorization_rate_by_parametric_answer_and_stance": cross_product,
     }

@@ -10,8 +10,8 @@ outcomes_table: outcomes
 articles_table: articles
 
 # Review-window smoke test.
-starting_review: CSR_0011
-review_count: 5
+starting_review: CSR_0010
+review_count: 10
 
 # Context options.
 detail_exposure_types:

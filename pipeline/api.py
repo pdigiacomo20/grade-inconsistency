@@ -14,6 +14,7 @@ from pydantic import BaseModel
 import requests
 
 from grade_inconsistency import fetch_article_html
+from pipeline.classify_z import classify_article
 from pipeline.dynamodb import DynamoStore
 from pipeline.env import load_repo_env
 from pipeline.evaluations import compute_metrics, list_runs, read_run
@@ -136,14 +137,42 @@ def _review_payload(store: DynamoStore, review: dict[str, Any], extra: dict[str,
     return {"review": review, "outcomes": outcomes, "articles": articles, **(extra or {})}
 
 
+def _enrich_evaluation_contexts(store: DynamoStore, run: dict[str, Any]) -> dict[str, Any]:
+    article_ids = [
+        str(context.get("article_id") or "")
+        for outcome in run.get("outcomes", [])
+        for context in outcome.get("contexts", [])
+        if context.get("article_id")
+    ]
+    articles = store.batch_get_articles(article_ids)
+    for outcome in run.get("outcomes", []):
+        for context in outcome.get("contexts", []):
+            article = articles.get(str(context.get("article_id") or ""))
+            if not article:
+                continue
+            computed_wald_z = None
+            computed_wald_z_category = None
+            computed_wald_z_error = None
+            if article.get("wald_z_category") in (None, "") or article.get("wald_z") in (None, ""):
+                computed_wald_z, computed_wald_z_category, computed_wald_z_error = classify_article(article)
+            if context.get("wald_z") in (None, ""):
+                context["wald_z"] = article.get("wald_z") if article.get("wald_z") not in (None, "") else computed_wald_z
+            if context.get("wald_z_category") in (None, ""):
+                context["wald_z_category"] = article.get("wald_z_category") or computed_wald_z_category
+            if context.get("wald_z_error") in (None, ""):
+                context["wald_z_error"] = article.get("wald_z_error") or computed_wald_z_error
+    return run
+
+
 def _evaluation_for_review(run: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
     pmid = str(review.get("pmid") or "")
     outcomes = [outcome for outcome in run.get("outcomes", []) if str(outcome.get("pmid") or "") == pmid]
+    scoped_run = _enrich_evaluation_contexts(get_store(), {"outcomes": outcomes})
     return {
         "filename": run.get("filename") or run.get("metadata", {}).get("filename") or "",
         "metadata": run.get("metadata", {}),
-        "metrics": compute_metrics({"outcomes": outcomes}),
-        "outcomes": outcomes,
+        "metrics": compute_metrics(scoped_run),
+        "outcomes": scoped_run["outcomes"],
     }
 
 
@@ -249,7 +278,8 @@ def get_evaluation(filename: str) -> dict[str, Any]:
         run = read_run(filename)
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    run["metrics"] = run.get("metrics") or compute_metrics(run)
+    run = _enrich_evaluation_contexts(get_store(), run)
+    run["metrics"] = compute_metrics(run)
     return run
 
 

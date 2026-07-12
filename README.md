@@ -126,7 +126,7 @@ The command updates each selected article with `wald_z` and `wald_z_category`. C
 
 ## Run Evaluation
 
-Run the accuracy/memorization evaluation:
+Run the accuracy evaluation:
 
 ```bash
 python -m pipeline.evaluate --config config.evaluation.yml
@@ -144,7 +144,9 @@ Key evaluation config fields:
 - `irrelevant_docs_per_context`: number of deterministic irrelevant article documents to add to each source context.
 - `max_contexts_per_outcome`: optional maximum number of article contexts per question for smoke tests.
 
-Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
+The evaluation only processes outcome rows whose certainty field contains `very low`. Rows with other certainty levels are skipped. The ground-truth answer for every evaluated row is `m` (`maybe`), and accuracy is the fraction of model answers that remain `m`.
+
+Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows accuracy and memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
 
 ## Run Frontend
 
