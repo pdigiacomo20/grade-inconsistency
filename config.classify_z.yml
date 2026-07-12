@@ -1,0 +1,7 @@
+aws_region: us-west-2
+dynamodb_endpoint_url: http://localhost:8000
+articles_table: articles
+
+# Classify articles attached to this CSR window, ordered by CSR index.
+starting_review: CSR_0011
+review_count: 5

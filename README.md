@@ -12,7 +12,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 6. Parses `Extract Agree Oppose` second, stores agreeing/opposing article IDs on each outcome, and inserts article rows as `ART_00001`, `ART_00002`, and so on.
 7. Searches PubMed for each associated article title, falls back to the extracted relaxed search string, and fetches PubMed metadata, abstracts, and available PMC full text when a PMID is found.
 8. Lets the user manually enter a PMID for unresolved associated articles or mark manual extraction as failed.
-9. Runs TASK2A LLM evaluations and displays memorization-ratio results from saved JSON runs.
+9. Runs LLM evaluations and displays memorization-ratio results from saved JSON runs.
 
 ## DynamoDB Tables
 
@@ -30,7 +30,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 `articles`
 
 - Primary key: `article_id`
-- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `line_of_no_effect`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
+- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `line_of_no_effect`, `wald_z`, `wald_z_category`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
 
 The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated.
 
@@ -108,24 +108,43 @@ Main routes:
 
 The PDF endpoint returns `Content-Disposition: attachment; filename="CSR_XXXX.pdf"`. Browser security does not allow a web app to force `~/Downloads/CSR`; configure the browser download location to that folder if needed.
 
-## Run TASK2A Evaluation
+## Classify Wald-Z
 
-Create a TASK2A config from `config.task2a.example.yml`, then run:
+Classify existing article rows by Wald-Z statistic and category:
 
 ```bash
-python -m pipeline.evaluate --config config.task2a.yml
+python -m pipeline.classify_z --config config.classify_z.yml
 ```
 
-Key TASK2A config fields:
+`config.classify_z.yml` accepts:
+
+- `starting_review`: first CSR ID to process, for example `CSR_0011`.
+- `review_count`: number of CSR IDs to process in CSR index order.
+- `articles_table`: DynamoDB articles table, default `articles`.
+
+The command updates each selected article with `wald_z` and `wald_z_category`. Categories are `COM-Z0`, `COM-Z1`, `COM-Z2+`, `INT-Z0`, `INT-Z1`, and `INT-Z2+`. Positive transformed effects are categorized as comparator-favoring (`COM`), and negative transformed effects are categorized as intervention-favoring (`INT`). Sensitivity/specificity values at exactly 0 or 1 are clamped to `1e-6` or `1 - 1e-6` before logit transformation because exact boundary logits are infinite. Rows that still do not have enough numeric data are marked `UNCLASSIFIED` with `wald_z_error`.
+
+## Run Evaluation
+
+Run the accuracy/memorization evaluation:
+
+```bash
+python -m pipeline.evaluate --config config.evaluation.yml
+```
+
+Key evaluation config fields:
 
 - `run_id`: prefix used for the saved JSON filename.
 - `model`: OpenAI model to evaluate.
 - `provider`: currently `openai`.
 - `evaluations_dir`: directory for run JSON files, default `data/evaluations`.
-- `max_questions`: optional maximum number of benchmark questions to evaluate, starting from the beginning.
+- `starting_review`: first CSR ID to process, for example `CSR_0011`.
+- `review_count`: number of CSR IDs to process in CSR index order.
+- `detail_exposure_types`: context detail modes to evaluate. Supported values are `abstract` and `full_text`.
+- `irrelevant_docs_per_context`: number of deterministic irrelevant article documents to add to each source context.
 - `max_contexts_per_outcome`: optional maximum number of article contexts per question for smoke tests.
 
-Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows TASK2A memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
+Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
 
 ## Run Frontend
 

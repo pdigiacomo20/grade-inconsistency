@@ -24,8 +24,8 @@ ANSWER_RE = re.compile(r"\b([ynm])\b", re.IGNORECASE)
 
 @dataclass(frozen=True)
 class EvaluationConfig:
-    task: str = "TASK2A"
-    run_id: str = "TASK2A"
+    task: str = "evaluation"
+    run_id: str = "evaluation"
     provider: str = "openai"
     model: str = "gpt-5.5"
     evaluations_dir: str = "data/evaluations"
@@ -33,9 +33,13 @@ class EvaluationConfig:
     dynamodb_endpoint_url: str | None = "http://localhost:8000"
     outcomes_table: str = "outcomes"
     articles_table: str = "articles"
+    starting_review: str | None = None
+    review_count: int | None = None
     max_questions: int | None = None
     max_outcomes: int | None = None
     max_contexts_per_outcome: int | None = None
+    detail_exposure_types: tuple[str, ...] = ("abstract",)
+    irrelevant_docs_per_context: int = 0
     request_timeout_seconds: int = 120
     retry_count: int = 3
 
@@ -54,6 +58,8 @@ def load_config(path: str | Path) -> EvaluationConfig:
     }
     allowed = set(EvaluationConfig.__dataclass_fields__)
     values = {key: value for key, value in {**env_defaults, **raw}.items() if key in allowed}
+    if isinstance(values.get("detail_exposure_types"), list):
+        values["detail_exposure_types"] = tuple(str(item) for item in values["detail_exposure_types"])
     return EvaluationConfig(**values)
 
 
@@ -133,7 +139,7 @@ def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
 
 def model_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
     if config.provider != "openai":
-        raise ValueError(f"Unsupported provider for TASK2A: {config.provider}")
+        raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
     return openai_answer(prompt, config=config)
 
 
@@ -141,8 +147,15 @@ def prompt_parametric(question: str) -> str:
     return f"Respond to the following question with a single character: y, n, or m, corresponding to yes, no, or maybe. Question: {question}"
 
 
-def prompt_contextual(question: str, citation: str, abstract: str) -> str:
-    context = f"Citation: {citation}\n\nAbstract: {abstract.strip()}"
+def prompt_contextual(question: str, citation: str, detail_label: str, detail_text: str, distractors: list[dict[str, str]] | None = None) -> str:
+    context_parts = [f"Source document\nCitation: {citation}\n\n{detail_label}: {detail_text.strip()}"]
+    for index, distractor in enumerate(distractors or [], start=1):
+        context_parts.append(
+            f"Distractor document {index}\n"
+            f"Citation: {distractor.get('citation', '')}\n\n"
+            f"{distractor.get('detail_label', 'Abstract')}: {distractor.get('detail_text', '').strip()}"
+        )
+    context = "\n\n---\n\n".join(context_parts)
     return (
         "Respond to the following question with a single character: y, n, or m, corresponding to yes, no, or maybe. "
         "You may use the provided context below to inform your response.\n\n"
@@ -158,12 +171,71 @@ def read_abstract(article: dict[str, Any]) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
+def read_full_text(article: dict[str, Any]) -> str:
+    path = Path(str(article.get("full_text_path") or ""))
+    if not path.exists() or not path.is_file():
+        return ""
+    return path.read_text(encoding="utf-8").strip()
+
+
+def csr_sort_key(value: Any) -> tuple[int, str]:
+    text = str(value or "")
+    match = re.fullmatch(r"CSR_(\d+)", text)
+    return (int(match.group(1)) if match else 10**12, text)
+
+
+def selected_review_ids(items: list[dict[str, Any]], *, starting_review: str | None, review_count: int | None) -> set[str] | None:
+    if not starting_review and not review_count:
+        return None
+    review_ids = sorted({str(item.get("review_id") or "") for item in items if item.get("review_id")}, key=csr_sort_key)
+    if starting_review:
+        start_key = csr_sort_key(starting_review)
+        review_ids = [review_id for review_id in review_ids if csr_sort_key(review_id) >= start_key]
+    if review_count:
+        review_ids = review_ids[:review_count]
+    return set(review_ids)
+
+
+def article_detail(article: dict[str, Any], detail_type: str) -> tuple[str, str]:
+    normalized = detail_type.strip().lower().replace("-", "_")
+    if normalized == "full_text":
+        return "Full text", read_full_text(article)
+    return "Abstract", read_abstract(article)
+
+
+def choose_distractors(
+    articles: list[dict[str, Any]],
+    *,
+    source_article: dict[str, Any],
+    detail_type: str,
+    count: int,
+) -> list[dict[str, str]]:
+    if count <= 0:
+        return []
+    selected: list[dict[str, str]] = []
+    for article in sorted(articles, key=lambda item: str(item.get("article_id") or "")):
+        if str(article.get("article_id") or "") == str(source_article.get("article_id") or ""):
+            continue
+        if str(article.get("review_pmid") or "") == str(source_article.get("review_pmid") or "") and int(article.get("outcome_id") or 0) == int(source_article.get("outcome_id") or 0):
+            continue
+        detail_label, detail_text = article_detail(article, detail_type)
+        if not detail_text:
+            continue
+        selected.append({"citation": str(article.get("citation") or ""), "detail_label": detail_label, "detail_text": detail_text})
+        if len(selected) >= count:
+            break
+    return selected
+
+
 def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     resource = dynamodb_resource(config)
     outcomes = sorted(
         scan_all(resource.Table(config.outcomes_table)),
         key=lambda item: (str(item.get("review_id") or ""), str(item.get("pmid") or ""), int(item.get("outcome_id", 0))),
     )
+    review_ids = selected_review_ids(outcomes, starting_review=config.starting_review, review_count=config.review_count)
+    if review_ids is not None:
+        outcomes = [outcome for outcome in outcomes if str(outcome.get("review_id") or "") in review_ids]
     question_limit = config.max_questions or config.max_outcomes
     if question_limit:
         outcomes = outcomes[: question_limit]
@@ -188,22 +260,35 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
         if config.max_contexts_per_outcome:
             source_articles = source_articles[: config.max_contexts_per_outcome]
         for article in source_articles:
-            abstract = read_abstract(article)
-            if not abstract:
-                continue
-            print(f"  context {article.get('article_id')} ({article.get('stance')})")
-            answer = model_answer(prompt_contextual(question, str(article.get("citation") or ""), abstract), config=config)
-            contexts.append(
-                {
-                    "article_id": article.get("article_id"),
-                    "stance": article.get("stance"),
-                    "citation": article.get("citation"),
-                    "title": article.get("title"),
-                    "pmid": article.get("pmid"),
-                    "abstract_path": article.get("abstract_path"),
-                    **answer,
-                }
-            )
+            for detail_type in config.detail_exposure_types:
+                detail_label, detail_text = article_detail(article, detail_type)
+                if not detail_text:
+                    continue
+                print(f"  context {article.get('article_id')} ({article.get('stance')}, {detail_type})")
+                distractors = choose_distractors(
+                    articles,
+                    source_article=article,
+                    detail_type=detail_type,
+                    count=config.irrelevant_docs_per_context,
+                )
+                answer = model_answer(
+                    prompt_contextual(question, str(article.get("citation") or ""), detail_label, detail_text, distractors),
+                    config=config,
+                )
+                contexts.append(
+                    {
+                        "article_id": article.get("article_id"),
+                        "stance": article.get("stance"),
+                        "citation": article.get("citation"),
+                        "title": article.get("title"),
+                        "pmid": article.get("pmid"),
+                        "abstract_path": article.get("abstract_path"),
+                        "full_text_path": article.get("full_text_path"),
+                        "detail_exposure_type": detail_type,
+                        "irrelevant_doc_count": len(distractors),
+                        **answer,
+                    }
+                )
         results.append(
             {
                 "pmid": outcome.get("pmid"),
@@ -219,7 +304,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
         )
 
     finished_at = datetime.now(UTC).isoformat()
-    safe_run_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", config.run_id).strip("._") or "TASK2A"
+    safe_run_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", config.run_id).strip("._") or "evaluation"
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     filename = f"{safe_run_id}-{timestamp}.json"
     run = {
@@ -234,6 +319,10 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
             "filename": filename,
             "outcomes_table": config.outcomes_table,
             "articles_table": config.articles_table,
+            "starting_review": config.starting_review,
+            "review_count": config.review_count,
+            "detail_exposure_types": list(config.detail_exposure_types),
+            "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
         },
         "outcomes": results,
     }
@@ -248,8 +337,8 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run TASK2A memorization-ratio evaluations.")
-    parser.add_argument("--config", default="config.yml", help="Path to TASK2A YAML config file.")
+    parser = argparse.ArgumentParser(description="Run LLM evaluation.")
+    parser.add_argument("--config", default="config.evaluation.yml", help="Path to evaluation YAML config file.")
     args = parser.parse_args()
     run_evaluation(load_config(args.config))
     return 0

@@ -2,13 +2,13 @@
   "metadata": {
     "articles_table": "articles",
     "created_at": "2026-07-07T16:55:56.675051+00:00",
-    "filename": "TASK2A-20260707T165952Z.json",
+    "filename": "evaluation-20260707T165952Z.json",
     "finished_at": "2026-07-07T16:59:52.858575+00:00",
     "model": "gpt-5.5",
     "outcomes_table": "outcomes",
     "provider": "openai",
-    "run_id": "TASK2A",
-    "task": "TASK2A"
+    "run_id": "evaluation",
+    "task": "evaluation"
   },
   "metrics": {
     "contextual_errors": 0,
@@ -548,5 +548,5 @@
       "review_id": "CSR_0025"
     }
   ],
-  "task": "TASK2A"
+  "task": "evaluation"
 }

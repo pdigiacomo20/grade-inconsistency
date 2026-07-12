@@ -583,7 +583,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
           <section className="evalSelector">
             <div>
               <h2>Evaluation Run</h2>
-              <p>{reviewEvaluation ? `${reviewEvaluation.metadata?.model || ""} · ${selectedEvaluation}` : "Select a run to show TASK2A answers for this CSR."}</p>
+              <p>{reviewEvaluation ? `${reviewEvaluation.metadata?.model || ""} · ${selectedEvaluation}` : "Select a run to show evaluation answers for this CSR."}</p>
             </div>
             <select value={selectedEvaluation} onChange={(event) => setSelectedEvaluation(event.target.value)}>
               <option value="">No evaluation selected</option>

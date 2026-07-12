@@ -1,5 +1,5 @@
-task: TASK2A
-run_id: TASK2A
+task: evaluation
+run_id: evaluation
 provider: openai
 model: gpt-5.5
 evaluations_dir: data/evaluations
@@ -9,7 +9,13 @@ dynamodb_endpoint_url: http://localhost:8000
 outcomes_table: outcomes
 articles_table: articles
 
-# Optional smoke-test limits.
-# max_questions limits the number of benchmark questions, starting from the beginning.
-max_questions: 5
+# Review-window smoke test.
+starting_review: CSR_0011
+review_count: 5
+
+# Context options.
+detail_exposure_types:
+  - abstract
+  # - full_text
+irrelevant_docs_per_context: 0
 max_contexts_per_outcome: 10
