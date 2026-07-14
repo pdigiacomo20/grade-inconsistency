@@ -144,7 +144,14 @@ def classify_article(article: dict[str, Any]) -> tuple[float | None, str, str]:
 def run_classification(config: ClassifyZConfig) -> dict[str, Any]:
     resource = dynamodb_resource(config)
     table = resource.Table(config.articles_table)
-    articles = sorted(scan_all(table), key=lambda item: (str(item.get("review_id") or ""), str(item.get("article_id") or "")))
+    articles = sorted(
+        [
+            item
+            for item in scan_all(table)
+            if item.get("article_type", "included_study") == "included_study"
+        ],
+        key=lambda item: (str(item.get("review_id") or ""), str(item.get("article_id") or "")),
+    )
     review_ids = selected_review_ids(articles, starting_review=config.starting_review, review_count=config.review_count)
     if review_ids is not None:
         articles = [article for article in articles if str(article.get("review_id") or "") in review_ids]

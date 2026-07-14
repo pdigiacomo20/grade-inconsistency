@@ -7,12 +7,14 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 1. Ingests PubMed records for open-access 2025 Cochrane systematic reviews into DynamoDB.
 2. Assigns each review a stable ID: `CSR_0001`, `CSR_0002`, and so on.
 3. Marks protocol-only reviews in the `reviews` table so the frontend can filter them out.
-4. Lets a user open each review detail page, download the review PDF when PMC exposes one, and paste browser-assisted extraction outputs into two extraction boxes.
-5. Parses `Extract SoF` first and stores inconsistency-downgraded outcomes in `outcomes`.
-6. Parses `Extract Agree Oppose` second, stores agreeing/opposing article IDs on each outcome, and inserts article rows as `ART_00001`, `ART_00002`, and so on.
-7. Searches PubMed for each associated article title, falls back to the extracted relaxed search string, and fetches PubMed metadata, abstracts, and available PMC full text when a PMID is found.
-8. Lets the user manually enter a PMID for unresolved associated articles or mark manual extraction as failed.
-9. Runs LLM evaluations and displays memorization-ratio results from saved JSON runs.
+4. Lets a user open each review detail page, download the review PDF when PMC exposes one, and paste browser-assisted extraction outputs into four extraction boxes.
+5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`. The benchmark multiple-choice answer is always `m`.
+6. Parses `Extract Studies` second, stores forest-plot aggregate metrics on each outcome, and inserts included study article rows as `ART_00001`, `ART_00002`, and so on.
+7. Parses `Extract PICO` and stores PICO fields on matching included study article rows.
+8. Parses `Extract Excluded` and inserts excluded study article rows with exclusion reasons.
+9. Searches PubMed for each included or excluded article title, falls back to the extracted relaxed search string, and fetches PubMed metadata, abstracts, and available PMC full text when a PMID is found.
+10. Lets the user manually enter a PMID for unresolved associated articles or mark manual extraction as failed.
+11. Runs LLM evaluations and displays accuracy results from saved JSON runs.
 
 ## DynamoDB Tables
 
@@ -25,14 +27,14 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `agreeing_articles`, `opposing_articles`
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`
 
 `articles`
 
 - Primary key: `article_id`
-- Important columns: `review_id`, `review_pmid`, `outcome_id`, `stance`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `line_of_no_effect`, `wald_z`, `wald_z_category`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
+- Important columns: `article_type`, `review_id`, `review_pmid`, `outcome_id`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `sample_size`, `line_of_no_effect`, `population`, `intervention`, `comparator`, `outcome`, `reason_for_exclusion`, `wald_z`, `wald_z_category`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
 
-The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated.
+The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated. Wald-Z classification and evaluations process `included_study` article rows; `excluded_study` rows are kept for PubMed enrichment and audit context.
 
 ## Setup
 
@@ -96,7 +98,9 @@ Main routes:
 - `GET /api/reviews/{CSR_ID}`
 - `GET /api/reviews/{CSR_ID}/pdf`
 - `POST /api/reviews/{CSR_ID}/extract-sof`
-- `POST /api/reviews/{CSR_ID}/extract-agree-oppose`
+- `POST /api/reviews/{CSR_ID}/extract-studies`
+- `POST /api/reviews/{CSR_ID}/extract-pico`
+- `POST /api/reviews/{CSR_ID}/extract-excluded`
 - `GET /api/outcomes`
 - `GET /api/evaluations`
 - `GET /api/evaluations/{FILENAME}`
@@ -171,13 +175,13 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 3. Click `PMC entry` to inspect the article in a new tab, or `Download PDF` to download `CSR_XXXX.pdf` if PMC exposes a PDF.
 4. Use GPT in a separate browser with the downloaded Cochrane PDF and the `Extract SoF` prompt.
 5. Paste the GPT output into `Extract SoF` and click `Extract SoF`.
-6. Use GPT with the `Extract Agree Oppose` prompt.
-7. Paste the GPT output into `Extract Agree Oppose` and click `Extract Agree/Oppose`.
+6. Use GPT with the `Extract Studies`, `Extract PICO`, and `Extract Excluded` prompts.
+7. Paste each GPT output into the matching panel and submit it.
 8. Review extracted outcomes and associated articles below the input boxes.
 9. Review automatically matched PMIDs in the article table.
 10. For unresolved associated articles, enter the PMID and click `Process PMID`, or click `Manual extract failed` if no PMID can be found.
 
-The backend rejects `Extract Agree Oppose` if `Extract SoF` has not already produced matching outcome rows. The `Extract Agree Oppose` output must include `Effect measure` and `Line of no effect` for each matched outcome, plus `Effect estimate`, `Confidence interval begin`, `Confidence interval end`, `Confidence interval percentage`, `Title`, and `Relaxed search` for each listed publication.
+The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract Studies` must include `Effect measure`, `Line of no effect`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract PICO` updates included study rows by exact study label. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
 
 ## Run Remotely Over SSH
 

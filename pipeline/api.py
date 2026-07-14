@@ -27,8 +27,10 @@ from pipeline.manual_extraction import (
     enrich_article_with_pmid,
     lookup_pmid_for_article,
     mark_manual_extraction_failed,
-    parse_agree_oppose_extraction,
+    parse_excluded_extraction,
+    parse_pico_extraction,
     parse_sof_extraction,
+    parse_studies_extraction,
 )
 
 load_repo_env()
@@ -70,15 +72,21 @@ def _review_or_404(store: DynamoStore, review_id: str) -> dict[str, Any]:
 def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
     return {
         "article_id": article.get("article_id"),
+        "article_type": article.get("article_type", "included_study"),
         "outcome_id": article.get("outcome_id"),
-        "stance": article.get("stance"),
         "study_label": article.get("study_label"),
         "effect_measure": article.get("effect_measure"),
         "effect_estimate": article.get("effect_estimate"),
         "confidence_interval_begin": article.get("confidence_interval_begin"),
         "confidence_interval_end": article.get("confidence_interval_end"),
         "confidence_interval_percentage": article.get("confidence_interval_percentage"),
+        "sample_size": article.get("sample_size"),
         "line_of_no_effect": article.get("line_of_no_effect"),
+        "population": article.get("population"),
+        "intervention": article.get("intervention"),
+        "comparator": article.get("comparator"),
+        "outcome": article.get("outcome"),
+        "reason_for_exclusion": article.get("reason_for_exclusion"),
         "wald_z": article.get("wald_z"),
         "wald_z_category": article.get("wald_z_category"),
         "wald_z_error": article.get("wald_z_error"),
@@ -100,18 +108,13 @@ def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
 
 
 def _hydrate_outcome(store: DynamoStore, outcome: dict[str, Any]) -> dict[str, Any]:
-    article_ids = list(outcome.get("agreeing_articles", [])) + list(outcome.get("opposing_articles", []))
+    article_ids = list(outcome.get("included_articles", []))
     articles = store.batch_get_articles(article_ids)
     return {
         **outcome,
-        "agreeing_article_refs": [
+        "included_article_refs": [
             _article_summary(articles[article_id])
-            for article_id in outcome.get("agreeing_articles", [])
-            if article_id in articles
-        ],
-        "opposing_article_refs": [
-            _article_summary(articles[article_id])
-            for article_id in outcome.get("opposing_articles", [])
+            for article_id in outcome.get("included_articles", [])
             if article_id in articles
         ],
     }
@@ -306,24 +309,34 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     outcomes = extraction.outcomes
     store.replace_outcomes(str(review["pmid"]), outcomes)
     review["sof_extracted_at"] = datetime.now(UTC).isoformat()
-    review["agree_oppose_extracted_at"] = None
+    review["studies_extracted_at"] = None
+    review["pico_extracted_at"] = None
+    review["excluded_extracted_at"] = None
     review["sof_overall_notes"] = extraction.overall_notes
-    review["agree_oppose_overall_notes"] = ""
-    review["has_inconsistency"] = extraction.has_inconsistency
-    review["status"] = "no_inconsistency" if not extraction.has_inconsistency else "sof_extracted"
+    review["studies_overall_notes"] = ""
+    review["pico_overall_notes"] = ""
+    review["excluded_overall_notes"] = ""
+    review["extraction_result"] = extraction.extraction_result
+    review["has_inconsistency"] = extraction.extraction_result == "extracted"
+    review["status"] = extraction.extraction_result if extraction.extraction_result != "extracted" else "sof_extracted"
     store.put_review(review)
-    return {"review": review, "outcomes": outcomes, "message": "No inconsistency." if not extraction.has_inconsistency else "SoF extracted."}
+    messages = {
+        "no_inconsistency": "No inconsistency.",
+        "inconsistency_not_very_low": "Inconsistency not very low.",
+        "extracted": "SoF extracted.",
+    }
+    return {"review": review, "outcomes": outcomes, "message": messages.get(extraction.extraction_result, "SoF extracted.")}
 
 
-@app.post("/api/reviews/{review_id}/extract-agree-oppose")
-def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+@app.post("/api/reviews/{review_id}/extract-studies")
+def extract_studies(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     store = get_store()
     review = _review_or_404(store, review_id)
     existing = store.list_outcomes_for_review(str(review["pmid"]))
     if not existing:
-        raise HTTPException(status_code=400, detail="Extract SoF must be completed before Extract Agree Oppose.")
+        raise HTTPException(status_code=400, detail="Extract SoF must be completed before Extract Studies.")
     try:
-        extraction = parse_agree_oppose_extraction(payload.text, existing)
+        extraction = parse_studies_extraction(payload.text, existing)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -331,48 +344,116 @@ def extract_agree_oppose(review_id: str, payload: ExtractionRequest) -> dict[str
     session = build_session()
     for item in extraction.outcomes:
         outcome = item["outcome"]
-        agreeing_ids: list[str] = []
-        opposing_ids: list[str] = []
-        for stance, key, output in (
-            ("agreeing", "agreeing_citations", agreeing_ids),
-            ("opposing", "opposing_citations", opposing_ids),
-        ):
-            for citation in item[key]:
-                article = create_and_store_article(
-                    store=store,
-                    citation=citation["citation"],
-                    study_label=citation["study_label"],
-                    review=review,
-                    outcome=outcome,
-                    stance=stance,
-                    effect_measure=item["effect_measure"],
-                    line_of_no_effect=item["line_of_no_effect"],
-                    effect_estimate=citation.get("effect_estimate", ""),
-                    confidence_interval_begin=citation.get("confidence_interval_begin", ""),
-                    confidence_interval_end=citation.get("confidence_interval_end", ""),
-                    confidence_interval_percentage=citation.get("confidence_interval_percentage", ""),
-                    title=citation.get("title", ""),
-                    relaxed_search=citation.get("relaxed_search", ""),
-                )
+        included_ids: list[str] = []
+        for study in item["studies"]:
+            article = create_and_store_article(
+                store=store,
+                citation=study["citation"],
+                study_label=study["study_label"],
+                review=review,
+                outcome=outcome,
+                article_type="included_study",
+                effect_measure=item["effect_measure"],
+                line_of_no_effect=item["line_of_no_effect"],
+                effect_estimate=study.get("effect_estimate", ""),
+                confidence_interval_begin=study.get("confidence_interval_begin", ""),
+                confidence_interval_end=study.get("confidence_interval_end", ""),
+                confidence_interval_percentage=study.get("confidence_interval_percentage", ""),
+                sample_size=study.get("sample_size", ""),
+                title=study.get("title", ""),
+                relaxed_search=study.get("relaxed_search", ""),
+            )
+            if not article.get("manual_extraction_failed"):
                 article = _try_auto_process_article(store=store, session=session, article=article)
-                output.append(str(article["article_id"]))
-                article_count += 1
+            included_ids.append(str(article["article_id"]))
+            article_count += 1
         outcome.update(
             {
                 "forest_plot_title": item["forest_plot_title"],
                 "effect_measure": item["effect_measure"],
                 "line_of_no_effect": item["line_of_no_effect"],
-                "agreeing_articles": agreeing_ids,
-                "opposing_articles": opposing_ids,
-                "extraction_status": "agree_oppose_extracted",
+                "aggregated_effect_estimate": item["aggregated_effect_estimate"],
+                "aggregated_confidence_interval_begin": item["aggregated_confidence_interval_begin"],
+                "aggregated_confidence_interval_end": item["aggregated_confidence_interval_end"],
+                "aggregated_confidence_interval_percentage": item["aggregated_confidence_interval_percentage"],
+                "aggregated_sample_size": item["aggregated_sample_size"],
+                "included_articles": included_ids,
+                "extraction_status": "studies_extracted",
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         )
         store.put_outcome(outcome)
 
-    review["agree_oppose_extracted_at"] = datetime.now(UTC).isoformat()
-    review["agree_oppose_overall_notes"] = extraction.overall_notes
-    review["status"] = "agree_oppose_extracted"
+    review["studies_extracted_at"] = datetime.now(UTC).isoformat()
+    review["studies_overall_notes"] = extraction.overall_notes
+    review["status"] = "studies_extracted"
+    store.put_review(review)
+    return _review_payload(store, review, {"article_count": article_count})
+
+
+@app.post("/api/reviews/{review_id}/extract-pico")
+def extract_pico(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    try:
+        extraction = parse_pico_extraction(payload.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    updated_count = 0
+    articles = store.list_articles_for_review(str(review["review_id"]))
+    for study in extraction.studies:
+        label = str(study.get("study_label") or "")
+        matches = [article for article in articles if article.get("article_type", "included_study") == "included_study" and str(article.get("study_label") or "") == label]
+        for article in matches:
+            article.update(
+                {
+                    "population": study.get("population") or None,
+                    "intervention": study.get("intervention") or None,
+                    "comparator": study.get("comparator") or None,
+                    "outcome": study.get("outcome") or None,
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
+            )
+            store.put_article(article)
+            updated_count += 1
+
+    review["pico_extracted_at"] = datetime.now(UTC).isoformat()
+    review["pico_overall_notes"] = extraction.overall_notes
+    review["status"] = "pico_extracted"
+    store.put_review(review)
+    return _review_payload(store, review, {"updated_article_count": updated_count})
+
+
+@app.post("/api/reviews/{review_id}/extract-excluded")
+def extract_excluded(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    try:
+        extraction = parse_excluded_extraction(payload.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    article_count = 0
+    session = build_session()
+    for study in extraction.studies:
+        article = create_and_store_article(
+            store=store,
+            citation=study.get("citation", ""),
+            study_label=study.get("study_label", ""),
+            review=review,
+            article_type="excluded_study",
+            title=study.get("title", ""),
+            relaxed_search=study.get("relaxed_search", ""),
+            reason_for_exclusion=study.get("reason_for_exclusion", ""),
+        )
+        if not article.get("manual_extraction_failed"):
+            _try_auto_process_article(store=store, session=session, article=article)
+        article_count += 1
+
+    review["excluded_extracted_at"] = datetime.now(UTC).isoformat()
+    review["excluded_overall_notes"] = extraction.overall_notes
+    review["status"] = "excluded_extracted"
     store.put_review(review)
     return _review_payload(store, review, {"article_count": article_count})
 

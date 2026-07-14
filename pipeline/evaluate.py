@@ -250,7 +250,11 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     question_limit = config.max_questions or config.max_outcomes
     if question_limit:
         outcomes = outcomes[: question_limit]
-    articles = scan_all(resource.Table(config.articles_table))
+    articles = [
+        article
+        for article in scan_all(resource.Table(config.articles_table))
+        if article.get("article_type", "included_study") == "included_study"
+    ]
     articles_by_outcome: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for article in articles:
         key = (str(article.get("review_pmid") or ""), int(article.get("outcome_id") or 0))
@@ -275,7 +279,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
                 detail_label, detail_text = article_detail(article, detail_type)
                 if not detail_text:
                     continue
-                print(f"  context {article.get('article_id')} ({article.get('stance')}, {detail_type})")
+                print(f"  context {article.get('article_id')} ({detail_type})")
                 distractors = choose_distractors(
                     articles,
                     source_article=article,
@@ -289,7 +293,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
                 contexts.append(
                     {
                         "article_id": article.get("article_id"),
-                        "stance": article.get("stance"),
+                        "article_type": article.get("article_type", "included_study"),
                         "citation": article.get("citation"),
                         "title": article.get("title"),
                         "pmid": article.get("pmid"),

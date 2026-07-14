@@ -83,9 +83,9 @@ def _fraction(numerator: int, denominator: int) -> float | None:
 def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
     memory = 0
     source = 0
-    by_stance: dict[str, Counter[str]] = defaultdict(Counter)
-    by_parametric_and_stance: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
-    accuracy_by_stance: dict[str, Counter[str]] = defaultdict(Counter)
+    by_article_type: dict[str, Counter[str]] = defaultdict(Counter)
+    by_parametric_and_article_type: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    accuracy_by_article_type: dict[str, Counter[str]] = defaultdict(Counter)
     parametric_counts: Counter[str] = Counter()
     parametric_total = 0
     parametric_correct = 0
@@ -111,45 +111,45 @@ def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
             if is_correct:
                 contextual_correct += 1
             item["accuracy_label"] = "correct" if is_correct else "incorrect"
-            stance = str(item.get("stance") or "unknown")
-            accuracy_by_stance[stance]["correct" if is_correct else "incorrect"] += 1
+            article_type = str(item.get("article_type") or "included_study")
+            accuracy_by_article_type[article_type]["correct" if is_correct else "incorrect"] += 1
             if not parametric_answer:
                 continue
             label = "memory" if contextual_answer == parametric_answer else "source"
-            by_stance[stance][label] += 1
-            by_parametric_and_stance[parametric_answer or "unknown"][stance][label] += 1
+            by_article_type[article_type][label] += 1
+            by_parametric_and_article_type[parametric_answer or "unknown"][article_type][label] += 1
             if label == "memory":
                 memory += 1
             else:
                 source += 1
             item["memorization_label"] = label
 
-    stance_rates = {
-        stance: {
+    article_type_rates = {
+        article_type: {
             "memory_count": counts["memory"],
             "source_count": counts["source"],
             "memorization_rate": _rate(counts["memory"], counts["source"]),
         }
-        for stance, counts in sorted(by_stance.items())
+        for article_type, counts in sorted(by_article_type.items())
     }
-    stance_accuracy = {
-        stance: {
+    article_type_accuracy = {
+        article_type: {
             "correct_count": counts["correct"],
             "incorrect_count": counts["incorrect"],
             "accuracy": _fraction(counts["correct"], counts["correct"] + counts["incorrect"]),
         }
-        for stance, counts in sorted(accuracy_by_stance.items())
+        for article_type, counts in sorted(accuracy_by_article_type.items())
     }
     cross_product = {
         answer: {
-            stance: {
+            article_type: {
                 "memory_count": counts["memory"],
                 "source_count": counts["source"],
                 "memorization_rate": _rate(counts["memory"], counts["source"]),
             }
-            for stance, counts in sorted(stance_counts.items())
+            for article_type, counts in sorted(article_type_counts.items())
         }
-        for answer, stance_counts in sorted(by_parametric_and_stance.items())
+        for answer, article_type_counts in sorted(by_parametric_and_article_type.items())
     }
     parametric_distribution = {
         answer: {
@@ -170,8 +170,8 @@ def compute_metrics(run: dict[str, Any]) -> dict[str, Any]:
         "memory_count": memory,
         "source_count": source,
         "memorization_rate": _rate(memory, source),
-        "memorization_rate_by_stance": stance_rates,
-        "accuracy_by_stance": stance_accuracy,
+        "memorization_rate_by_article_type": article_type_rates,
+        "accuracy_by_article_type": article_type_accuracy,
         "parametric_distribution": parametric_distribution,
-        "memorization_rate_by_parametric_answer_and_stance": cross_product,
+        "memorization_rate_by_parametric_answer_and_article_type": cross_product,
     }

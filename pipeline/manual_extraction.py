@@ -27,24 +27,21 @@ PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
     r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
-    r"Forest plot title|Effect measure|Line of no effect|Agreeing studies|Opposing studies|Overall notes)\s*:\s*(.*?)(?=^\s*(?:SoF table|Row|Medical question|"
-    r"Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|Forest plot title|Effect measure|Line of no effect|Agreeing studies|"
-    r"Opposing studies|Overall notes)\s*:|\Z)"
+    r"Forest plot title|Effect measure|Line of no effect|Aggregated effect estimate|Aggregated confidence interval begin|"
+    r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes)\s*:\s*"
+    r"(.*?)(?=^\s*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
+    r"Forest plot title|Effect measure|Line of no effect|Aggregated effect estimate|Aggregated confidence interval begin|"
+    r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes|Study)\s*:|\Z)"
 )
-PUBLICATION_RE = re.compile(
-    r"(?ims)^\s*Publication\s+\d+\s*:\s*(.*?)(?=^\s*(?:Publication\s+\d+\s*:|Study\s*:|Effect estimate\s*:|"
-    r"Confidence interval begin\s*:|Confidence interval end\s*:|Confidence interval percentage\s*:|Opposing studies\s*:|"
-    r"Agreeing studies\s*:|Overall notes\s*:|SoF table\s*:|Row\s*:)|\Z)"
-)
-PUBLICATION_META_RE = re.compile(r"(?ims)^\s*(Title|Relaxed search)\s*:\s*(.*?)(?=^\s*(?:Title|Relaxed search)\s*:|\Z)")
 STUDY_BLOCK_RE = re.compile(
-    r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Opposing studies\s*:|^\s*Agreeing studies\s*:|"
-    r"^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
+    r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
 )
 STUDY_FIELD_RE = re.compile(
-    r"(?ims)^\s*(Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage)\s*:\s*"
+    r"(?ims)^\s*(Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|Sample size|Citation|"
+    r"Title|Relaxed search|Population|Intervention|Comparator|Outcome|Reason for exclusion)\s*:\s*"
     r"(.*?)(?=^\s*(?:Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|"
-    r"Publication\s+\d+|Study|Opposing studies|Agreeing studies|Overall notes|SoF table|Row)\s*:|\Z)"
+    r"Sample size|Citation|Title|Relaxed search|Population|Intervention|Comparator|Outcome|Reason for exclusion|"
+    r"Study|Overall notes|SoF table|Row)\s*:|\Z)"
 )
 TITLE_RE = re.compile(
     r"(?P<title>.+?)(?:[.?!])\s+(?P<journal>[A-Z][A-Za-z0-9&().,'’ -]+?)\s+"
@@ -56,9 +53,8 @@ PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)[
 OVERALL_NOTES_RE = re.compile(
     r"(?ims)^[ \t]*Overall notes[ \t]*:[ \t]*"
     r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
-    r"Forest plot title|Agreeing studies|Opposing studies)[ \t]*:|^[ \t]*No inconsistency[ \t.]*$|\Z)"
+    r"Forest plot title|Study)[ \t]*:|^[ \t]*(?:No inconsistency|Inconsistency not very low)[ \t.]*$|\Z)"
 )
-MC_ANSWER_RE = re.compile(r"^[ynm]$")
 
 
 @dataclass(frozen=True)
@@ -77,12 +73,24 @@ class ParsedSofOutcome:
 class ParsedSofExtraction:
     outcomes: list[dict[str, Any]]
     overall_notes: str
-    has_inconsistency: bool
+    extraction_result: str
 
 
 @dataclass(frozen=True)
-class ParsedAgreeOpposeExtraction:
+class ParsedStudiesExtraction:
     outcomes: list[dict[str, Any]]
+    overall_notes: str
+
+
+@dataclass(frozen=True)
+class ParsedPicoExtraction:
+    studies: list[dict[str, str]]
+    overall_notes: str
+
+
+@dataclass(frozen=True)
+class ParsedExcludedExtraction:
+    studies: list[dict[str, str]]
     overall_notes: str
 
 
@@ -106,16 +114,6 @@ def _sof_key(sof_table: str, row: str) -> str:
     return f"{_clean(sof_table).lower()}::{_clean(row).lower()}"
 
 
-def _normalize_mc_answer(value: str, *, block_index: int) -> str:
-    answer = _clean(value).lower()
-    if not MC_ANSWER_RE.fullmatch(answer):
-        raise ValueError(
-            f"Extract SoF block {block_index} has invalid Multiple choice answer: "
-            "expected a single character, y, n, or m."
-        )
-    return answer
-
-
 def _extract_overall_notes(text: str) -> str:
     return _clean("\n\n".join(match.group(1) for match in OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
@@ -126,16 +124,24 @@ def _is_no_inconsistency(text: str) -> bool:
     return normalized == "no inconsistency"
 
 
+def _is_inconsistency_not_very_low(text: str) -> bool:
+    without_notes = OVERALL_NOTES_RE.sub("", text).strip()
+    normalized = without_notes.rstrip(".").strip().lower()
+    return normalized == "inconsistency not very low"
+
+
 def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofExtraction:
     if not text.strip():
         raise ValueError("Paste the Extract SoF output before extracting.")
     overall_notes = _extract_overall_notes(text)
     if _is_no_inconsistency(text):
-        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, has_inconsistency=False)
+        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="no_inconsistency")
+    if _is_inconsistency_not_very_low(text):
+        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="inconsistency_not_very_low")
 
     starts = [match.start() for match in re.finditer(r"(?im)^\s*SoF table\s*:", text)]
     if not starts:
-        raise ValueError("Could not find any 'SoF table:' blocks in the Extract SoF text.")
+        raise ValueError("Could not find any 'SoF table:' blocks or exact no-extraction response in the Extract SoF text.")
     starts.append(len(text))
 
     outcomes: list[dict[str, Any]] = []
@@ -144,7 +150,7 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
         fields = _fields(block)
         missing = [
             label
-            for label in ("sof table", "row", "medical question", "consensus answer", "certainty of evidence", "multiple choice answer")
+            for label in ("sof table", "row", "medical question", "consensus answer", "certainty of evidence")
             if not fields.get(label)
         ]
         if missing:
@@ -163,95 +169,43 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
                 "question": _clean(fields["medical question"][0]),
                 "consensus_answer": _clean(fields["consensus answer"][0]),
                 "certainty": _clean(fields["certainty of evidence"][0]),
-                "mc_answer": _normalize_mc_answer(fields["multiple choice answer"][0], block_index=index + 1),
+                "mc_answer": "m",
                 "downgrade_reasoning": _clean((fields.get("downgrade reasoning") or [""])[0]),
                 "forest_plot_title": "",
-                "agreeing_articles": [],
-                "opposing_articles": [],
+                "effect_measure": "",
+                "line_of_no_effect": "",
+                "aggregated_effect_estimate": "",
+                "aggregated_confidence_interval_begin": "",
+                "aggregated_confidence_interval_end": "",
+                "aggregated_confidence_interval_percentage": "",
+                "aggregated_sample_size": "",
+                "included_articles": [],
                 "extraction_status": "sof_extracted",
                 "created_at": datetime.now(UTC).isoformat(),
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         )
-    return ParsedSofExtraction(outcomes=outcomes, overall_notes=overall_notes, has_inconsistency=True)
+    return ParsedSofExtraction(outcomes=outcomes, overall_notes=overall_notes, extraction_result="extracted")
 
 
-def _extract_section(text: str, heading: str) -> str:
-    match = re.search(
-        rf"(?ims)^\s*{re.escape(heading)}\s*:\s*(.*?)(?=^\s*(?:Agreeing studies|Opposing studies|Overall notes|SoF table|Row)\s*:|\Z)",
-        text,
-    )
-    return match.group(1).strip() if match else ""
+def _is_extraction_failed(value: Any) -> bool:
+    return _clean(str(value or "")).lower() == "extraction failed"
 
 
-def _extract_citations(section: str) -> list[dict[str, Any]]:
-    citations: list[dict[str, Any]] = []
-    for study_match in STUDY_BLOCK_RE.finditer(section):
-        block = study_match.group(1).strip()
-        first_line, _, rest = block.partition("\n")
-        study_label = _clean(first_line)
-        fields = _study_fields(rest)
-        for pub_match in PUBLICATION_RE.finditer(rest):
-            citation, title, relaxed_search = _extract_publication(pub_match.group(1))
-            if citation:
-                citations.append(
-                    {
-                        "study_label": study_label,
-                        "citation": citation,
-                        "title": title,
-                        "relaxed_search": relaxed_search,
-                        "effect_estimate": fields.get("effect estimate", ""),
-                        "confidence_interval_begin": fields.get("confidence interval begin", ""),
-                        "confidence_interval_end": fields.get("confidence interval end", ""),
-                        "confidence_interval_percentage": fields.get("confidence interval percentage", ""),
-                    }
-                )
-    if not citations:
-        for pub_match in PUBLICATION_RE.finditer(section):
-            citation, title, relaxed_search = _extract_publication(pub_match.group(1))
-            if citation:
-                citations.append(
-                    {
-                        "study_label": "",
-                        "citation": citation,
-                        "title": title,
-                        "relaxed_search": relaxed_search,
-                        "effect_estimate": "",
-                        "confidence_interval_begin": "",
-                        "confidence_interval_end": "",
-                        "confidence_interval_percentage": "",
-                    }
-                )
-    return citations
+def _clean_failed(value: Any) -> str:
+    return "extraction failed" if _is_extraction_failed(value) else _clean(str(value or ""))
 
 
-def _validate_effect_citations(citations: list[dict[str, Any]], *, block_index: int, section_name: str) -> None:
-    required = (
-        ("effect_estimate", "Effect estimate"),
-        ("confidence_interval_begin", "Confidence interval begin"),
-        ("confidence_interval_end", "Confidence interval end"),
-        ("confidence_interval_percentage", "Confidence interval percentage"),
-    )
-    for citation_index, citation in enumerate(citations, start=1):
-        missing = [label for key, label in required if not str(citation.get(key) or "").strip()]
-        if missing:
-            study = citation.get("study_label") or f"citation {citation_index}"
-            raise ValueError(
-                f"Extract Agree Oppose block {block_index} {section_name} study '{study}' is missing: "
-                f"{', '.join(missing)}."
-            )
-
-
-def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, Any]]) -> ParsedAgreeOpposeExtraction:
+def parse_studies_extraction(text: str, existing_outcomes: list[dict[str, Any]]) -> ParsedStudiesExtraction:
     if not existing_outcomes:
-        raise ValueError("Extract SoF must be completed before Extract Agree Oppose.")
+        raise ValueError("Extract SoF must be completed before Extract Studies.")
     if not text.strip():
-        raise ValueError("Paste the Extract Agree Oppose output before extracting.")
+        raise ValueError("Paste the Extract Studies output before extracting.")
 
     overall_notes = _extract_overall_notes(text)
     starts = [match.start() for match in re.finditer(r"(?im)^\s*SoF table\s*:", text)]
     if not starts:
-        raise ValueError("Could not find any 'SoF table:' blocks in the Extract Agree Oppose text.")
+        raise ValueError("Could not find any 'SoF table:' blocks in the Extract Studies text.")
     starts.append(len(text))
     outcomes_by_key = {str(item.get("outcome_key")): item for item in existing_outcomes}
     parsed: list[dict[str, Any]] = []
@@ -260,16 +214,14 @@ def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, A
         block = text[starts[index] : starts[index + 1]].strip()
         fields = _fields(block)
         if not fields.get("sof table") or not fields.get("row"):
-            raise ValueError(f"Extract Agree Oppose block {index + 1} is missing SoF table or Row.")
+            raise ValueError(f"Extract Studies block {index + 1} is missing SoF table or Row.")
         key = _sof_key(fields["sof table"][0], fields["row"][0])
         outcome = outcomes_by_key.get(key)
         if not outcome:
             raise ValueError(
-                f"Extract Agree Oppose block {index + 1} does not match a prior SoF outcome "
+                f"Extract Studies block {index + 1} does not match a prior SoF outcome "
                 f"(SoF table {fields['sof table'][0]}, Row {fields['row'][0]})."
             )
-        agreeing_section = _extract_section(block, "Agreeing studies")
-        opposing_section = _extract_section(block, "Opposing studies")
         effect_measure = _clean((fields.get("effect measure") or [""])[0]).lower()
         line_of_no_effect = _clean((fields.get("line of no effect") or [""])[0])
         missing_effect_fields = []
@@ -278,33 +230,91 @@ def parse_agree_oppose_extraction(text: str, existing_outcomes: list[dict[str, A
         if not line_of_no_effect:
             missing_effect_fields.append("Line of no effect")
         if missing_effect_fields:
-            raise ValueError(f"Extract Agree Oppose block {index + 1} is missing: {', '.join(missing_effect_fields)}.")
-        agreeing_citations = _extract_citations(agreeing_section)
-        opposing_citations = _extract_citations(opposing_section)
-        _validate_effect_citations(agreeing_citations, block_index=index + 1, section_name="Agreeing studies")
-        _validate_effect_citations(opposing_citations, block_index=index + 1, section_name="Opposing studies")
+            raise ValueError(f"Extract Studies block {index + 1} is missing: {', '.join(missing_effect_fields)}.")
+        studies = []
+        for study_match in STUDY_BLOCK_RE.finditer(block):
+            study_block = study_match.group(1).strip()
+            first_line, _, rest = study_block.partition("\n")
+            study = {"study_label": _clean(first_line), **_study_fields(rest)}
+            for required in ("effect estimate", "confidence interval begin", "confidence interval end", "confidence interval percentage", "sample size", "citation", "title", "relaxed search"):
+                if required not in study:
+                    raise ValueError(f"Extract Studies block {index + 1} study '{study['study_label']}' is missing: {required.title()}.")
+            studies.append(
+                {
+                    "study_label": study["study_label"],
+                    "effect_estimate": _clean_failed(study.get("effect estimate")),
+                    "confidence_interval_begin": _clean_failed(study.get("confidence interval begin")),
+                    "confidence_interval_end": _clean_failed(study.get("confidence interval end")),
+                    "confidence_interval_percentage": _clean_failed(study.get("confidence interval percentage")),
+                    "sample_size": _clean_failed(study.get("sample size")),
+                    "citation": _clean_failed(study.get("citation")),
+                    "title": _clean_failed(study.get("title")),
+                    "relaxed_search": _clean_failed(study.get("relaxed search")),
+                }
+            )
         parsed.append(
             {
                 "outcome": outcome,
                 "forest_plot_title": _clean((fields.get("forest plot title") or [""])[0]),
                 "effect_measure": effect_measure,
                 "line_of_no_effect": line_of_no_effect,
-                "agreeing_citations": agreeing_citations,
-                "opposing_citations": opposing_citations,
+                "aggregated_effect_estimate": _clean((fields.get("aggregated effect estimate") or [""])[0]),
+                "aggregated_confidence_interval_begin": _clean((fields.get("aggregated confidence interval begin") or [""])[0]),
+                "aggregated_confidence_interval_end": _clean((fields.get("aggregated confidence interval end") or [""])[0]),
+                "aggregated_confidence_interval_percentage": _clean((fields.get("aggregated confidence interval percentage") or [""])[0]),
+                "aggregated_sample_size": _clean((fields.get("aggregated sample size") or [""])[0]),
+                "studies": studies,
             }
         )
-    return ParsedAgreeOpposeExtraction(outcomes=parsed, overall_notes=overall_notes)
+    return ParsedStudiesExtraction(outcomes=parsed, overall_notes=overall_notes)
 
 
-def _extract_publication(block: str) -> tuple[str, str, str]:
-    metadata = {match.group(1).lower(): _clean(match.group(2)) for match in PUBLICATION_META_RE.finditer(block)}
-    first_meta = PUBLICATION_META_RE.search(block)
-    citation = _clean(block[: first_meta.start()] if first_meta else block)
-    title = metadata.get("title", "")
-    relaxed_search = metadata.get("relaxed search", "")
-    if not title and citation:
-        title, _year = _extract_title_year(citation)
-    return citation, title, relaxed_search
+def parse_pico_extraction(text: str) -> ParsedPicoExtraction:
+    if not text.strip():
+        raise ValueError("Paste the Extract PICO output before extracting.")
+    overall_notes = _extract_overall_notes(text)
+    studies = []
+    for study_match in STUDY_BLOCK_RE.finditer(text):
+        block = study_match.group(1).strip()
+        first_line, _, rest = block.partition("\n")
+        fields = _study_fields(rest)
+        studies.append(
+            {
+                "study_label": _clean(first_line),
+                "population": _clean_failed(fields.get("population")),
+                "intervention": _clean_failed(fields.get("intervention")),
+                "comparator": _clean_failed(fields.get("comparator")),
+                "outcome": _clean_failed(fields.get("outcome")),
+            }
+        )
+    if not studies and not _is_extraction_failed(text):
+        raise ValueError("Could not find any 'Study:' blocks in the Extract PICO text.")
+    return ParsedPicoExtraction(studies=studies, overall_notes=overall_notes)
+
+
+def parse_excluded_extraction(text: str) -> ParsedExcludedExtraction:
+    if not text.strip():
+        raise ValueError("Paste the Extract Excluded output before extracting.")
+    overall_notes = _extract_overall_notes(text)
+    if _is_extraction_failed(OVERALL_NOTES_RE.sub("", text).strip()):
+        return ParsedExcludedExtraction(studies=[], overall_notes=overall_notes)
+    studies = []
+    for study_match in STUDY_BLOCK_RE.finditer(text):
+        block = study_match.group(1).strip()
+        first_line, _, rest = block.partition("\n")
+        fields = _study_fields(rest)
+        studies.append(
+            {
+                "study_label": _clean(first_line),
+                "citation": _clean_failed(fields.get("citation")),
+                "title": _clean_failed(fields.get("title")),
+                "relaxed_search": _clean_failed(fields.get("relaxed search")),
+                "reason_for_exclusion": _clean_failed(fields.get("reason for exclusion")),
+            }
+        )
+    if not studies:
+        raise ValueError("Could not find any 'Study:' blocks in the Extract Excluded text.")
+    return ParsedExcludedExtraction(studies=studies, overall_notes=overall_notes)
 
 
 def build_session() -> requests.Session:
@@ -462,35 +472,48 @@ def create_and_store_article(
     citation: str,
     study_label: str,
     review: dict[str, Any],
-    outcome: dict[str, Any],
-    stance: str,
+    outcome: dict[str, Any] | None = None,
+    article_type: str = "included_study",
     effect_measure: str = "",
     line_of_no_effect: str = "",
     effect_estimate: str = "",
     confidence_interval_begin: str = "",
     confidence_interval_end: str = "",
     confidence_interval_percentage: str = "",
+    sample_size: str = "",
+    population: str = "",
+    intervention: str = "",
+    comparator: str = "",
+    outcome_text: str = "",
+    reason_for_exclusion: str = "",
     title: str = "",
     relaxed_search: str = "",
 ) -> dict[str, Any]:
     article_id = store.next_article_id()
-    extracted_title, year = _extract_title_year(citation)
+    extracted_title, year = _extract_title_year(citation) if citation and not _is_extraction_failed(citation) else ("", "")
     title = _clean(title or extracted_title)
+    outcome_id = int(outcome["outcome_id"]) if outcome else 0
 
     item = {
         "article_id": article_id,
+        "article_type": article_type,
         "review_id": review["review_id"],
         "review_pmid": review["pmid"],
-        "outcome_id": int(outcome["outcome_id"]),
-        "outcome_key": outcome.get("outcome_key", ""),
-        "stance": stance,
+        "outcome_id": outcome_id,
+        "outcome_key": outcome.get("outcome_key", "") if outcome else "",
         "study_label": study_label,
         "effect_measure": effect_measure or None,
         "effect_estimate": effect_estimate or None,
         "confidence_interval_begin": confidence_interval_begin or None,
         "confidence_interval_end": confidence_interval_end or None,
         "confidence_interval_percentage": confidence_interval_percentage or None,
+        "sample_size": sample_size or None,
         "line_of_no_effect": line_of_no_effect or None,
+        "population": population or None,
+        "intervention": intervention or None,
+        "comparator": comparator or None,
+        "outcome": outcome_text or None,
+        "reason_for_exclusion": reason_for_exclusion or None,
         "citation": citation,
         "pmid": None,
         "pmcid": None,
@@ -504,10 +527,12 @@ def create_and_store_article(
         "pubmed_query": "",
         "relaxed_search": relaxed_search,
         "match_status": "pmid_pending",
-        "manual_extraction_failed": False,
+        "manual_extraction_failed": _is_extraction_failed(citation) or _is_extraction_failed(title),
         "enrichment_errors": [],
         "created_at": datetime.now(UTC).isoformat(),
     }
+    if item["manual_extraction_failed"]:
+        item["match_status"] = "manual_extraction_failed"
     store.put_article(item)
     return item
 

@@ -122,7 +122,9 @@ function ReviewsView({ reviews, onOpen }) {
 function OverallNotes({ review }) {
   const notes = [
     { label: "SoF overall notes", value: review?.sof_overall_notes },
-    { label: "Agree/Oppose overall notes", value: review?.agree_oppose_overall_notes },
+    { label: "Studies overall notes", value: review?.studies_overall_notes },
+    { label: "PICO overall notes", value: review?.pico_overall_notes },
+    { label: "Excluded overall notes", value: review?.excluded_overall_notes },
   ].filter((item) => String(item.value || "").trim());
 
   if (!notes.length) return null;
@@ -150,14 +152,16 @@ function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
             <th>Row</th>
             <th>Medical Question</th>
             <th>Consensus Answer</th>
-            <th>MC Answer</th>
+            <th>Benchmark Answer</th>
             <th>Eval Parametric</th>
             <th>Certainty</th>
             <th>Forest Plot</th>
             <th>Effect Measure</th>
             <th>Line of No Effect</th>
-            <th>Agreeing Articles</th>
-            <th>Opposing Articles</th>
+            <th>Aggregated Estimate</th>
+            <th>Aggregated CI</th>
+            <th>Aggregated Sample</th>
+            <th>Included Articles</th>
             <th>Downgrade Reasoning</th>
           </tr>
         </thead>
@@ -173,14 +177,25 @@ function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
               <td>{outcome.row}</td>
               <td>{outcome.question}</td>
               <td>{outcome.consensus_answer}</td>
-              <td>{outcome.mc_answer || <span className="muted">Missing</span>}</td>
+              <td>m</td>
               <td>{evalOutcome.parametric?.answer || <span className="muted">No run</span>}</td>
               <td>{outcome.certainty}</td>
               <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
               <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
               <td>{outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
-              <td>{(outcome.agreeing_articles || []).join(", ") || <span className="muted">None</span>}</td>
-              <td>{(outcome.opposing_articles || []).join(", ") || <span className="muted">None</span>}</td>
+              <td>{outcome.aggregated_effect_estimate || <span className="muted">Pending</span>}</td>
+              <td>
+                {outcome.aggregated_confidence_interval_begin && outcome.aggregated_confidence_interval_end ? (
+                  <>
+                    {outcome.aggregated_confidence_interval_begin} to {outcome.aggregated_confidence_interval_end}
+                    {outcome.aggregated_confidence_interval_percentage ? ` (${outcome.aggregated_confidence_interval_percentage}%)` : ""}
+                  </>
+                ) : (
+                  <span className="muted">Pending</span>
+                )}
+              </td>
+              <td>{outcome.aggregated_sample_size || <span className="muted">Pending</span>}</td>
+              <td>{(outcome.included_articles || []).join(", ") || <span className="muted">None</span>}</td>
               <td>{outcome.downgrade_reasoning}</td>
                   </>
                 );
@@ -252,14 +267,20 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
             <tr>
               <th>Article ID</th>
               <th>Outcome</th>
-              <th>Stance</th>
+              <th>Type</th>
               <th>Study</th>
               <th>Effect Measure</th>
               <th>Effect Estimate</th>
               <th>CI</th>
+              <th>Sample Size</th>
               <th>Line of No Effect</th>
               <th>Z Category</th>
               <th>Wald Z</th>
+              <th>Population</th>
+              <th>Intervention</th>
+              <th>Comparator</th>
+              <th>Outcome</th>
+              <th>Exclusion Reason</th>
               <th>Title</th>
               <th>Citation</th>
               <th>PMID</th>
@@ -273,8 +294,8 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
             {rows.map((article) => (
               <tr key={article.article_id}>
                 <td>{article.article_id}</td>
-                <td>{article.outcome_id}</td>
-                <td>{article.stance}</td>
+                <td>{article.outcome_id || <span className="muted">n/a</span>}</td>
+                <td>{article.article_type === "excluded_study" ? <Pill tone="warn">Excluded</Pill> : <Pill>Included</Pill>}</td>
                 <td>{article.study_label || <span className="muted">Unlabeled</span>}</td>
                 <td>{article.effect_measure || <span className="muted">Missing</span>}</td>
                 <td>{article.effect_estimate || <span className="muted">Missing</span>}</td>
@@ -288,6 +309,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
                     <span className="muted">Missing</span>
                   )}
                 </td>
+                <td>{article.sample_size || <span className="muted">Missing</span>}</td>
                 <td>{article.line_of_no_effect || <span className="muted">Missing</span>}</td>
                 <td>
                   {article.wald_z_category ? (
@@ -297,6 +319,11 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
                   )}
                 </td>
                 <td>{formatNumber(article.wald_z) || <span className="muted">{article.wald_z_error || "Missing"}</span>}</td>
+                <td className="titleCell">{article.population || <span className="muted">Missing</span>}</td>
+                <td className="titleCell">{article.intervention || <span className="muted">Missing</span>}</td>
+                <td className="titleCell">{article.comparator || <span className="muted">Missing</span>}</td>
+                <td className="titleCell">{article.outcome || <span className="muted">Missing</span>}</td>
+                <td className="titleCell">{article.reason_for_exclusion || <span className="muted">n/a</span>}</td>
                 <td className="titleCell">{article.title || <span className="muted">Missing</span>}</td>
                 <td className="titleCell">{article.citation}</td>
                 <td>
@@ -549,7 +576,9 @@ function EvaluationsView() {
 function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [payload, setPayload] = useState(null);
   const [sofText, setSofText] = useState("");
-  const [agreeText, setAgreeText] = useState("");
+  const [studiesText, setStudiesText] = useState("");
+  const [picoText, setPicoText] = useState("");
+  const [excludedText, setExcludedText] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -587,15 +616,19 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
     setError("");
     setMessage("");
     try {
-      const path = kind === "sof" ? "extract-sof" : "extract-agree-oppose";
-      const text = kind === "sof" ? sofText : agreeText;
-      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/${path}`, {
+      const config = {
+        sof: { path: "extract-sof", text: sofText, success: (result) => result.message || "SoF extracted." },
+        studies: { path: "extract-studies", text: studiesText, success: (result) => `Studies extracted. Added ${result.article_count || 0} articles.` },
+        pico: { path: "extract-pico", text: picoText, success: (result) => `PICO extracted. Updated ${result.updated_article_count || 0} articles.` },
+        excluded: { path: "extract-excluded", text: excludedText, success: (result) => `Excluded studies extracted. Added ${result.article_count || 0} articles.` },
+      }[kind];
+      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/${config.path}`, {
         method: "POST",
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: config.text }),
       });
       setPayload(result.review ? result : { ...payload, ...result });
       if (result.review) onReviewUpdated(result.review);
-      setMessage(kind === "sof" ? result.message || "SoF extracted." : `Agree/Oppose extracted. Added ${result.article_count || 0} articles.`);
+      setMessage(config.success(result));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -665,10 +698,24 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
               </button>
             </div>
             <div className="extractPanel">
-              <h2>Extract Agree Oppose</h2>
-              <textarea value={agreeText} onChange={(event) => setAgreeText(event.target.value)} />
-              <button className="primaryButton" disabled={busy === "agree"} onClick={() => submit("agree")}>
-                {busy === "agree" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Agree/Oppose
+              <h2>Extract Studies</h2>
+              <textarea value={studiesText} onChange={(event) => setStudiesText(event.target.value)} />
+              <button className="primaryButton" disabled={busy === "studies"} onClick={() => submit("studies")}>
+                {busy === "studies" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Studies
+              </button>
+            </div>
+            <div className="extractPanel">
+              <h2>Extract PICO</h2>
+              <textarea value={picoText} onChange={(event) => setPicoText(event.target.value)} />
+              <button className="primaryButton" disabled={busy === "pico"} onClick={() => submit("pico")}>
+                {busy === "pico" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract PICO
+              </button>
+            </div>
+            <div className="extractPanel">
+              <h2>Extract Excluded</h2>
+              <textarea value={excludedText} onChange={(event) => setExcludedText(event.target.value)} />
+              <button className="primaryButton" disabled={busy === "excluded"} onClick={() => submit("excluded")}>
+                {busy === "excluded" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Excluded
               </button>
             </div>
           </section>
