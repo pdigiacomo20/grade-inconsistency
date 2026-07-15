@@ -8,7 +8,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 2. Assigns each review a stable ID: `CSR_0001`, `CSR_0002`, and so on.
 3. Marks protocol-only reviews in the `reviews` table so the frontend can filter them out.
 4. Lets a user open each review detail page, download the review PDF when PMC exposes one, and paste browser-assisted extraction outputs into four extraction boxes.
-5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`. The benchmark multiple-choice answer is always `m`.
+5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`. The pasted SoF output only needs `SoF table`, `Row`, `Medical question`, and optional `Downgrade reasoning`; the app keeps compatibility fields internally with certainty set to `very low` and benchmark multiple-choice answer set to `m`.
 6. Parses `Extract Studies` second, stores forest-plot aggregate metrics on each outcome, and inserts included study article rows as `ART_00001`, `ART_00002`, and so on.
 7. Parses `Extract PICO` and stores PICO fields on matching included study article rows.
 8. Parses `Extract Excluded` and inserts excluded study article rows with exclusion reasons.
@@ -27,7 +27,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`. `consensus_answer`, `mc_answer`, and `certainty` are compatibility fields; new manual SoF extraction output no longer has to include them.
 
 `articles`
 
@@ -177,11 +177,11 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 5. Paste the GPT output into `Extract SoF` and click `Extract SoF`.
 6. Use GPT with the `Extract Studies`, `Extract PICO`, and `Extract Excluded` prompts.
 7. Paste each GPT output into the matching panel and submit it.
-8. Review extracted outcomes and associated articles below the input boxes.
+8. Review extracted outcomes and associated articles below the input boxes. Associated articles default to the `Included` tab; use the `Excluded` tab for excluded studies and the `Full`, `Results`, `PICO`, and `Citation` presets to change article-table columns.
 9. Review automatically matched PMIDs in the article table.
 10. For unresolved associated articles, enter the PMID and click `Process PMID`, or click `Manual extract failed` if no PMID can be found.
 
-The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract Studies` must include `Effect measure`, `Line of no effect`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract PICO` updates included study rows by exact study label. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
+The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Line of no effect`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract PICO` updates included study rows by exact study label. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
 
 ## Run Remotely Over SSH
 

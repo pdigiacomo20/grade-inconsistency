@@ -63,9 +63,6 @@ class ParsedSofOutcome:
     sof_table: str
     row: str
     question: str
-    consensus_answer: str
-    certainty: str
-    mc_answer: str
     downgrade_reasoning: str
 
 
@@ -150,7 +147,7 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
         fields = _fields(block)
         missing = [
             label
-            for label in ("sof table", "row", "medical question", "consensus answer", "certainty of evidence")
+            for label in ("sof table", "row", "medical question")
             if not fields.get(label)
         ]
         if missing:
@@ -167,8 +164,8 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
                 "row": row,
                 "outcome_key": _sof_key(sof_table, row),
                 "question": _clean(fields["medical question"][0]),
-                "consensus_answer": _clean(fields["consensus answer"][0]),
-                "certainty": _clean(fields["certainty of evidence"][0]),
+                "consensus_answer": _clean((fields.get("consensus answer") or [""])[0]),
+                "certainty": _clean((fields.get("certainty of evidence") or ["very low"])[0]) or "very low",
                 "mc_answer": "m",
                 "downgrade_reasoning": _clean((fields.get("downgrade reasoning") or [""])[0]),
                 "forest_plot_title": "",
@@ -420,6 +417,44 @@ def _summaries(session: requests.Session, pmids: list[str]) -> dict[str, dict[st
     return {pmid: result.get(pmid, {}) for pmid in result.get("uids", [])}
 
 
+def _summary_title(summary: dict[str, Any]) -> str:
+    return _clean(str(summary.get("title") or "").rstrip("."))
+
+
+def _summary_author_text(summary: dict[str, Any]) -> str:
+    authors = summary.get("authors") or []
+    names = [str(author.get("name") or "").strip() for author in authors if isinstance(author, dict) and author.get("name")]
+    if not names:
+        return ""
+    if len(names) > 6:
+        return f"{', '.join(names[:6])}, et al."
+    return ", ".join(names)
+
+
+def _summary_citation(summary: dict[str, Any]) -> str:
+    title = _summary_title(summary)
+    journal = _clean(str(summary.get("fulljournalname") or summary.get("source") or ""))
+    pubdate = _clean(str(summary.get("pubdate") or summary.get("epubdate") or ""))
+    year = pubdate[:4] if YEAR_RE.match(pubdate[:4]) else ""
+    volume = _clean(str(summary.get("volume") or ""))
+    issue = _clean(str(summary.get("issue") or ""))
+    pages = _clean(str(summary.get("pages") or ""))
+    journal_bits = ""
+    if journal:
+        journal_bits = f"{journal} {year}".strip()
+        if volume:
+            journal_bits += f";{volume}"
+            if issue:
+                journal_bits += f"({issue})"
+        elif issue:
+            journal_bits += f";({issue})"
+        if pages:
+            journal_bits += f":{pages}"
+        journal_bits = journal_bits.rstrip(";:") + "."
+    parts = [_summary_author_text(summary), f"{title}." if title else "", journal_bits]
+    return _clean(" ".join(part for part in parts if part))
+
+
 def _search_pubmed_first(session: requests.Session, query: str) -> str:
     query = query.strip()
     if not query:
@@ -604,6 +639,8 @@ def enrich_article_with_pmid(
     if not summary:
         raise ValueError(f"No PubMed record found for PMID {pmid}.")
 
+    summary_title = _summary_title(summary)
+    summary_citation = _summary_citation(summary)
     pmcid = _lookup_pmcid(session, pmid)
     abstract_path = str(article.get("abstract_path") or "")
     full_text_path = str(article.get("full_text_path") or "")
@@ -627,7 +664,8 @@ def enrich_article_with_pmid(
         {
             "pmid": pmid,
             "pmcid": pmcid or None,
-            "title": str(article.get("title") or summary.get("title") or ""),
+            "title": summary_title if _is_extraction_failed(article.get("title")) or not article.get("title") else str(article.get("title") or ""),
+            "citation": summary_citation if _is_extraction_failed(article.get("citation")) or not article.get("citation") else str(article.get("citation") or ""),
             "journal": str(summary.get("fulljournalname") or summary.get("source") or ""),
             "year": str(summary.get("pubdate") or summary.get("epubdate") or "")[:4],
             "pubmed_url": PUBMED_ARTICLE_URL.format(pmid=pmid),

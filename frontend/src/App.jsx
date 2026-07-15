@@ -211,16 +211,25 @@ function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
 
 function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByArticle = {} }) {
   const [sortByOutcome, setSortByOutcome] = useState(true);
+  const [articleTab, setArticleTab] = useState("included");
+  const [viewMode, setViewMode] = useState("full");
   const [pmidInputs, setPmidInputs] = useState({});
   const [processingArticle, setProcessingArticle] = useState("");
   const [rowError, setRowError] = useState("");
+  const tabbedArticles = useMemo(() => {
+    return articles.filter((article) => (
+      articleTab === "excluded"
+        ? article.article_type === "excluded_study"
+        : article.article_type !== "excluded_study"
+    ));
+  }, [articles, articleTab]);
   const rows = useMemo(() => {
-    const copy = [...articles];
+    const copy = [...tabbedArticles];
     if (sortByOutcome) {
       copy.sort((a, b) => Number(a.outcome_id || 0) - Number(b.outcome_id || 0) || String(a.article_id).localeCompare(String(b.article_id)));
     }
     return copy;
-  }, [articles, sortByOutcome]);
+  }, [tabbedArticles, sortByOutcome]);
 
   const processPmid = async (article) => {
     const pmid = String(pmidInputs[article.article_id] || article.pmid || "").trim();
@@ -252,139 +261,150 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
     }
   };
 
+  const renderCi = (article) => (
+    article.confidence_interval_begin && article.confidence_interval_end ? (
+      <>
+        {article.confidence_interval_begin} to {article.confidence_interval_end}
+        {article.confidence_interval_percentage ? ` (${article.confidence_interval_percentage}%)` : ""}
+      </>
+    ) : (
+      <span className="muted">Missing</span>
+    )
+  );
+
+  const renderPmid = (article) => (
+    <div className="pmidCell">
+      {article.manual_extraction_failed ? (
+        <span className="muted">Manual extract failed</span>
+      ) : (
+        <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>
+      )}
+      <div className="pmidControl">
+        <input
+          value={pmidInputs[article.article_id] || ""}
+          onChange={(event) => setPmidInputs((current) => ({ ...current, [article.article_id]: event.target.value }))}
+          placeholder="PMID"
+          inputMode="numeric"
+        />
+        <button
+          className="smallButton"
+          disabled={processingArticle === article.article_id}
+          onClick={() => processPmid(article)}
+        >
+          {processingArticle === article.article_id ? <RefreshCw size={14} className="spin" /> : null}
+          Process PMID
+        </button>
+        <button
+          className="smallButton warningButton"
+          disabled={processingArticle === article.article_id || Boolean(article.pmid)}
+          onClick={() => markManualFailed(article)}
+        >
+          <AlertTriangle size={14} />
+          Manual extract failed
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderFiles = (article) => (
+    <div className="fileLinks">
+      {article.abstract_path ? <a href={apiHref(`/api/articles/${article.article_id}/abstract`)}>Abstract</a> : <span className="muted">No abstract</span>}
+      {article.full_text_path ? <a href={apiHref(`/api/articles/${article.article_id}/full-text`)}>Full text</a> : <span className="muted">No full text</span>}
+    </div>
+  );
+
+  const renderEvalAnswer = (article) => (
+    evaluationByArticle[article.article_id]?.answer ? (
+      <>
+        <Pill>{evaluationByArticle[article.article_id].answer}</Pill>{" "}
+        <span className="muted">{evaluationByArticle[article.article_id].memorization_label || ""}</span>
+      </>
+    ) : (
+      <span className="muted">No run</span>
+    )
+  );
+
+  const columns = [
+    { id: "study", label: "Study", className: "stickyColumn", render: (article) => article.study_label || <span className="muted">Unlabeled</span> },
+    { id: "article_id", label: "Article ID", render: (article) => article.article_id },
+    { id: "outcome_id", label: "Outcome", render: (article) => article.outcome_id || <span className="muted">n/a</span> },
+    { id: "type", label: "Type", render: (article) => article.article_type === "excluded_study" ? <Pill tone="warn">Excluded</Pill> : <Pill>Included</Pill> },
+    { id: "pmid", label: "PMID", render: renderPmid },
+    { id: "pmcid", label: "PMCID", render: (article) => <LinkOut href={article.pmc_url}>{article.pmcid || "PMC"}</LinkOut> },
+    { id: "files", label: "Files", render: renderFiles },
+    { id: "citation", label: "Citation", className: "titleCell", render: (article) => article.citation || <span className="muted">Missing</span> },
+    { id: "title", label: "Title", className: "titleCell", render: (article) => article.title || <span className="muted">Missing</span> },
+    { id: "effect_measure", label: "Effect measure", render: (article) => article.effect_measure || <span className="muted">Missing</span> },
+    { id: "effect_estimate", label: "Effect estimate", render: (article) => article.effect_estimate || <span className="muted">Missing</span> },
+    { id: "ci", label: "CI", render: renderCi },
+    { id: "sample_size", label: "sample size", render: (article) => article.sample_size || <span className="muted">Missing</span> },
+    { id: "line_of_no_effect", label: "line of no effect", render: (article) => article.line_of_no_effect || <span className="muted">Missing</span> },
+    {
+      id: "wald_z_category",
+      label: "z category",
+      render: (article) => article.wald_z_category ? <Pill>{article.wald_z_category}</Pill> : <span className="muted">{article.wald_z_error ? "Unclassified" : "Missing"}</span>,
+    },
+    { id: "wald_z", label: "wald-Z", render: (article) => formatNumber(article.wald_z) || <span className="muted">{article.wald_z_error || "Missing"}</span> },
+    { id: "population", label: "population", className: "titleCell", render: (article) => article.population || <span className="muted">Missing</span> },
+    { id: "intervention", label: "intervention", className: "titleCell", render: (article) => article.intervention || <span className="muted">Missing</span> },
+    { id: "comparator", label: "comparator", className: "titleCell", render: (article) => article.comparator || <span className="muted">Missing</span> },
+    { id: "outcome", label: "outcome", className: "titleCell", render: (article) => article.outcome || <span className="muted">Missing</span> },
+    { id: "eval_context_answer", label: "eval context answer", render: renderEvalAnswer },
+    { id: "reason_for_exclusion", label: "exclusion reason", className: "titleCell", render: (article) => article.reason_for_exclusion || <span className="muted">n/a</span> },
+    { id: "match_status", label: "match", render: (article) => article.match_status || <span className="muted">Not matched</span> },
+  ];
+  const viewColumns = {
+    full: columns.map((column) => column.id),
+    results: ["study", "article_id", "outcome_id", "type", "effect_measure", "effect_estimate", "ci", "sample_size", "line_of_no_effect", "wald_z_category", "wald_z", "eval_context_answer", "match_status"],
+    pico: ["study", "article_id", "outcome_id", "type", "population", "intervention", "comparator", "outcome", "eval_context_answer", "reason_for_exclusion", "match_status"],
+    citation: ["study", "article_id", "outcome_id", "type", "pmid", "pmcid", "files", "citation", "title", "match_status"],
+  };
+  const visibleColumns = columns.filter((column) => viewColumns[viewMode].includes(column.id));
+  const includedCount = articles.filter((article) => article.article_type !== "excluded_study").length;
+  const excludedCount = articles.filter((article) => article.article_type === "excluded_study").length;
+
   return (
     <>
       <div className="sectionHeader">
         <h2>Associated Articles</h2>
-        <label className="checkControl">
-          <input type="checkbox" checked={sortByOutcome} onChange={(event) => setSortByOutcome(event.target.checked)} />
-          Sort by outcome
-        </label>
+        <div className="articleControls">
+          <div className="segmentedControl" role="tablist" aria-label="Article type">
+            <button className={articleTab === "included" ? "active" : ""} onClick={() => setArticleTab("included")}>Included ({includedCount})</button>
+            <button className={articleTab === "excluded" ? "active" : ""} onClick={() => setArticleTab("excluded")}>Excluded ({excludedCount})</button>
+          </div>
+          <div className="segmentedControl" aria-label="Article table view">
+            <button className={viewMode === "full" ? "active" : ""} onClick={() => setViewMode("full")}>Full</button>
+            <button className={viewMode === "results" ? "active" : ""} onClick={() => setViewMode("results")}>Results</button>
+            <button className={viewMode === "pico" ? "active" : ""} onClick={() => setViewMode("pico")}>PICO</button>
+            <button className={viewMode === "citation" ? "active" : ""} onClick={() => setViewMode("citation")}>Citation</button>
+          </div>
+          <label className="checkControl">
+            <input type="checkbox" checked={sortByOutcome} onChange={(event) => setSortByOutcome(event.target.checked)} />
+            Sort by outcome
+          </label>
+        </div>
       </div>
-      <div className="tableWrap compact">
-        <table>
+      <div className="tableWrap compact articlesTableWrap">
+        <table className="articlesTable">
           <thead>
             <tr>
-              <th>Article ID</th>
-              <th>Outcome</th>
-              <th>Type</th>
-              <th>Study</th>
-              <th>Effect Measure</th>
-              <th>Effect Estimate</th>
-              <th>CI</th>
-              <th>Sample Size</th>
-              <th>Line of No Effect</th>
-              <th>Z Category</th>
-              <th>Wald Z</th>
-              <th>Population</th>
-              <th>Intervention</th>
-              <th>Comparator</th>
-              <th>Outcome</th>
-              <th>Exclusion Reason</th>
-              <th>Title</th>
-              <th>Citation</th>
-              <th>PMID</th>
-              <th>PMCID</th>
-              <th>Files</th>
-              <th>Match</th>
-              <th>Eval Context Answer</th>
+              {visibleColumns.map((column) => (
+                <th className={column.className || ""} key={column.id}>{column.label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((article) => (
               <tr key={article.article_id}>
-                <td>{article.article_id}</td>
-                <td>{article.outcome_id || <span className="muted">n/a</span>}</td>
-                <td>{article.article_type === "excluded_study" ? <Pill tone="warn">Excluded</Pill> : <Pill>Included</Pill>}</td>
-                <td>{article.study_label || <span className="muted">Unlabeled</span>}</td>
-                <td>{article.effect_measure || <span className="muted">Missing</span>}</td>
-                <td>{article.effect_estimate || <span className="muted">Missing</span>}</td>
-                <td>
-                  {article.confidence_interval_begin && article.confidence_interval_end ? (
-                    <>
-                      {article.confidence_interval_begin} to {article.confidence_interval_end}
-                      {article.confidence_interval_percentage ? ` (${article.confidence_interval_percentage}%)` : ""}
-                    </>
-                  ) : (
-                    <span className="muted">Missing</span>
-                  )}
-                </td>
-                <td>{article.sample_size || <span className="muted">Missing</span>}</td>
-                <td>{article.line_of_no_effect || <span className="muted">Missing</span>}</td>
-                <td>
-                  {article.wald_z_category ? (
-                    <Pill>{article.wald_z_category}</Pill>
-                  ) : (
-                    <span className="muted">{article.wald_z_error ? "Unclassified" : "Missing"}</span>
-                  )}
-                </td>
-                <td>{formatNumber(article.wald_z) || <span className="muted">{article.wald_z_error || "Missing"}</span>}</td>
-                <td className="titleCell">{article.population || <span className="muted">Missing</span>}</td>
-                <td className="titleCell">{article.intervention || <span className="muted">Missing</span>}</td>
-                <td className="titleCell">{article.comparator || <span className="muted">Missing</span>}</td>
-                <td className="titleCell">{article.outcome || <span className="muted">Missing</span>}</td>
-                <td className="titleCell">{article.reason_for_exclusion || <span className="muted">n/a</span>}</td>
-                <td className="titleCell">{article.title || <span className="muted">Missing</span>}</td>
-                <td className="titleCell">{article.citation}</td>
-                <td>
-                  <div className="pmidCell">
-                    {article.manual_extraction_failed ? (
-                      <span className="muted">Manual extract failed</span>
-                    ) : (
-                      <LinkOut href={article.pubmed_url}>{article.pmid || "PMID"}</LinkOut>
-                    )}
-                    <div className="pmidControl">
-                      <input
-                        value={pmidInputs[article.article_id] || ""}
-                        onChange={(event) => setPmidInputs((current) => ({ ...current, [article.article_id]: event.target.value }))}
-                        placeholder="PMID"
-                        inputMode="numeric"
-                      />
-                      <button
-                        className="smallButton"
-                        disabled={processingArticle === article.article_id}
-                        onClick={() => processPmid(article)}
-                      >
-                        {processingArticle === article.article_id ? <RefreshCw size={14} className="spin" /> : null}
-                        Process PMID
-                      </button>
-                      <button
-                        className="smallButton warningButton"
-                        disabled={processingArticle === article.article_id || Boolean(article.pmid)}
-                        onClick={() => markManualFailed(article)}
-                      >
-                        <AlertTriangle size={14} />
-                        Manual extract failed
-                      </button>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <LinkOut href={article.pmc_url}>{article.pmcid || "PMC"}</LinkOut>
-                </td>
-                <td>
-                  <div className="fileLinks">
-                    {article.abstract_path ? <a href={apiHref(`/api/articles/${article.article_id}/abstract`)}>Abstract</a> : <span className="muted">No abstract</span>}
-                    {article.full_text_path ? <a href={apiHref(`/api/articles/${article.article_id}/full-text`)}>Full text</a> : <span className="muted">No full text</span>}
-                  </div>
-                </td>
-                <td>{article.match_status || <span className="muted">Not matched</span>}</td>
-                <td>
-                  {evaluationByArticle[article.article_id]?.answer ? (
-                    <>
-                      <Pill>{evaluationByArticle[article.article_id].answer}</Pill>{" "}
-                      <span className="muted">{evaluationByArticle[article.article_id].memorization_label || ""}</span>
-                    </>
-                  ) : (
-                    <span className="muted">No run</span>
-                  )}
-                </td>
+                {visibleColumns.map((column) => (
+                  <td className={column.className || ""} key={column.id}>{column.render(article)}</td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
         {rowError && <div className="error compactError">{rowError}</div>}
-        {rows.length === 0 && <div className="empty">No articles have been extracted for this review.</div>}
+        {rows.length === 0 && <div className="empty">No {articleTab} articles have been extracted for this review.</div>}
       </div>
     </>
   );
