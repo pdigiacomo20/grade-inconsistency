@@ -124,6 +124,7 @@ function OverallNotes({ review }) {
     { label: "SoF overall notes", value: review?.sof_overall_notes },
     { label: "Studies overall notes", value: review?.studies_overall_notes },
     { label: "PICO overall notes", value: review?.pico_overall_notes },
+    { label: "Plain language summary", value: review?.plain_language_summary },
     { label: "Excluded overall notes", value: review?.excluded_overall_notes },
   ].filter((item) => String(item.value || "").trim());
 
@@ -157,7 +158,9 @@ function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
             <th>Certainty</th>
             <th>Forest Plot</th>
             <th>Effect Measure</th>
-            <th>Line of No Effect</th>
+            <th>Unit</th>
+            <th>Polarity</th>
+            <th>Comparator Effect</th>
             <th>Aggregated Estimate</th>
             <th>Aggregated CI</th>
             <th>Aggregated Sample</th>
@@ -182,7 +185,9 @@ function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
               <td>{outcome.certainty}</td>
               <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
               <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
-              <td>{outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
+              <td>{outcome.unit_of_measure || <span className="muted">Pending</span>}</td>
+              <td>{outcome.polarity_of_measure || <span className="muted">Pending</span>}</td>
+              <td>{outcome.comparator_effect_measure || outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
               <td>{outcome.aggregated_effect_estimate || <span className="muted">Pending</span>}</td>
               <td>
                 {outcome.aggregated_confidence_interval_begin && outcome.aggregated_confidence_interval_end ? (
@@ -335,10 +340,12 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
     { id: "citation", label: "Citation", className: "titleCell", render: (article) => article.citation || <span className="muted">Missing</span> },
     { id: "title", label: "Title", className: "titleCell", render: (article) => article.title || <span className="muted">Missing</span> },
     { id: "effect_measure", label: "Effect measure", render: (article) => article.effect_measure || <span className="muted">Missing</span> },
+    { id: "unit_of_measure", label: "unit", render: (article) => article.unit_of_measure || <span className="muted">Missing</span> },
+    { id: "polarity_of_measure", label: "polarity", render: (article) => article.polarity_of_measure || <span className="muted">Missing</span> },
+    { id: "comparator_effect_measure", label: "comparator effect", render: (article) => article.comparator_effect_measure || article.line_of_no_effect || <span className="muted">Missing</span> },
     { id: "effect_estimate", label: "Effect estimate", render: (article) => article.effect_estimate || <span className="muted">Missing</span> },
     { id: "ci", label: "CI", render: renderCi },
     { id: "sample_size", label: "sample size", render: (article) => article.sample_size || <span className="muted">Missing</span> },
-    { id: "line_of_no_effect", label: "line of no effect", render: (article) => article.line_of_no_effect || <span className="muted">Missing</span> },
     {
       id: "wald_z_category",
       label: "z category",
@@ -355,7 +362,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
   ];
   const viewColumns = {
     full: columns.map((column) => column.id),
-    results: ["study", "article_id", "outcome_id", "type", "effect_measure", "effect_estimate", "ci", "sample_size", "line_of_no_effect", "wald_z_category", "wald_z", "eval_context_answer", "match_status"],
+    results: ["study", "article_id", "outcome_id", "type", "effect_measure", "unit_of_measure", "polarity_of_measure", "comparator_effect_measure", "effect_estimate", "ci", "sample_size", "wald_z_category", "wald_z", "eval_context_answer", "match_status"],
     pico: ["study", "article_id", "outcome_id", "type", "population", "intervention", "comparator", "outcome", "eval_context_answer", "reason_for_exclusion", "match_status"],
     citation: ["study", "article_id", "outcome_id", "type", "pmid", "pmcid", "files", "citation", "title", "match_status"],
   };

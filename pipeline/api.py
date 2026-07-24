@@ -14,7 +14,7 @@ from pydantic import BaseModel
 import requests
 
 from grade_inconsistency import fetch_article_html
-from pipeline.classify_z import classify_article
+from pipeline.classify_z import classify_and_store_article, classify_article
 from pipeline.dynamodb import DynamoStore
 from pipeline.env import load_repo_env
 from pipeline.evaluations import compute_metrics, list_runs, read_run
@@ -76,6 +76,9 @@ def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
         "outcome_id": article.get("outcome_id"),
         "study_label": article.get("study_label"),
         "effect_measure": article.get("effect_measure"),
+        "unit_of_measure": article.get("unit_of_measure"),
+        "polarity_of_measure": article.get("polarity_of_measure"),
+        "comparator_effect_measure": article.get("comparator_effect_measure"),
         "effect_estimate": article.get("effect_estimate"),
         "confidence_interval_begin": article.get("confidence_interval_begin"),
         "confidence_interval_end": article.get("confidence_interval_end"),
@@ -315,6 +318,7 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     review["sof_overall_notes"] = extraction.overall_notes
     review["studies_overall_notes"] = ""
     review["pico_overall_notes"] = ""
+    review["plain_language_summary"] = ""
     review["excluded_overall_notes"] = ""
     review["extraction_result"] = extraction.extraction_result
     review["has_inconsistency"] = extraction.extraction_result == "extracted"
@@ -353,8 +357,11 @@ def extract_studies(review_id: str, payload: ExtractionRequest) -> dict[str, Any
                 review=review,
                 outcome=outcome,
                 article_type="included_study",
-                effect_measure=item["effect_measure"],
-                line_of_no_effect=item["line_of_no_effect"],
+                effect_measure=study.get("effect_measure", item["effect_measure"]),
+                unit_of_measure=study.get("unit_of_measure", item["unit_of_measure"]),
+                polarity_of_measure=study.get("polarity_of_measure", item["polarity_of_measure"]),
+                comparator_effect_measure=study.get("comparator_effect_measure", item["comparator_effect_measure"]),
+                line_of_no_effect=study.get("line_of_no_effect", item["line_of_no_effect"]),
                 effect_estimate=study.get("effect_estimate", ""),
                 confidence_interval_begin=study.get("confidence_interval_begin", ""),
                 confidence_interval_end=study.get("confidence_interval_end", ""),
@@ -365,12 +372,16 @@ def extract_studies(review_id: str, payload: ExtractionRequest) -> dict[str, Any
             )
             if not article.get("manual_extraction_failed"):
                 article = _try_auto_process_article(store=store, session=session, article=article)
+            article = classify_and_store_article(store.articles, article)
             included_ids.append(str(article["article_id"]))
             article_count += 1
         outcome.update(
             {
                 "forest_plot_title": item["forest_plot_title"],
                 "effect_measure": item["effect_measure"],
+                "unit_of_measure": item["unit_of_measure"],
+                "polarity_of_measure": item["polarity_of_measure"],
+                "comparator_effect_measure": item["comparator_effect_measure"],
                 "line_of_no_effect": item["line_of_no_effect"],
                 "aggregated_effect_estimate": item["aggregated_effect_estimate"],
                 "aggregated_confidence_interval_begin": item["aggregated_confidence_interval_begin"],
@@ -420,6 +431,7 @@ def extract_pico(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
 
     review["pico_extracted_at"] = datetime.now(UTC).isoformat()
     review["pico_overall_notes"] = extraction.overall_notes
+    review["plain_language_summary"] = extraction.plain_language_summary
     review["status"] = "pico_extracted"
     store.put_review(review)
     return _review_payload(store, review, {"updated_article_count": updated_count})

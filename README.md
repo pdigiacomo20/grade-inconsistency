@@ -9,8 +9,8 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 3. Marks protocol-only reviews in the `reviews` table so the frontend can filter them out.
 4. Lets a user open each review detail page, download the review PDF when PMC exposes one, and paste browser-assisted extraction outputs into four extraction boxes.
 5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`. The pasted SoF output only needs `SoF table`, `Row`, `Medical question`, and optional `Downgrade reasoning`; the app keeps compatibility fields internally with certainty set to `very low` and benchmark multiple-choice answer set to `m`.
-6. Parses `Extract Studies` second, stores forest-plot aggregate metrics on each outcome, and inserts included study article rows as `ART_00001`, `ART_00002`, and so on.
-7. Parses `Extract PICO` and stores PICO fields on matching included study article rows.
+6. Parses `Extract Studies` second, stores forest-plot aggregate metrics on each outcome, inserts included study article rows as `ART_00001`, `ART_00002`, and so on, then classifies each included study by Wald-Z.
+7. Parses `Extract PICO` and stores the review plain-language summary plus PICO fields on matching included study article rows.
 8. Parses `Extract Excluded` and inserts excluded study article rows with exclusion reasons.
 9. Searches PubMed for each included or excluded article title, falls back to the extracted relaxed search string, and fetches PubMed metadata, abstracts, and available PMC full text when a PMID is found.
 10. Lets the user manually enter a PMID for unresolved associated articles or mark manual extraction as failed.
@@ -21,20 +21,20 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 `reviews`
 
 - Primary key: `pmid`
-- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`
+- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`, `plain_language_summary`
 
 `outcomes`
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`. `consensus_answer`, `mc_answer`, and `certainty` are compatibility fields; new manual SoF extraction output no longer has to include them.
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `unit_of_measure`, `polarity_of_measure`, `comparator_effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`. `consensus_answer`, `mc_answer`, `certainty`, and `line_of_no_effect` are compatibility fields; new manual SoF extraction output no longer has to include them.
 
 `articles`
 
 - Primary key: `article_id`
-- Important columns: `article_type`, `review_id`, `review_pmid`, `outcome_id`, `study_label`, `effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `sample_size`, `line_of_no_effect`, `population`, `intervention`, `comparator`, `outcome`, `reason_for_exclusion`, `wald_z`, `wald_z_category`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
+- Important columns: `article_type`, `review_id`, `review_pmid`, `outcome_id`, `study_label`, `effect_measure`, `unit_of_measure`, `polarity_of_measure`, `comparator_effect_measure`, `effect_estimate`, `confidence_interval_begin`, `confidence_interval_end`, `confidence_interval_percentage`, `sample_size`, `line_of_no_effect`, `population`, `intervention`, `comparator`, `outcome`, `reason_for_exclusion`, `wald_z`, `wald_z_category`, `citation`, `title`, `relaxed_search`, `pmid`, `pmcid`, `abstract_path`, `full_text_path`, `pubmed_query`, `match_status`, `manual_extraction_failed`
 
-The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated. Wald-Z classification and evaluations process `included_study` article rows; `excluded_study` rows are kept for PubMed enrichment and audit context.
+The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated. Wald-Z classification runs automatically for new `included_study` rows after `Extract Studies`; evaluations process those rows. `excluded_study` rows are kept for PubMed enrichment and audit context.
 
 ## Setup
 
@@ -112,22 +112,6 @@ Main routes:
 
 The PDF endpoint returns `Content-Disposition: attachment; filename="CSR_XXXX.pdf"`. Browser security does not allow a web app to force `~/Downloads/CSR`; configure the browser download location to that folder if needed.
 
-## Classify Wald-Z
-
-Classify existing article rows by Wald-Z statistic and category:
-
-```bash
-python -m pipeline.classify_z --config config.classify_z.yml
-```
-
-`config.classify_z.yml` accepts:
-
-- `starting_review`: first CSR ID to process, for example `CSR_0011`.
-- `review_count`: number of CSR IDs to process in CSR index order.
-- `articles_table`: DynamoDB articles table, default `articles`.
-
-The command updates each selected article with `wald_z` and `wald_z_category`. Categories are `COM-Z0`, `COM-Z1`, `COM-Z2+`, `INT-Z0`, `INT-Z1`, and `INT-Z2+`. Positive transformed effects are categorized as comparator-favoring (`COM`), and negative transformed effects are categorized as intervention-favoring (`INT`). Sensitivity/specificity values at exactly 0 or 1 are clamped to `1e-6` or `1 - 1e-6` before logit transformation because exact boundary logits are infinite. Rows that still do not have enough numeric data are marked `UNCLASSIFIED` with `wald_z_error`.
-
 ## Run Evaluation
 
 Run the accuracy evaluation:
@@ -175,13 +159,13 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 3. Click `PMC entry` to inspect the article in a new tab, or `Download PDF` to download `CSR_XXXX.pdf` if PMC exposes a PDF.
 4. Use GPT in a separate browser with the downloaded Cochrane PDF and the `Extract SoF` prompt.
 5. Paste the GPT output into `Extract SoF` and click `Extract SoF`.
-6. Use GPT with the `Extract Studies`, `Extract PICO`, and `Extract Excluded` prompts.
+6. Use GPT with the `Extract Studies`, `Extract PICO`, and `Extract Excluded` prompts. `Extract Studies` automatically computes Wald-Z categories for included studies.
 7. Paste each GPT output into the matching panel and submit it.
 8. Review extracted outcomes and associated articles below the input boxes. Associated articles default to the `Included` tab; use the `Excluded` tab for excluded studies and the `Full`, `Results`, `PICO`, and `Citation` presets to change article-table columns.
 9. Review automatically matched PMIDs in the article table.
 10. For unresolved associated articles, enter the PMID and click `Process PMID`, or click `Manual extract failed` if no PMID can be found.
 
-The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Line of no effect`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract PICO` updates included study rows by exact study label. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
+The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Unit of measure`, `Polarity of measure`, `Comparator effect measure`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract PICO` stores `Plain language summary` on the review and updates included study rows by exact study label. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
 
 ## Run Remotely Over SSH
 

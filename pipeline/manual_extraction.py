@@ -27,19 +27,19 @@ PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
     r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
-    r"Forest plot title|Effect measure|Line of no effect|Aggregated effect estimate|Aggregated confidence interval begin|"
+    r"Forest plot title|Effect measure|Unit of measure|Polarity of measure|Line of no effect|Comparator effect measure|Aggregated effect estimate|Aggregated confidence interval begin|"
     r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes)\s*:\s*"
     r"(.*?)(?=^\s*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
-    r"Forest plot title|Effect measure|Line of no effect|Aggregated effect estimate|Aggregated confidence interval begin|"
+    r"Forest plot title|Effect measure|Unit of measure|Polarity of measure|Line of no effect|Comparator effect measure|Aggregated effect estimate|Aggregated confidence interval begin|"
     r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes|Study)\s*:|\Z)"
 )
 STUDY_BLOCK_RE = re.compile(
     r"(?ims)^\s*Study\s*:\s*(.*?)\s*(?=^\s*Study\s*:|^\s*Overall notes\s*:|^\s*SoF table\s*:|^\s*Row\s*:|\Z)"
 )
 STUDY_FIELD_RE = re.compile(
-    r"(?ims)^\s*(Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|Sample size|Citation|"
+    r"(?ims)^\s*(Effect measure|Unit of measure|Polarity of measure|Comparator effect measure|Line of no effect|Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|Sample size|Citation|"
     r"Title|Relaxed search|Population|Intervention|Comparator|Outcome|Reason for exclusion)\s*:\s*"
-    r"(.*?)(?=^\s*(?:Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|"
+    r"(.*?)(?=^\s*(?:Effect measure|Unit of measure|Polarity of measure|Comparator effect measure|Line of no effect|Effect estimate|Confidence interval begin|Confidence interval end|Confidence interval percentage|"
     r"Sample size|Citation|Title|Relaxed search|Population|Intervention|Comparator|Outcome|Reason for exclusion|"
     r"Study|Overall notes|SoF table|Row)\s*:|\Z)"
 )
@@ -53,7 +53,11 @@ PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)[
 OVERALL_NOTES_RE = re.compile(
     r"(?ims)^[ \t]*Overall notes[ \t]*:[ \t]*"
     r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
-    r"Forest plot title|Study)[ \t]*:|^[ \t]*(?:No inconsistency|Inconsistency not very low)[ \t.]*$|\Z)"
+    r"Forest plot title|Plain language summary|Study)[ \t]*:|^[ \t]*(?:No inconsistency|Inconsistency not very low)[ \t.]*$|\Z)"
+)
+PLAIN_LANGUAGE_SUMMARY_RE = re.compile(
+    r"(?ims)^[ \t]*Plain language summary[ \t]*:[ \t]*"
+    r"(.*?)(?=^[ \t]*(?:Study|Overall notes|SoF table|Row)[ \t]*:|\Z)"
 )
 
 
@@ -83,6 +87,7 @@ class ParsedStudiesExtraction:
 class ParsedPicoExtraction:
     studies: list[dict[str, str]]
     overall_notes: str
+    plain_language_summary: str
 
 
 @dataclass(frozen=True)
@@ -170,6 +175,9 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
                 "downgrade_reasoning": _clean((fields.get("downgrade reasoning") or [""])[0]),
                 "forest_plot_title": "",
                 "effect_measure": "",
+                "unit_of_measure": "",
+                "polarity_of_measure": "",
+                "comparator_effect_measure": "",
                 "line_of_no_effect": "",
                 "aggregated_effect_estimate": "",
                 "aggregated_confidence_interval_begin": "",
@@ -220,12 +228,19 @@ def parse_studies_extraction(text: str, existing_outcomes: list[dict[str, Any]])
                 f"(SoF table {fields['sof table'][0]}, Row {fields['row'][0]})."
             )
         effect_measure = _clean((fields.get("effect measure") or [""])[0]).lower()
-        line_of_no_effect = _clean((fields.get("line of no effect") or [""])[0])
+        unit_of_measure = _clean((fields.get("unit of measure") or [""])[0])
+        polarity_of_measure = _clean((fields.get("polarity of measure") or [""])[0]).lower()
+        comparator_effect_measure = _clean((fields.get("comparator effect measure") or fields.get("line of no effect") or [""])[0])
+        line_of_no_effect = comparator_effect_measure
         missing_effect_fields = []
         if not effect_measure:
             missing_effect_fields.append("Effect measure")
-        if not line_of_no_effect:
-            missing_effect_fields.append("Line of no effect")
+        if not unit_of_measure:
+            missing_effect_fields.append("Unit of measure")
+        if not polarity_of_measure:
+            missing_effect_fields.append("Polarity of measure")
+        if not comparator_effect_measure:
+            missing_effect_fields.append("Comparator effect measure")
         if missing_effect_fields:
             raise ValueError(f"Extract Studies block {index + 1} is missing: {', '.join(missing_effect_fields)}.")
         studies = []
@@ -239,6 +254,11 @@ def parse_studies_extraction(text: str, existing_outcomes: list[dict[str, Any]])
             studies.append(
                 {
                     "study_label": study["study_label"],
+                    "effect_measure": _clean((study.get("effect measure") or effect_measure)).lower(),
+                    "unit_of_measure": _clean(study.get("unit of measure") or unit_of_measure),
+                    "polarity_of_measure": _clean(study.get("polarity of measure") or polarity_of_measure).lower(),
+                    "comparator_effect_measure": _clean(study.get("comparator effect measure") or study.get("line of no effect") or comparator_effect_measure),
+                    "line_of_no_effect": _clean(study.get("line of no effect") or study.get("comparator effect measure") or line_of_no_effect),
                     "effect_estimate": _clean_failed(study.get("effect estimate")),
                     "confidence_interval_begin": _clean_failed(study.get("confidence interval begin")),
                     "confidence_interval_end": _clean_failed(study.get("confidence interval end")),
@@ -254,6 +274,9 @@ def parse_studies_extraction(text: str, existing_outcomes: list[dict[str, Any]])
                 "outcome": outcome,
                 "forest_plot_title": _clean((fields.get("forest plot title") or [""])[0]),
                 "effect_measure": effect_measure,
+                "unit_of_measure": unit_of_measure,
+                "polarity_of_measure": polarity_of_measure,
+                "comparator_effect_measure": comparator_effect_measure,
                 "line_of_no_effect": line_of_no_effect,
                 "aggregated_effect_estimate": _clean((fields.get("aggregated effect estimate") or [""])[0]),
                 "aggregated_confidence_interval_begin": _clean((fields.get("aggregated confidence interval begin") or [""])[0]),
@@ -270,6 +293,8 @@ def parse_pico_extraction(text: str) -> ParsedPicoExtraction:
     if not text.strip():
         raise ValueError("Paste the Extract PICO output before extracting.")
     overall_notes = _extract_overall_notes(text)
+    plain_language_summary_match = PLAIN_LANGUAGE_SUMMARY_RE.search(text)
+    plain_language_summary = _clean(plain_language_summary_match.group(1)) if plain_language_summary_match else ""
     studies = []
     for study_match in STUDY_BLOCK_RE.finditer(text):
         block = study_match.group(1).strip()
@@ -286,7 +311,7 @@ def parse_pico_extraction(text: str) -> ParsedPicoExtraction:
         )
     if not studies and not _is_extraction_failed(text):
         raise ValueError("Could not find any 'Study:' blocks in the Extract PICO text.")
-    return ParsedPicoExtraction(studies=studies, overall_notes=overall_notes)
+    return ParsedPicoExtraction(studies=studies, overall_notes=overall_notes, plain_language_summary=plain_language_summary)
 
 
 def parse_excluded_extraction(text: str) -> ParsedExcludedExtraction:
@@ -510,6 +535,9 @@ def create_and_store_article(
     outcome: dict[str, Any] | None = None,
     article_type: str = "included_study",
     effect_measure: str = "",
+    unit_of_measure: str = "",
+    polarity_of_measure: str = "",
+    comparator_effect_measure: str = "",
     line_of_no_effect: str = "",
     effect_estimate: str = "",
     confidence_interval_begin: str = "",
@@ -538,6 +566,9 @@ def create_and_store_article(
         "outcome_key": outcome.get("outcome_key", "") if outcome else "",
         "study_label": study_label,
         "effect_measure": effect_measure or None,
+        "unit_of_measure": unit_of_measure or None,
+        "polarity_of_measure": polarity_of_measure or None,
+        "comparator_effect_measure": comparator_effect_measure or line_of_no_effect or None,
         "effect_estimate": effect_estimate or None,
         "confidence_interval_begin": confidence_interval_begin or None,
         "confidence_interval_end": confidence_interval_end or None,
