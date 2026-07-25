@@ -56,8 +56,18 @@ OVERALL_NOTES_RE = re.compile(
     r"Forest plot title|Plain language summary|Study)[ \t]*:|^[ \t]*(?:No inconsistency|Inconsistency not very low)[ \t.]*$|\Z)"
 )
 PLAIN_LANGUAGE_SUMMARY_RE = re.compile(
-    r"(?ims)^[ \t]*Plain language summary[ \t]*:[ \t]*"
-    r"(.*?)(?=^[ \t]*(?:Study|Overall notes|SoF table|Row)[ \t]*:|\Z)"
+    r"(?ims)^[ \t]*(?:YYY)?Plain language summary[ \t]*:[ \t]*"
+    r"(.*?)(?=^[ \t]*(?:(?:YYY)?Study|(?:YYY)?Overall notes|SoF table|Row)[ \t]*:|\Z)"
+)
+CHARACTERISTICS_OVERALL_NOTES_RE = re.compile(
+    r"(?ims)^[ \t]*(?:YYY)?Overall notes[ \t]*:[ \t]*"
+    r"(.*?)(?=^[ \t]*(?:(?:YYY)?Plain language summary|(?:YYY)?Study|SoF table|Row)[ \t]*:|\Z)"
+)
+CHARACTERISTICS_STUDY_BLOCK_RE = re.compile(
+    r"(?ims)^[ \t]*(?:YYY)?Study[ \t]*:[ \t]*(.*?)\s*(?=^[ \t]*(?:YYY)?Study[ \t]*:|\Z)"
+)
+CHARACTERISTICS_SECTION_RE = re.compile(
+    r"(?im)^[ \t]*(?:#{1,6}[ \t]*)?YYY(Methods|Participants|Interventions|Outcomes|Risk of Bias)[ \t]*$"
 )
 
 
@@ -84,8 +94,8 @@ class ParsedStudiesExtraction:
 
 
 @dataclass(frozen=True)
-class ParsedPicoExtraction:
-    studies: list[dict[str, str]]
+class ParsedCharacteristicsExtraction:
+    studies: list[dict[str, Any]]
     overall_notes: str
     plain_language_summary: str
 
@@ -118,6 +128,10 @@ def _sof_key(sof_table: str, row: str) -> str:
 
 def _extract_overall_notes(text: str) -> str:
     return _clean("\n\n".join(match.group(1) for match in OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
+
+
+def _extract_characteristics_overall_notes(text: str) -> str:
+    return _clean("\n\n".join(match.group(1) for match in CHARACTERISTICS_OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
 
 def _is_no_inconsistency(text: str) -> bool:
@@ -289,29 +303,86 @@ def parse_studies_extraction(text: str, existing_outcomes: list[dict[str, Any]])
     return ParsedStudiesExtraction(outcomes=parsed, overall_notes=overall_notes)
 
 
-def parse_pico_extraction(text: str) -> ParsedPicoExtraction:
+def _clean_markdown(text: str) -> str:
+    return text.strip()
+
+
+def _is_characteristics_extraction_failed(text: str) -> bool:
+    normalized = re.sub(r"(?im)^[ \t]*(?:#{1,6}[ \t]*)?YYY", "", text.strip())
+    return _clean(normalized).lower() == "extraction failed"
+
+
+def _characteristics_sections(text: str) -> dict[str, str]:
+    matches = list(CHARACTERISTICS_SECTION_RE.finditer(text))
+    sections: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        label = match.group(1).lower().replace(" ", "_")
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections[label] = _clean_markdown(text[start:end])
+    return sections
+
+
+def _build_characteristics_markdown(sections: dict[str, str]) -> str:
+    labels = [
+        ("methods", "# YYYMethods"),
+        ("participants", "# YYYParticipants"),
+        ("interventions", "# YYYInterventions"),
+        ("outcomes", "# YYYOutcomes"),
+        ("risk_of_bias", "# YYYRisk of Bias"),
+    ]
+    return "\n\n".join(
+        f"{heading}\n\n{sections[key].strip()}".strip()
+        for key, heading in labels
+        if sections.get(key, "").strip()
+    )
+
+
+def parse_characteristics_extraction(text: str) -> ParsedCharacteristicsExtraction:
     if not text.strip():
-        raise ValueError("Paste the Extract PICO output before extracting.")
-    overall_notes = _extract_overall_notes(text)
+        raise ValueError("Paste the Extract Characteristics output before extracting.")
+    overall_notes = _extract_characteristics_overall_notes(text)
     plain_language_summary_match = PLAIN_LANGUAGE_SUMMARY_RE.search(text)
-    plain_language_summary = _clean(plain_language_summary_match.group(1)) if plain_language_summary_match else ""
+    plain_language_summary = _clean_markdown(plain_language_summary_match.group(1)) if plain_language_summary_match else ""
     studies = []
-    for study_match in STUDY_BLOCK_RE.finditer(text):
+    required = ("methods", "participants", "interventions", "outcomes", "risk_of_bias")
+    for study_match in CHARACTERISTICS_STUDY_BLOCK_RE.finditer(text):
         block = study_match.group(1).strip()
         first_line, _, rest = block.partition("\n")
-        fields = _study_fields(rest)
+        study_label = _clean(first_line)
+        if _is_characteristics_extraction_failed(rest):
+            studies.append(
+                {
+                    "study_label": study_label,
+                    "characteristics_extraction_failed": True,
+                    "characteristics_methods": "extraction failed",
+                    "characteristics_participants": "extraction failed",
+                    "characteristics_interventions": "extraction failed",
+                    "characteristics_outcomes": "extraction failed",
+                    "characteristics_risk_of_bias": "extraction failed",
+                    "characteristics_markdown": "YYYExtraction Failed",
+                }
+            )
+            continue
+        sections = _characteristics_sections(rest)
+        missing = [label.replace("_", " ").title() for label in required if label not in sections]
+        if missing:
+            raise ValueError(f"Extract Characteristics study '{study_label}' is missing: {', '.join(missing)}.")
         studies.append(
             {
-                "study_label": _clean(first_line),
-                "population": _clean_failed(fields.get("population")),
-                "intervention": _clean_failed(fields.get("intervention")),
-                "comparator": _clean_failed(fields.get("comparator")),
-                "outcome": _clean_failed(fields.get("outcome")),
+                "study_label": study_label,
+                "characteristics_extraction_failed": False,
+                "characteristics_methods": sections["methods"],
+                "characteristics_participants": sections["participants"],
+                "characteristics_interventions": sections["interventions"],
+                "characteristics_outcomes": sections["outcomes"],
+                "characteristics_risk_of_bias": sections["risk_of_bias"],
+                "characteristics_markdown": _build_characteristics_markdown(sections),
             }
         )
     if not studies and not _is_extraction_failed(text):
-        raise ValueError("Could not find any 'Study:' blocks in the Extract PICO text.")
-    return ParsedPicoExtraction(studies=studies, overall_notes=overall_notes, plain_language_summary=plain_language_summary)
+        raise ValueError("Could not find any 'YYYStudy:' blocks in the Extract Characteristics text.")
+    return ParsedCharacteristicsExtraction(studies=studies, overall_notes=overall_notes, plain_language_summary=plain_language_summary)
 
 
 def parse_excluded_extraction(text: str) -> ParsedExcludedExtraction:
@@ -544,10 +615,6 @@ def create_and_store_article(
     confidence_interval_end: str = "",
     confidence_interval_percentage: str = "",
     sample_size: str = "",
-    population: str = "",
-    intervention: str = "",
-    comparator: str = "",
-    outcome_text: str = "",
     reason_for_exclusion: str = "",
     title: str = "",
     relaxed_search: str = "",
@@ -575,10 +642,6 @@ def create_and_store_article(
         "confidence_interval_percentage": confidence_interval_percentage or None,
         "sample_size": sample_size or None,
         "line_of_no_effect": line_of_no_effect or None,
-        "population": population or None,
-        "intervention": intervention or None,
-        "comparator": comparator or None,
-        "outcome": outcome_text or None,
         "reason_for_exclusion": reason_for_exclusion or None,
         "citation": citation,
         "pmid": None,

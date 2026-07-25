@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, BarChart3, Download, ExternalLink, FileText, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Download, ExternalLink, FileText, RefreshCw, Search, Upload } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -36,6 +36,114 @@ function formatNumber(value, digits = 2) {
   if (value === null || value === undefined || value === "") return "";
   const number = Number(value);
   return Number.isFinite(number) ? number.toFixed(digits) : String(value);
+}
+
+function markdownPreview(markdown, sentenceLimit = 3) {
+  const text = String(markdown || "")
+    .replace(/\|/g, " ")
+    .replace(/[#*_`>-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return "";
+  const sentences = text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [text];
+  const preview = sentences.slice(0, sentenceLimit).join(" ").trim();
+  return preview.length > 420 ? `${preview.slice(0, 417).trim()}...` : preview;
+}
+
+function MarkdownInline({ text }) {
+  const parts = String(text || "").split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, index) => (
+        part.startsWith("**") && part.endsWith("**")
+          ? <strong key={index}>{part.slice(2, -2)}</strong>
+          : <React.Fragment key={index}>{part}</React.Fragment>
+      ))}
+    </>
+  );
+}
+
+function MarkdownView({ markdown }) {
+  const lines = String(markdown || "").split(/\r?\n/);
+  const blocks = [];
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index];
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+    const heading = line.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      blocks.push({ type: "heading", level: heading[1].length, text: heading[2] });
+      index += 1;
+      continue;
+    }
+    if (line.trim().startsWith("|")) {
+      const tableLines = [];
+      while (index < lines.length && lines[index].trim().startsWith("|")) {
+        tableLines.push(lines[index]);
+        index += 1;
+      }
+      const rows = tableLines
+        .filter((tableLine) => !/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(tableLine))
+        .map((tableLine) => tableLine.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim()));
+      if (rows.length) blocks.push({ type: "table", rows });
+      continue;
+    }
+    if (/^\s*(?:[-*]|\d+\.)\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*(?:[-*]|\d+\.)\s+/.test(lines[index])) {
+        items.push(lines[index].replace(/^\s*(?:[-*]|\d+\.)\s+/, ""));
+        index += 1;
+      }
+      blocks.push({ type: "list", items });
+      continue;
+    }
+    const paragraph = [];
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !/^(#{1,6})\s+/.test(lines[index]) &&
+      !lines[index].trim().startsWith("|") &&
+      !/^\s*(?:[-*]|\d+\.)\s+/.test(lines[index])
+    ) {
+      paragraph.push(lines[index].trim());
+      index += 1;
+    }
+    blocks.push({ type: "paragraph", text: paragraph.join(" ") });
+  }
+
+  return (
+    <div className="markdownBody">
+      {blocks.map((block, index) => {
+        if (block.type === "heading") {
+          const HeadingTag = `h${Math.min(block.level + 2, 6)}`;
+          return <HeadingTag key={index}><MarkdownInline text={block.text} /></HeadingTag>;
+        }
+        if (block.type === "table") {
+          const [header, ...body] = block.rows;
+          return (
+            <div className="markdownTableWrap" key={index}>
+              <table className="markdownTable">
+                <thead>
+                  <tr>{header.map((cell, cellIndex) => <th key={cellIndex}><MarkdownInline text={cell} /></th>)}</tr>
+                </thead>
+                <tbody>
+                  {body.map((row, rowIndex) => (
+                    <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}><MarkdownInline text={cell} /></td>)}</tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+        if (block.type === "list") {
+          return <ul key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}><MarkdownInline text={item} /></li>)}</ul>;
+        }
+        return <p key={index}><MarkdownInline text={block.text} /></p>;
+      })}
+    </div>
+  );
 }
 
 function LinkOut({ href, children }) {
@@ -123,7 +231,7 @@ function OverallNotes({ review }) {
   const notes = [
     { label: "SoF overall notes", value: review?.sof_overall_notes },
     { label: "Studies overall notes", value: review?.studies_overall_notes },
-    { label: "PICO overall notes", value: review?.pico_overall_notes },
+    { label: "Characteristics overall notes", value: review?.characteristics_overall_notes },
     { label: "Plain language summary", value: review?.plain_language_summary },
     { label: "Excluded overall notes", value: review?.excluded_overall_notes },
   ].filter((item) => String(item.value || "").trim());
@@ -221,6 +329,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
   const [pmidInputs, setPmidInputs] = useState({});
   const [processingArticle, setProcessingArticle] = useState("");
   const [rowError, setRowError] = useState("");
+  const [selectedCharacteristics, setSelectedCharacteristics] = useState(null);
   const tabbedArticles = useMemo(() => {
     return articles.filter((article) => (
       articleTab === "excluded"
@@ -329,6 +438,17 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
     )
   );
 
+  const renderCharacteristics = (article) => {
+    const markdown = article.characteristics_markdown || "";
+    if (!markdown) return <span className="muted">Missing</span>;
+    return (
+      <div className="characteristicsCell">
+        <p>{markdownPreview(markdown)}</p>
+        <button className="smallButton" onClick={() => setSelectedCharacteristics(article)}>View formatted</button>
+      </div>
+    );
+  };
+
   const columns = [
     { id: "study", label: "Study", className: "stickyColumn", render: (article) => article.study_label || <span className="muted">Unlabeled</span> },
     { id: "article_id", label: "Article ID", render: (article) => article.article_id },
@@ -352,10 +472,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
       render: (article) => article.wald_z_category ? <Pill>{article.wald_z_category}</Pill> : <span className="muted">{article.wald_z_error ? "Unclassified" : "Missing"}</span>,
     },
     { id: "wald_z", label: "wald-Z", render: (article) => formatNumber(article.wald_z) || <span className="muted">{article.wald_z_error || "Missing"}</span> },
-    { id: "population", label: "population", className: "titleCell", render: (article) => article.population || <span className="muted">Missing</span> },
-    { id: "intervention", label: "intervention", className: "titleCell", render: (article) => article.intervention || <span className="muted">Missing</span> },
-    { id: "comparator", label: "comparator", className: "titleCell", render: (article) => article.comparator || <span className="muted">Missing</span> },
-    { id: "outcome", label: "outcome", className: "titleCell", render: (article) => article.outcome || <span className="muted">Missing</span> },
+    { id: "characteristics", label: "characteristics", className: "titleCell", render: renderCharacteristics },
     { id: "eval_context_answer", label: "eval context answer", render: renderEvalAnswer },
     { id: "reason_for_exclusion", label: "exclusion reason", className: "titleCell", render: (article) => article.reason_for_exclusion || <span className="muted">n/a</span> },
     { id: "match_status", label: "match", render: (article) => article.match_status || <span className="muted">Not matched</span> },
@@ -363,7 +480,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
   const viewColumns = {
     full: columns.map((column) => column.id),
     results: ["study", "article_id", "outcome_id", "type", "effect_measure", "unit_of_measure", "polarity_of_measure", "comparator_effect_measure", "effect_estimate", "ci", "sample_size", "wald_z_category", "wald_z", "eval_context_answer", "match_status"],
-    pico: ["study", "article_id", "outcome_id", "type", "population", "intervention", "comparator", "outcome", "eval_context_answer", "reason_for_exclusion", "match_status"],
+    characteristics: ["study", "article_id", "outcome_id", "type", "characteristics", "eval_context_answer", "reason_for_exclusion", "match_status"],
     citation: ["study", "article_id", "outcome_id", "type", "pmid", "pmcid", "files", "citation", "title", "match_status"],
   };
   const visibleColumns = columns.filter((column) => viewColumns[viewMode].includes(column.id));
@@ -382,7 +499,7 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
           <div className="segmentedControl" aria-label="Article table view">
             <button className={viewMode === "full" ? "active" : ""} onClick={() => setViewMode("full")}>Full</button>
             <button className={viewMode === "results" ? "active" : ""} onClick={() => setViewMode("results")}>Results</button>
-            <button className={viewMode === "pico" ? "active" : ""} onClick={() => setViewMode("pico")}>PICO</button>
+            <button className={viewMode === "characteristics" ? "active" : ""} onClick={() => setViewMode("characteristics")}>Characteristics</button>
             <button className={viewMode === "citation" ? "active" : ""} onClick={() => setViewMode("citation")}>Citation</button>
           </div>
           <label className="checkControl">
@@ -413,6 +530,20 @@ function ArticlesTable({ articles, onProcessPmid, onManualFailed, evaluationByAr
         {rowError && <div className="error compactError">{rowError}</div>}
         {rows.length === 0 && <div className="empty">No {articleTab} articles have been extracted for this review.</div>}
       </div>
+      {selectedCharacteristics && (
+        <div className="modalBackdrop" role="presentation" onClick={() => setSelectedCharacteristics(null)}>
+          <div className="modalPanel" role="dialog" aria-modal="true" aria-label="Study characteristics" onClick={(event) => event.stopPropagation()}>
+            <div className="modalHeader">
+              <div>
+                <h2>{selectedCharacteristics.study_label || selectedCharacteristics.article_id}</h2>
+                <p>Study characteristics</p>
+              </div>
+              <button className="smallButton" onClick={() => setSelectedCharacteristics(null)}>Close</button>
+            </div>
+            <MarkdownView markdown={selectedCharacteristics.characteristics_markdown || ""} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -545,6 +676,35 @@ function EvaluationAccuracyExplorer({ run }) {
   );
 }
 
+function ExtractionPanel({ title, kind, value, onChange, onSubmit, busy, performed, rawText, editing, onEdit }) {
+  if (performed && !editing) {
+    return (
+      <div className="extractPanel">
+        <div className="extractPanelHeader">
+          <h2>{title}</h2>
+          <Pill>Extracted</Pill>
+        </div>
+        <button className="primaryButton" disabled={Boolean(busy)} onClick={() => onEdit(kind, rawText || "")}>
+          <FileText size={16} /> Edit extraction
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="extractPanel">
+      <div className="extractPanelHeader">
+        <h2>{title}</h2>
+        {editing ? <Pill tone="warn">Editing</Pill> : null}
+      </div>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+      <button className="primaryButton" disabled={busy === kind} onClick={() => onSubmit(kind)}>
+        {busy === kind ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} {editing ? "Submit edit" : title}
+      </button>
+    </div>
+  );
+}
+
 function EvaluationsView() {
   const [runs, setRuns] = useState([]);
   const [selected, setSelected] = useState("");
@@ -604,7 +764,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [payload, setPayload] = useState(null);
   const [sofText, setSofText] = useState("");
   const [studiesText, setStudiesText] = useState("");
-  const [picoText, setPicoText] = useState("");
+  const [characteristicsText, setCharacteristicsText] = useState("");
   const [excludedText, setExcludedText] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -612,6 +772,9 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [evaluationRuns, setEvaluationRuns] = useState([]);
   const [selectedEvaluation, setSelectedEvaluation] = useState("");
   const [reviewEvaluation, setReviewEvaluation] = useState(null);
+  const [editModes, setEditModes] = useState({});
+  const [documentFiles, setDocumentFiles] = useState([]);
+  const [documentInputKey, setDocumentInputKey] = useState(0);
 
   const load = () => {
     setError("");
@@ -646,7 +809,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
       const config = {
         sof: { path: "extract-sof", text: sofText, success: (result) => result.message || "SoF extracted." },
         studies: { path: "extract-studies", text: studiesText, success: (result) => `Studies extracted. Added ${result.article_count || 0} articles.` },
-        pico: { path: "extract-pico", text: picoText, success: (result) => `PICO extracted. Updated ${result.updated_article_count || 0} articles.` },
+        characteristics: { path: "extract-characteristics", text: characteristicsText, success: (result) => `Characteristics extracted. Updated ${result.updated_article_count || 0} articles.` },
         excluded: { path: "extract-excluded", text: excludedText, success: (result) => `Excluded studies extracted. Added ${result.article_count || 0} articles.` },
       }[kind];
       const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/${config.path}`, {
@@ -655,7 +818,53 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
       });
       setPayload(result.review ? result : { ...payload, ...result });
       if (result.review) onReviewUpdated(result.review);
+      setEditModes((current) => ({ ...current, [kind]: false }));
       setMessage(config.success(result));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const editExtraction = (kind, rawText) => {
+    const setters = {
+      sof: setSofText,
+      studies: setStudiesText,
+      characteristics: setCharacteristicsText,
+      excluded: setExcludedText,
+    };
+    setters[kind](rawText);
+    setEditModes((current) => ({ ...current, [kind]: true }));
+  };
+
+  const uploadDocuments = async () => {
+    if (!documentFiles.length) {
+      setError("Choose at least one document to upload.");
+      return;
+    }
+    setBusy("documents");
+    setError("");
+    setMessage("");
+    try {
+      const formData = new FormData();
+      for (const file of documentFiles) {
+        formData.append("files", file);
+      }
+      const response = await fetch(apiHref(`/api/reviews/${encodeURIComponent(reviewId)}/documents`), {
+        method: "POST",
+        body: formData,
+      });
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : {};
+      if (!response.ok) {
+        throw new Error(result.detail || `Request failed: ${response.status}`);
+      }
+      setPayload(result);
+      if (result.review) onReviewUpdated(result.review);
+      setDocumentFiles([]);
+      setDocumentInputKey((current) => current + 1);
+      setMessage(`Saved ${result.saved_document_count || 0} documents for this review.`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -686,6 +895,14 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const review = payload?.review;
   const outcomes = payload?.outcomes || [];
   const articles = payload?.articles || [];
+  const savedDocuments = review?.saved_documents || [];
+  const savedDocumentCount = savedDocuments.length;
+  const extractionPerformed = {
+    sof: Boolean(review?.sof_extracted_at || review?.extraction_result),
+    studies: Boolean(review?.studies_extracted_at),
+    characteristics: Boolean(review?.characteristics_extracted_at),
+    excluded: Boolean(review?.excluded_extracted_at),
+  };
   const evaluationByOutcome = {};
   const evaluationByArticle = {};
   for (const outcome of reviewEvaluation?.outcomes || []) {
@@ -716,35 +933,36 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
               </a>
             </div>
           </section>
+          <section className="documentPanel">
+            <div>
+              <h2>Saved Documents</h2>
+              <p>{savedDocumentCount} saved</p>
+            </div>
+            <div className="documentControls">
+              <input key={documentInputKey} type="file" multiple onChange={(event) => setDocumentFiles(Array.from(event.target.files || []))} />
+              <button className="primaryButton" disabled={busy === "documents"} onClick={uploadDocuments}>
+                {busy === "documents" ? <RefreshCw size={16} className="spin" /> : <Upload size={16} />} Upload
+              </button>
+            </div>
+            {savedDocumentCount > 0 && (
+              <div className="savedDocumentLinks">
+                {savedDocuments.map((document, index) => (
+                  <a
+                    className="buttonLink"
+                    href={apiHref(`/api/reviews/${encodeURIComponent(review.review_id || review.pmid)}/documents/${index}`)}
+                    key={`${document.path || document.filename || "document"}-${index}`}
+                  >
+                    <Download size={16} /> {document.filename || `Document ${index + 1}`}
+                  </a>
+                ))}
+              </div>
+            )}
+          </section>
           <section className="extractGrid">
-            <div className="extractPanel">
-              <h2>Extract SoF</h2>
-              <textarea value={sofText} onChange={(event) => setSofText(event.target.value)} />
-              <button className="primaryButton" disabled={busy === "sof"} onClick={() => submit("sof")}>
-                {busy === "sof" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract SoF
-              </button>
-            </div>
-            <div className="extractPanel">
-              <h2>Extract Studies</h2>
-              <textarea value={studiesText} onChange={(event) => setStudiesText(event.target.value)} />
-              <button className="primaryButton" disabled={busy === "studies"} onClick={() => submit("studies")}>
-                {busy === "studies" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Studies
-              </button>
-            </div>
-            <div className="extractPanel">
-              <h2>Extract PICO</h2>
-              <textarea value={picoText} onChange={(event) => setPicoText(event.target.value)} />
-              <button className="primaryButton" disabled={busy === "pico"} onClick={() => submit("pico")}>
-                {busy === "pico" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract PICO
-              </button>
-            </div>
-            <div className="extractPanel">
-              <h2>Extract Excluded</h2>
-              <textarea value={excludedText} onChange={(event) => setExcludedText(event.target.value)} />
-              <button className="primaryButton" disabled={busy === "excluded"} onClick={() => submit("excluded")}>
-                {busy === "excluded" ? <RefreshCw size={16} className="spin" /> : <FileText size={16} />} Extract Excluded
-              </button>
-            </div>
+            <ExtractionPanel title="Extract SoF" kind="sof" value={sofText} onChange={setSofText} onSubmit={submit} busy={busy} performed={extractionPerformed.sof} rawText={review.sof_raw_extraction_text} editing={Boolean(editModes.sof)} onEdit={editExtraction} />
+            <ExtractionPanel title="Extract Studies" kind="studies" value={studiesText} onChange={setStudiesText} onSubmit={submit} busy={busy} performed={extractionPerformed.studies} rawText={review.studies_raw_extraction_text} editing={Boolean(editModes.studies)} onEdit={editExtraction} />
+            <ExtractionPanel title="Extract Characteristics" kind="characteristics" value={characteristicsText} onChange={setCharacteristicsText} onSubmit={submit} busy={busy} performed={extractionPerformed.characteristics} rawText={review.characteristics_raw_extraction_text} editing={Boolean(editModes.characteristics)} onEdit={editExtraction} />
+            <ExtractionPanel title="Extract Excluded" kind="excluded" value={excludedText} onChange={setExcludedText} onSubmit={submit} busy={busy} performed={extractionPerformed.excluded} rawText={review.excluded_raw_extraction_text} editing={Boolean(editModes.excluded)} onEdit={editExtraction} />
           </section>
           <OverallNotes review={review} />
           <section className="evalSelector">

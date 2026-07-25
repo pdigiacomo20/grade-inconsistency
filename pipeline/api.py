@@ -4,10 +4,11 @@ from datetime import UTC, datetime
 import os
 from pathlib import Path
 import re
+import shutil
 from typing import Any
 from urllib.parse import urljoin
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
@@ -28,7 +29,7 @@ from pipeline.manual_extraction import (
     lookup_pmid_for_article,
     mark_manual_extraction_failed,
     parse_excluded_extraction,
-    parse_pico_extraction,
+    parse_characteristics_extraction,
     parse_sof_extraction,
     parse_studies_extraction,
 )
@@ -62,6 +63,10 @@ def _full_text_dir() -> str:
     return os.getenv("FULL_TEXT_DIR", "data/articles/full_text")
 
 
+def _review_documents_dir() -> str:
+    return os.getenv("REVIEW_DOCUMENTS_DIR", "data/review_documents")
+
+
 def _review_or_404(store: DynamoStore, review_id: str) -> dict[str, Any]:
     review = store.get_review(review_id)
     if not review:
@@ -85,10 +90,13 @@ def _article_summary(article: dict[str, Any]) -> dict[str, Any]:
         "confidence_interval_percentage": article.get("confidence_interval_percentage"),
         "sample_size": article.get("sample_size"),
         "line_of_no_effect": article.get("line_of_no_effect"),
-        "population": article.get("population"),
-        "intervention": article.get("intervention"),
-        "comparator": article.get("comparator"),
-        "outcome": article.get("outcome"),
+        "characteristics_methods": article.get("characteristics_methods"),
+        "characteristics_participants": article.get("characteristics_participants"),
+        "characteristics_interventions": article.get("characteristics_interventions"),
+        "characteristics_outcomes": article.get("characteristics_outcomes"),
+        "characteristics_risk_of_bias": article.get("characteristics_risk_of_bias"),
+        "characteristics_markdown": article.get("characteristics_markdown"),
+        "characteristics_extraction_failed": bool(article.get("characteristics_extraction_failed", False)),
         "reason_for_exclusion": article.get("reason_for_exclusion"),
         "wald_z": article.get("wald_z"),
         "wald_z_category": article.get("wald_z_category"),
@@ -141,6 +149,72 @@ def _review_payload(store: DynamoStore, review: dict[str, Any], extra: dict[str,
     outcomes = [_hydrate_outcome(store, item) for item in store.list_outcomes_for_review(str(review["pmid"]))]
     articles = [_article_summary(item) for item in store.list_articles_for_review(str(review["review_id"]))]
     return {"review": review, "outcomes": outcomes, "articles": articles, **(extra or {})}
+
+
+def _clear_characteristics_fields(store: DynamoStore, review_id: str) -> int:
+    updated_count = 0
+    for article in store.list_articles_for_review(review_id):
+        if article.get("article_type", "included_study") != "included_study":
+            continue
+        for key in (
+            "population",
+            "intervention",
+            "comparator",
+            "outcome",
+            "characteristics_methods",
+            "characteristics_participants",
+            "characteristics_interventions",
+            "characteristics_outcomes",
+            "characteristics_risk_of_bias",
+            "characteristics_markdown",
+            "characteristics_extraction_failed",
+        ):
+            article.pop(key, None)
+        article["updated_at"] = datetime.now(UTC).isoformat()
+        store.put_article(article)
+        updated_count += 1
+    return updated_count
+
+
+def _reset_characteristics_review_fields(review: dict[str, Any]) -> None:
+    for key in ("pico_extracted_at", "pico_raw_extraction_text", "pico_overall_notes"):
+        review.pop(key, None)
+    review["characteristics_extracted_at"] = None
+    review["characteristics_raw_extraction_text"] = ""
+    review["characteristics_overall_notes"] = ""
+    review["plain_language_summary"] = ""
+
+
+def _empty_studies_outcome(outcome: dict[str, Any]) -> dict[str, Any]:
+    outcome.update(
+        {
+            "forest_plot_title": "",
+            "effect_measure": "",
+            "unit_of_measure": "",
+            "polarity_of_measure": "",
+            "comparator_effect_measure": "",
+            "line_of_no_effect": "",
+            "aggregated_effect_estimate": "",
+            "aggregated_confidence_interval_begin": "",
+            "aggregated_confidence_interval_end": "",
+            "aggregated_confidence_interval_percentage": "",
+            "aggregated_sample_size": "",
+            "included_articles": [],
+            "extraction_status": "sof_extracted",
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    )
+    return outcome
+
+
+def _safe_filename(filename: str) -> str:
+    cleaned = Path(filename or "document").name
+    cleaned = re.sub(r"[^A-Za-z0-9._ -]+", "_", cleaned).strip(" .")
+    return cleaned or "document"
+
+
+def _saved_documents(review: dict[str, Any]) -> list[dict[str, Any]]:
+    return [item for item in review.get("saved_documents", []) if isinstance(item, dict) and item.get("path")]
 
 
 def _enrich_evaluation_contexts(store: DynamoStore, run: dict[str, Any]) -> dict[str, Any]:
@@ -253,6 +327,57 @@ def get_review(review_id: str) -> dict[str, Any]:
     return _review_payload(store, review)
 
 
+@app.post("/api/reviews/{review_id}/documents")
+def upload_review_documents(review_id: str, files: list[UploadFile] = File(...)) -> dict[str, Any]:
+    if not files:
+        raise HTTPException(status_code=400, detail="Upload at least one document.")
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    review_dir = Path(_review_documents_dir()) / str(review["review_id"])
+    review_dir.mkdir(parents=True, exist_ok=True)
+    saved = _saved_documents(review)
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+
+    for index, upload in enumerate(files, start=1):
+        original_name = _safe_filename(upload.filename or f"document-{index}")
+        destination = review_dir / f"{timestamp}-{index:02d}-{original_name}"
+        with destination.open("wb") as handle:
+            shutil.copyfileobj(upload.file, handle)
+        saved.append(
+            {
+                "filename": original_name,
+                "path": str(destination),
+                "content_type": upload.content_type or "application/octet-stream",
+                "uploaded_at": datetime.now(UTC).isoformat(),
+                "size_bytes": destination.stat().st_size,
+            }
+        )
+
+    review["saved_documents"] = saved
+    review["updated_at"] = datetime.now(UTC).isoformat()
+    store.put_review(review)
+    return _review_payload(store, review, {"saved_document_count": len(saved)})
+
+
+@app.get("/api/reviews/{review_id}/documents/{document_index}")
+def download_review_document(review_id: str, document_index: int) -> FileResponse:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    documents = _saved_documents(review)
+    if document_index < 0 or document_index >= len(documents):
+        raise HTTPException(status_code=404, detail="Saved document not found.")
+    document = documents[document_index]
+    path = Path(str(document.get("path") or ""))
+    if not path.exists() or not path.is_file():
+        raise HTTPException(status_code=404, detail="Saved document file not found.")
+    filename = _safe_filename(str(document.get("filename") or path.name))
+    return FileResponse(
+        path,
+        media_type=str(document.get("content_type") or "application/octet-stream"),
+        filename=filename,
+    )
+
+
 @app.get("/api/outcomes")
 def list_outcomes() -> dict[str, Any]:
     store = get_store()
@@ -310,16 +435,15 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     outcomes = extraction.outcomes
+    store.delete_articles_for_review(str(review["review_id"]), article_type="included_study")
     store.replace_outcomes(str(review["pmid"]), outcomes)
     review["sof_extracted_at"] = datetime.now(UTC).isoformat()
     review["studies_extracted_at"] = None
-    review["pico_extracted_at"] = None
-    review["excluded_extracted_at"] = None
+    review["sof_raw_extraction_text"] = payload.text
+    review["studies_raw_extraction_text"] = ""
     review["sof_overall_notes"] = extraction.overall_notes
     review["studies_overall_notes"] = ""
-    review["pico_overall_notes"] = ""
-    review["plain_language_summary"] = ""
-    review["excluded_overall_notes"] = ""
+    _reset_characteristics_review_fields(review)
     review["extraction_result"] = extraction.extraction_result
     review["has_inconsistency"] = extraction.extraction_result == "extracted"
     review["status"] = extraction.extraction_result if extraction.extraction_result != "extracted" else "sof_extracted"
@@ -343,6 +467,10 @@ def extract_studies(review_id: str, payload: ExtractionRequest) -> dict[str, Any
         extraction = parse_studies_extraction(payload.text, existing)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    store.delete_articles_for_review(str(review["review_id"]), article_type="included_study")
+    for outcome in existing:
+        store.put_outcome(_empty_studies_outcome(outcome))
 
     article_count = 0
     session = build_session()
@@ -396,22 +524,25 @@ def extract_studies(review_id: str, payload: ExtractionRequest) -> dict[str, Any
         store.put_outcome(outcome)
 
     review["studies_extracted_at"] = datetime.now(UTC).isoformat()
+    review["studies_raw_extraction_text"] = payload.text
     review["studies_overall_notes"] = extraction.overall_notes
+    _reset_characteristics_review_fields(review)
     review["status"] = "studies_extracted"
     store.put_review(review)
     return _review_payload(store, review, {"article_count": article_count})
 
 
-@app.post("/api/reviews/{review_id}/extract-pico")
-def extract_pico(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
+@app.post("/api/reviews/{review_id}/extract-characteristics")
+def extract_characteristics(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     store = get_store()
     review = _review_or_404(store, review_id)
     try:
-        extraction = parse_pico_extraction(payload.text)
+        extraction = parse_characteristics_extraction(payload.text)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     updated_count = 0
+    _clear_characteristics_fields(store, str(review["review_id"]))
     articles = store.list_articles_for_review(str(review["review_id"]))
     for study in extraction.studies:
         label = str(study.get("study_label") or "")
@@ -419,20 +550,26 @@ def extract_pico(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
         for article in matches:
             article.update(
                 {
-                    "population": study.get("population") or None,
-                    "intervention": study.get("intervention") or None,
-                    "comparator": study.get("comparator") or None,
-                    "outcome": study.get("outcome") or None,
+                    "characteristics_methods": study.get("characteristics_methods") or None,
+                    "characteristics_participants": study.get("characteristics_participants") or None,
+                    "characteristics_interventions": study.get("characteristics_interventions") or None,
+                    "characteristics_outcomes": study.get("characteristics_outcomes") or None,
+                    "characteristics_risk_of_bias": study.get("characteristics_risk_of_bias") or None,
+                    "characteristics_markdown": study.get("characteristics_markdown") or None,
+                    "characteristics_extraction_failed": bool(study.get("characteristics_extraction_failed", False)),
                     "updated_at": datetime.now(UTC).isoformat(),
                 }
             )
             store.put_article(article)
             updated_count += 1
 
-    review["pico_extracted_at"] = datetime.now(UTC).isoformat()
-    review["pico_overall_notes"] = extraction.overall_notes
+    for key in ("pico_extracted_at", "pico_raw_extraction_text", "pico_overall_notes"):
+        review.pop(key, None)
+    review["characteristics_extracted_at"] = datetime.now(UTC).isoformat()
+    review["characteristics_raw_extraction_text"] = payload.text
+    review["characteristics_overall_notes"] = extraction.overall_notes
     review["plain_language_summary"] = extraction.plain_language_summary
-    review["status"] = "pico_extracted"
+    review["status"] = "characteristics_extracted"
     store.put_review(review)
     return _review_payload(store, review, {"updated_article_count": updated_count})
 
@@ -446,6 +583,7 @@ def extract_excluded(review_id: str, payload: ExtractionRequest) -> dict[str, An
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    store.delete_articles_for_review(str(review["review_id"]), article_type="excluded_study")
     article_count = 0
     session = build_session()
     for study in extraction.studies:
@@ -464,6 +602,7 @@ def extract_excluded(review_id: str, payload: ExtractionRequest) -> dict[str, An
         article_count += 1
 
     review["excluded_extracted_at"] = datetime.now(UTC).isoformat()
+    review["excluded_raw_extraction_text"] = payload.text
     review["excluded_overall_notes"] = extraction.overall_notes
     review["status"] = "excluded_extracted"
     store.put_review(review)

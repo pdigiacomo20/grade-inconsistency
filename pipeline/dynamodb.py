@@ -176,6 +176,18 @@ class DynamoStore:
     def put_article(self, item: dict[str, Any]) -> None:
         self.articles.put_item(Item=_to_dynamodb_value(item))
 
+    def delete_article(self, article_id: str) -> None:
+        self.articles.delete_item(Key={"article_id": str(article_id)})
+
+    def delete_articles_for_review(self, review_id: str, *, article_type: str | None = None) -> int:
+        articles = self.list_articles_for_review(review_id)
+        if article_type is not None:
+            articles = [item for item in articles if item.get("article_type", "included_study") == article_type]
+        with self.articles.batch_writer() as batch:
+            for item in articles:
+                batch.delete_item(Key={"article_id": str(item["article_id"])})
+        return len(articles)
+
     def get_article(self, article_id: str) -> dict[str, Any] | None:
         try:
             response = self.articles.get_item(Key={"article_id": str(article_id)})
