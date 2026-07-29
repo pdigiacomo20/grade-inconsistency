@@ -141,11 +141,14 @@ class DynamoStore:
 
     def replace_outcomes(self, pmid: str, items: list[dict[str, Any]]) -> None:
         existing = self.list_outcomes_for_review(pmid)
-        with self.outcomes.batch_writer() as batch:
-            for item in existing:
-                batch.delete_item(Key={"pmid": str(pmid), "outcome_id": int(item["outcome_id"])})
-            for item in items:
-                batch.put_item(Item=_to_dynamodb_value(item))
+        if existing:
+            with self.outcomes.batch_writer() as batch:
+                for item in existing:
+                    batch.delete_item(Key={"pmid": str(pmid), "outcome_id": int(item["outcome_id"])})
+        if items:
+            with self.outcomes.batch_writer() as batch:
+                for item in items:
+                    batch.put_item(Item=_to_dynamodb_value(item))
 
     def list_outcomes(self) -> list[dict[str, Any]]:
         return sorted(

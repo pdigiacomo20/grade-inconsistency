@@ -13,7 +13,14 @@ async function fetchJson(path, options = {}) {
     ...options,
   });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { detail: text };
+    }
+  }
   if (!response.ok) {
     throw new Error(data.detail || `Request failed: ${response.status}`);
   }
