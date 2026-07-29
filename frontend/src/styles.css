@@ -269,6 +269,7 @@ a:hover,
 .linkIcon,
 .buttonLink,
 .iconButton,
+.dangerButton,
 .primaryButton {
   align-items: center;
   display: inline-flex;
@@ -282,6 +283,7 @@ a:hover,
 
 .buttonLink,
 .iconButton,
+.dangerButton,
 .primaryButton {
   background: #ffffff;
   border: 1px solid #cfd7e2;
@@ -295,6 +297,13 @@ a:hover,
   white-space: nowrap;
 }
 
+.dangerButton {
+  border-color: #d92d20;
+  color: #b42318;
+  justify-content: center;
+  width: fit-content;
+}
+
 .primaryButton {
   background: #17324d;
   border-color: #17324d;
@@ -303,6 +312,7 @@ a:hover,
   width: fit-content;
 }
 
+.dangerButton:disabled,
 .primaryButton:disabled {
   cursor: wait;
   opacity: 0.7;
@@ -559,6 +569,7 @@ legend,
 
 .extractPanel,
 .notesPanel,
+.resetPanel,
 .documentPanel {
   background: #ffffff;
   border: 1px solid #d8dee6;
@@ -572,6 +583,13 @@ legend,
 .documentPanel {
   align-items: center;
   flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 14px 0;
+}
+
+.resetPanel {
+  align-items: center;
   flex-direction: row;
   justify-content: space-between;
   margin: 14px 0;
@@ -821,6 +839,7 @@ textarea {
   .headerActions,
   .documentPanel,
   .documentControls,
+  .resetPanel,
   .savedDocumentLinks,
   .articleControls {
     align-items: stretch;

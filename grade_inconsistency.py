@@ -21,6 +21,7 @@ PMC_IDCONV_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
 PMC_ARTICLE_URL = "https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
 PMC_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 NCBI_REQUEST_DELAY_SECONDS = 0.34
+NCBI_RETRY_WINDOW_SECONDS = 5.0
 
 PUBMED_QUERY = (
     '"Cochrane Database Syst Rev"[jour] '
@@ -404,26 +405,54 @@ def chunked(values: list[str], size: int) -> Iterable[list[str]]:
         yield values[idx : idx + size]
 
 
+def _ncbi_retry_sleep(started_at: float, attempt: int, retry_after: str | None = None) -> bool:
+    elapsed = time.monotonic() - started_at
+    remaining = NCBI_RETRY_WINDOW_SECONDS - elapsed
+    if remaining <= 0:
+        return False
+    delay = min(0.25 * (2**attempt), 1.5, remaining)
+    if retry_after and retry_after.isdigit():
+        delay = min(float(retry_after), remaining)
+    time.sleep(delay)
+    return True
+
+
+def _is_ncbi_rate_limit_payload(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    error = str(data.get("error") or "").lower()
+    return "rate limit" in error or "api rate limit" in error
+
+
 def fetch_json(session: requests.Session, url: str, params: dict) -> dict:
     last_error = ""
-    for attempt in range(5):
+    started_at = time.monotonic()
+    attempt = 0
+    while time.monotonic() - started_at <= NCBI_RETRY_WINDOW_SECONDS:
         try:
             response = session.get(url, params=params, timeout=60)
             if response.status_code == 429 or response.status_code >= 500:
                 retry_after = response.headers.get("Retry-After")
-                if retry_after and retry_after.isdigit():
-                    time.sleep(float(retry_after))
-                else:
-                    time.sleep(2.0 * (attempt + 1))
                 last_error = f"HTTP {response.status_code}"
+                if not _ncbi_retry_sleep(started_at, attempt, retry_after):
+                    break
+                attempt += 1
                 continue
             response.raise_for_status()
             data = response.json()
+            if _is_ncbi_rate_limit_payload(data):
+                last_error = str(data.get("error") or "NCBI API rate limit")
+                if not _ncbi_retry_sleep(started_at, attempt):
+                    break
+                attempt += 1
+                continue
             time.sleep(NCBI_REQUEST_DELAY_SECONDS)
             return data
         except requests.RequestException as exc:
             last_error = str(exc)
-            time.sleep(2.0 * (attempt + 1))
+            if not _ncbi_retry_sleep(started_at, attempt):
+                break
+            attempt += 1
     raise RuntimeError(f"{url} ({last_error})")
 
 
@@ -450,27 +479,33 @@ def fetch_pmc_xml(session: requests.Session, pmcid: str) -> str:
         "tool": "grade-inconsistency",
     }
     last_error = ""
-    for attempt in range(5):
+    started_at = time.monotonic()
+    attempt = 0
+    while time.monotonic() - started_at <= NCBI_RETRY_WINDOW_SECONDS:
         try:
             response = session.get(PMC_FETCH_URL, params=params, timeout=60)
             if response.status_code == 429 or response.status_code >= 500:
                 retry_after = response.headers.get("Retry-After")
-                if retry_after and retry_after.isdigit():
-                    time.sleep(float(retry_after))
-                else:
-                    time.sleep(2.0 * (attempt + 1))
                 last_error = f"HTTP {response.status_code}"
+                if not _ncbi_retry_sleep(started_at, attempt, retry_after):
+                    break
+                attempt += 1
                 continue
             response.raise_for_status()
             data = response.text
             if not has_article_markers(data):
                 last_error = "missing expected article markers"
+                if not _ncbi_retry_sleep(started_at, attempt):
+                    break
+                attempt += 1
                 continue
             time.sleep(NCBI_REQUEST_DELAY_SECONDS)
             return data
         except requests.RequestException as exc:
             last_error = str(exc)
-            time.sleep(2.0 * (attempt + 1))
+            if not _ncbi_retry_sleep(started_at, attempt):
+                break
+            attempt += 1
     raise RuntimeError(f"{PMC_FETCH_URL} ({pmcid}: {last_error})")
 
 

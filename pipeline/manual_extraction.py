@@ -16,6 +16,8 @@ from grade_inconsistency import (
     PUBMED_SEARCH_URL,
     PUBMED_SUMMARY_URL,
     NCBI_REQUEST_DELAY_SECONDS,
+    NCBI_RETRY_WINDOW_SECONDS,
+    _ncbi_retry_sleep,
     fetch_pmc_xml,
     fetch_json,
     strip_tags,
@@ -469,16 +471,17 @@ def _extract_abstract(xml_text: str) -> str:
 def _fetch_abstract(session: requests.Session, pmid: str) -> str:
     params = {"db": "pubmed", "id": pmid, "retmode": "xml", "tool": "grade-inconsistency"}
     last_error = ""
-    for attempt in range(5):
+    started_at = time.monotonic()
+    attempt = 0
+    while time.monotonic() - started_at <= NCBI_RETRY_WINDOW_SECONDS:
         try:
             response = session.get(PUBMED_FETCH_URL, params=params, timeout=60)
             if response.status_code == 429 or response.status_code >= 500:
                 retry_after = response.headers.get("Retry-After")
-                if retry_after and retry_after.isdigit():
-                    time.sleep(float(retry_after))
-                else:
-                    time.sleep(2.0 * (attempt + 1))
                 last_error = f"HTTP {response.status_code}"
+                if not _ncbi_retry_sleep(started_at, attempt, retry_after):
+                    break
+                attempt += 1
                 continue
             response.raise_for_status()
             abstract = _extract_abstract(response.text)
@@ -486,7 +489,9 @@ def _fetch_abstract(session: requests.Session, pmid: str) -> str:
             return abstract
         except requests.RequestException as exc:
             last_error = str(exc)
-            time.sleep(2.0 * (attempt + 1))
+            if not _ncbi_retry_sleep(started_at, attempt):
+                break
+            attempt += 1
     raise RuntimeError(f"{PUBMED_FETCH_URL} ({pmid}: {last_error})")
 
 

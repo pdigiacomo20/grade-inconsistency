@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, BarChart3, Download, ExternalLink, FileText, RefreshCw, Search, Upload } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Download, ExternalLink, FileText, RefreshCw, Search, Trash2, Upload } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -845,6 +845,32 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
     setEditModes((current) => ({ ...current, [kind]: true }));
   };
 
+  const deleteExtractions = async () => {
+    if (!window.confirm("Delete all extracted outcomes, study rows, notes, and pasted extraction text for this review?")) {
+      return;
+    }
+    setBusy("delete-extractions");
+    setError("");
+    setMessage("");
+    try {
+      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/extractions`, {
+        method: "DELETE",
+      });
+      setPayload(result);
+      if (result.review) onReviewUpdated(result.review);
+      setSofText("");
+      setStudiesText("");
+      setCharacteristicsText("");
+      setExcludedText("");
+      setEditModes({});
+      setMessage(result.message || `Deleted ${result.deleted_outcome_count || 0} outcomes and ${result.deleted_article_count || 0} articles.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
   const uploadDocuments = async () => {
     if (!documentFiles.length) {
       setError("Choose at least one document to upload.");
@@ -970,6 +996,15 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
             <ExtractionPanel title="Extract Studies" kind="studies" value={studiesText} onChange={setStudiesText} onSubmit={submit} busy={busy} performed={extractionPerformed.studies} rawText={review.studies_raw_extraction_text} editing={Boolean(editModes.studies)} onEdit={editExtraction} />
             <ExtractionPanel title="Extract Characteristics" kind="characteristics" value={characteristicsText} onChange={setCharacteristicsText} onSubmit={submit} busy={busy} performed={extractionPerformed.characteristics} rawText={review.characteristics_raw_extraction_text} editing={Boolean(editModes.characteristics)} onEdit={editExtraction} />
             <ExtractionPanel title="Extract Excluded" kind="excluded" value={excludedText} onChange={setExcludedText} onSubmit={submit} busy={busy} performed={extractionPerformed.excluded} rawText={review.excluded_raw_extraction_text} editing={Boolean(editModes.excluded)} onEdit={editExtraction} />
+          </section>
+          <section className="resetPanel">
+            <div>
+              <h2>Extractions</h2>
+              <p>Delete extracted outcomes, study rows, notes, and pasted extraction text for this review.</p>
+            </div>
+            <button className="dangerButton" disabled={Boolean(busy)} onClick={deleteExtractions}>
+              {busy === "delete-extractions" ? <RefreshCw size={16} className="spin" /> : <Trash2 size={16} />} Delete extractions
+            </button>
           </section>
           <OverallNotes review={review} />
           <section className="evalSelector">

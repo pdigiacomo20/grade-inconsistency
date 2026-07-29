@@ -185,6 +185,34 @@ def _reset_characteristics_review_fields(review: dict[str, Any]) -> None:
     review["plain_language_summary"] = ""
 
 
+def _reset_extraction_review_fields(review: dict[str, Any]) -> None:
+    for key in (
+        "sof_extracted_at",
+        "studies_extracted_at",
+        "characteristics_extracted_at",
+        "excluded_extracted_at",
+        "pico_extracted_at",
+        "extraction_result",
+        "has_inconsistency",
+    ):
+        review.pop(key, None)
+    for key in (
+        "sof_raw_extraction_text",
+        "studies_raw_extraction_text",
+        "characteristics_raw_extraction_text",
+        "excluded_raw_extraction_text",
+        "pico_raw_extraction_text",
+        "sof_overall_notes",
+        "studies_overall_notes",
+        "characteristics_overall_notes",
+        "excluded_overall_notes",
+        "pico_overall_notes",
+        "plain_language_summary",
+    ):
+        review[key] = ""
+    review["status"] = "protocol_only" if review.get("is_protocol_only") else "ready_for_extraction"
+
+
 def _empty_studies_outcome(outcome: dict[str, Any]) -> dict[str, Any]:
     outcome.update(
         {
@@ -295,7 +323,7 @@ def _try_auto_process_article(
         article["match_status"] = match_status
         article["updated_at"] = datetime.now(UTC).isoformat()
         store.put_article(article)
-    except (RuntimeError, requests.RequestException) as exc:
+    except (RuntimeError, ValueError, requests.RequestException) as exc:
         errors = list(article.get("enrichment_errors", []))
         errors.append(f"pubmed_lookup: {exc}")
         article["enrichment_errors"] = errors
@@ -454,6 +482,26 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
         "extracted": "SoF extracted.",
     }
     return {"review": review, "outcomes": outcomes, "message": messages.get(extraction.extraction_result, "SoF extracted.")}
+
+
+@app.delete("/api/reviews/{review_id}/extractions")
+def delete_review_extractions(review_id: str) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    article_count = store.delete_articles_for_review(str(review["review_id"]))
+    outcome_count = len(store.list_outcomes_for_review(str(review["pmid"])))
+    store.replace_outcomes(str(review["pmid"]), [])
+    _reset_extraction_review_fields(review)
+    store.put_review(review)
+    return _review_payload(
+        store,
+        review,
+        {
+            "deleted_article_count": article_count,
+            "deleted_outcome_count": outcome_count,
+            "message": "Extractions deleted.",
+        },
+    )
 
 
 @app.post("/api/reviews/{review_id}/extract-studies")
