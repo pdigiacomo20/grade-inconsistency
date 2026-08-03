@@ -28,10 +28,10 @@ from pipeline.dynamodb import DynamoStore
 PUBMED_FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 PUBMED_ARTICLE_URL = "https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 FIELD_RE = re.compile(
-    r"(?ims)^\s*(SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
+    r"(?ims)^\s*(License|SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
     r"Forest plot title|Effect measure|Unit of measure|Polarity of measure|Line of no effect|Comparator effect measure|Aggregated effect estimate|Aggregated confidence interval begin|"
     r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes)\s*:\s*"
-    r"(.*?)(?=^\s*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
+    r"(.*?)(?=^\s*(?:License|SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
     r"Forest plot title|Effect measure|Unit of measure|Polarity of measure|Line of no effect|Comparator effect measure|Aggregated effect estimate|Aggregated confidence interval begin|"
     r"Aggregated confidence interval end|Aggregated confidence interval percentage|Aggregated sample size|Overall notes|Study)\s*:|\Z)"
 )
@@ -54,7 +54,7 @@ PDF_META_RE = re.compile(r'(?is)<meta\s+name=["\']citation_pdf_url["\']\s+conten
 PDF_LINK_RE = re.compile(r'(?is)<a\b[^>]+href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']')
 OVERALL_NOTES_RE = re.compile(
     r"(?ims)^[ \t]*Overall notes[ \t]*:[ \t]*"
-    r"(.*?)(?=^[ \t]*(?:SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
+    r"(.*?)(?=^[ \t]*(?:License|SoF table|Row|Medical question|Consensus answer|Certainty of evidence|Multiple choice answer|Downgrade reasoning|"
     r"Forest plot title|Plain language summary|Study)[ \t]*:|^[ \t]*(?:No inconsistency|Inconsistency not very low)[ \t.]*$|\Z)"
 )
 PLAIN_LANGUAGE_SUMMARY_RE = re.compile(
@@ -87,6 +87,7 @@ class ParsedSofExtraction:
     outcomes: list[dict[str, Any]]
     overall_notes: str
     extraction_result: str
+    license: str
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,20 @@ def _extract_overall_notes(text: str) -> str:
     return _clean("\n\n".join(match.group(1) for match in OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
 
+def _normalize_license(text: str) -> str:
+    cleaned = _clean(text)
+    return re.sub(
+        r"\bLicen[cs]e\b",
+        lambda match: "License" if match.group(0)[0].isupper() else "license",
+        cleaned,
+    )
+
+
+def _extract_license(text: str) -> str:
+    fields = _fields(text)
+    return _normalize_license((fields.get("license") or [""])[0])
+
+
 def _extract_characteristics_overall_notes(text: str) -> str:
     return _clean("\n\n".join(match.group(1) for match in CHARACTERISTICS_OVERALL_NOTES_RE.finditer(text) if match.group(1).strip()))
 
@@ -152,10 +167,11 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
     if not text.strip():
         raise ValueError("Paste the Extract SoF output before extracting.")
     overall_notes = _extract_overall_notes(text)
+    license_text = _extract_license(text)
     if _is_no_inconsistency(text):
-        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="no_inconsistency")
+        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="no_inconsistency", license=license_text)
     if _is_inconsistency_not_very_low(text):
-        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="inconsistency_not_very_low")
+        return ParsedSofExtraction(outcomes=[], overall_notes=overall_notes, extraction_result="inconsistency_not_very_low", license=license_text)
 
     starts = [match.start() for match in re.finditer(r"(?im)^\s*SoF table\s*:", text)]
     if not starts:
@@ -206,7 +222,7 @@ def parse_sof_extraction(text: str, *, pmid: str, review_id: str) -> ParsedSofEx
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         )
-    return ParsedSofExtraction(outcomes=outcomes, overall_notes=overall_notes, extraction_result="extracted")
+    return ParsedSofExtraction(outcomes=outcomes, overall_notes=overall_notes, extraction_result="extracted", license=license_text)
 
 
 def _is_extraction_failed(value: Any) -> bool:

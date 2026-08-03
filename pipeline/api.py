@@ -210,7 +210,20 @@ def _reset_extraction_review_fields(review: dict[str, Any]) -> None:
         "plain_language_summary",
     ):
         review[key] = ""
+    review["license"] = ""
+    review["license_missing_since"] = datetime.now(UTC).isoformat()
+    review["license_missing_reason"] = "extraction_reset"
     review["status"] = "protocol_only" if review.get("is_protocol_only") else "ready_for_extraction"
+
+
+def _set_review_license(review: dict[str, Any], license_text: str) -> None:
+    review["license"] = license_text
+    if license_text:
+        review.pop("license_missing_since", None)
+        review.pop("license_missing_reason", None)
+        return
+    review["license_missing_since"] = datetime.now(UTC).isoformat()
+    review["license_missing_reason"] = "sof_extraction_missing_license"
 
 
 def _empty_studies_outcome(outcome: dict[str, Any]) -> dict[str, Any]:
@@ -471,6 +484,7 @@ def extract_sof(review_id: str, payload: ExtractionRequest) -> dict[str, Any]:
     review["studies_raw_extraction_text"] = ""
     review["sof_overall_notes"] = extraction.overall_notes
     review["studies_overall_notes"] = ""
+    _set_review_license(review, extraction.license)
     _reset_characteristics_review_fields(review)
     review["extraction_result"] = extraction.extraction_result
     review["has_inconsistency"] = extraction.extraction_result == "extracted"

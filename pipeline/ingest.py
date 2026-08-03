@@ -50,6 +50,7 @@ def build_review_item(
     is_protocol_only: bool,
     fetch_error: str | None = None,
 ) -> dict[str, Any]:
+    indexed_at = datetime.now(UTC).isoformat()
     return {
         "review_id": review_id,
         "pmid": str(pmid),
@@ -63,7 +64,10 @@ def build_review_item(
         "status": status,
         "is_protocol_only": is_protocol_only,
         "fetch_error": fetch_error,
-        "indexed_at": datetime.now(UTC).isoformat(),
+        "license": "",
+        "license_missing_since": indexed_at,
+        "license_missing_reason": "not_extracted",
+        "indexed_at": indexed_at,
     }
 
 

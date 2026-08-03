@@ -392,6 +392,44 @@ a:hover,
   align-items: flex-start;
 }
 
+.metadataGrid {
+  background: #ffffff;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 14px 0;
+  overflow: hidden;
+}
+
+.metadataItem {
+  border-right: 1px solid #e5eaf0;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.metadataItem:last-child {
+  border-right: 0;
+}
+
+.metadataItem span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.metadataItem strong {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 680;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .extractGrid {
   display: grid;
   gap: 14px;
@@ -848,11 +886,21 @@ textarea {
 
   .extractGrid,
   .notesGrid,
+  .metadataGrid,
   .metricGrid,
   .accuracyExplorer,
   .filterGrid,
   .chartGrid {
     grid-template-columns: 1fr;
+  }
+
+  .metadataItem {
+    border-bottom: 1px solid #e5eaf0;
+    border-right: 0;
+  }
+
+  .metadataItem:last-child {
+    border-bottom: 0;
   }
 
   select {

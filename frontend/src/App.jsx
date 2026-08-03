@@ -257,6 +257,28 @@ function OverallNotes({ review }) {
   );
 }
 
+function ReviewMetadata({ review }) {
+  const items = [
+    { label: "PMID", value: review.pmid },
+    { label: "Year", value: review.year || "Year unknown" },
+    { label: "Journal", value: review.journal || "Journal unknown" },
+    { label: "Status", value: review.status },
+    { label: "PMCID", value: review.pmcid },
+    { label: "License", value: review.license },
+  ];
+
+  return (
+    <section className="metadataGrid" aria-label="Review metadata">
+      {items.map((item) => (
+        <div className="metadataItem" key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value || <span className="muted">Missing</span>}</strong>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
   return (
     <div className="tableWrap compact">
@@ -966,6 +988,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
               </a>
             </div>
           </section>
+          <ReviewMetadata review={review} />
           <section className="documentPanel">
             <div>
               <h2>Saved Documents</h2>

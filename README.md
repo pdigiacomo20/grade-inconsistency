@@ -8,7 +8,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 2. Assigns each review a stable ID: `CSR_0001`, `CSR_0002`, and so on.
 3. Marks protocol-only reviews in the `reviews` table so the frontend can filter them out.
 4. Lets a user open each review detail page, download the review PDF when PMC exposes one, upload/save local review documents, and paste browser-assisted extraction outputs into four extraction boxes.
-5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`. The pasted SoF output only needs `SoF table`, `Row`, `Medical question`, and optional `Downgrade reasoning`; the app keeps compatibility fields internally with certainty set to `very low` and benchmark multiple-choice answer set to `m`.
+5. Parses `Extract SoF` first and stores eligible very-low-certainty inconsistency outcomes in `outcomes`, plus review-level `License` metadata in `reviews`. The pasted SoF output needs `License`, `SoF table`, `Row`, `Medical question`, and optional `Downgrade reasoning`; the app keeps compatibility fields internally with certainty set to `very low` and benchmark multiple-choice answer set to `m`.
 6. Parses `Extract Studies` second, stores forest-plot aggregate metrics on each outcome, inserts included study article rows as `ART_00001`, `ART_00002`, and so on, then classifies each included study by Wald-Z.
 7. Parses `Extract Characteristics` and stores the review plain-language summary plus per-study Methods, Participants, Interventions, Outcomes, and Risk of Bias markdown on matching included study article rows.
 8. Parses `Extract Excluded` and inserts excluded study article rows with exclusion reasons.
@@ -22,7 +22,9 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 `reviews`
 
 - Primary key: `pmid`
-- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`, `plain_language_summary`, `saved_documents`, `sof_raw_extraction_text`, `studies_raw_extraction_text`, `characteristics_raw_extraction_text`, `excluded_raw_extraction_text`
+- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`, `license`, `license_missing_since`, `license_missing_reason`, `plain_language_summary`, `saved_documents`, `sof_raw_extraction_text`, `studies_raw_extraction_text`, `characteristics_raw_extraction_text`, `excluded_raw_extraction_text`
+
+`license_missing_reason=pre_v4_migration` identifies reviews that existed before the v4 License field was added and still need License metadata filled in.
 
 `outcomes`
 
@@ -38,6 +40,16 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 The app intentionally inserts a new article row for every pasted citation. It does not deduplicate citations. If rows in the same review have an exact title match, PMID enrichment is copied across those rows so PubMed lookup is not repeated. Wald-Z classification runs automatically for new `included_study` rows after `Extract Studies`; evaluations process those rows. `excluded_study` rows are kept for PubMed enrichment and audit context.
 
 Edited extraction submissions replace the derived data for that step. Editing `Extract SoF` clears included-study articles and resets `Extract Studies` and `Extract Characteristics` state. Editing `Extract Studies` deletes and recreates included-study article rows from the edited text and resets all characteristics fields. Editing `Extract Characteristics` clears prior characteristics fields before applying the edited text. Editing `Extract Excluded` deletes and recreates only excluded-study rows, independent of the other steps.
+
+## Database Backups
+
+The v4 pre-License-change database backup is stored at:
+
+```text
+dynamodb-backups/v4-database/
+```
+
+The authoritative full backup is `dynamodb-backups/v4-database/dynamodb-local-data-v4.tar`. See `dynamodb-backups/v4-database/README.md` for restore commands. Table scan JSON files are also saved there for inspection.
 
 ## Setup
 
@@ -172,7 +184,7 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 11. Review automatically matched PMIDs in the article table.
 12. For unresolved associated articles, enter the PMID and click `Process PMID`, or click `Manual extract failed` if no PMID can be found.
 
-The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Unit of measure`, `Polarity of measure`, `Comparator effect measure`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract Characteristics` stores `Plain language summary` on the review and updates included study rows by exact study label; each non-failed study must include YYYMethods, YYYParticipants, YYYInterventions, YYYOutcomes, and YYYRisk of Bias sections. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
+The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise it stores a top-level `License` value on the review and each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Unit of measure`, `Polarity of measure`, `Comparator effect measure`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract Characteristics` stores `Plain language summary` on the review and updates included study rows by exact study label; each non-failed study must include YYYMethods, YYYParticipants, YYYInterventions, YYYOutcomes, and YYYRisk of Bias sections. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
 
 ## Run Remotely Over SSH
 
