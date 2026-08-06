@@ -145,11 +145,14 @@ Key evaluation config fields:
 - `evaluations_dir`: directory for run JSON files, default `data/evaluations`.
 - `starting_review`: first CSR ID to process, for example `CSR_0011`.
 - `review_count`: number of CSR IDs to process in CSR index order.
-- `detail_exposure_types`: context detail modes to evaluate. Supported values are `abstract` and `full_text`.
+- `detail_exposure_types`: context detail modes to evaluate. Supported values are `abstract`, `full_text`, and `multiturn_char`.
 - `irrelevant_docs_per_context`: number of deterministic irrelevant article documents to add to each source context.
+- `maximum_follow_ups`: maximum follow-up rounds for `multiturn_char`, default `4`. If the model asks four rounds of follow-up questions, the fifth response is forced to answer.
 - `max_contexts_per_outcome`: optional maximum number of article contexts per question for smoke tests.
 
 The evaluation only processes outcome rows whose certainty field contains `very low`. Rows with other certainty levels are skipped. The ground-truth answer for every evaluated row is `m` (`maybe`), and accuracy is the fraction of model answers that remain `m`.
+
+`multiturn_char` exposes study characteristics/results incrementally. Each source study is split into `participants` from `YYYParticipants`, `mic` from `YYYMethods` plus `YYYInterventions`, `outcomes` from `YYYOutcomes`, and `results` from the extracted study effect measure, unit, polarity, comparator effect, effect estimate, and confidence interval fields. The initial context deterministically varies between `participants`+`mic` and `outcomes`+`results`; the other sections are hidden behind a gatekeeper that replies with unavailable/prior-context messages or reveals one hidden section at a time.
 
 Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows accuracy and memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
 

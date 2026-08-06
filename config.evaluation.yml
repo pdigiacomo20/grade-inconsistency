@@ -17,5 +17,7 @@ review_count: 10
 detail_exposure_types:
   - abstract
   # - full_text
+  # - multiturn_char
 irrelevant_docs_per_context: 0
+maximum_follow_ups: 4
 max_contexts_per_outcome: 10

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,9 @@ from pipeline.evaluations import clean_answer, compute_metrics, evaluations_dir
 
 ANSWER_RE = re.compile(r"\b([ynm])\b", re.IGNORECASE)
 GROUND_TRUTH_ANSWER = "m"
+MULTITURN_CHAR_DETAIL_TYPE = "multiturn_char"
+GATEKEEPER_PRIOR = "Information contained in prior context provided."
+GATEKEEPER_UNAVAILABLE = "Information is not available."
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,7 @@ class EvaluationConfig:
     max_contexts_per_outcome: int | None = None
     detail_exposure_types: tuple[str, ...] = ("abstract",)
     irrelevant_docs_per_context: int = 0
+    maximum_follow_ups: int = 4
     request_timeout_seconds: int = 120
     retry_count: int = 3
 
@@ -102,34 +107,35 @@ def parse_answer(text: str) -> str:
     raise ValueError(f"Model did not return y, n, or m: {text!r}")
 
 
-def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
+def openai_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not set.")
     payload = {
         "model": config.model,
-        "input": [
-            {"role": "system", "content": "Answer medical multiple choice questions with exactly one lowercase character: y, n, or m."},
-            {"role": "user", "content": prompt},
-        ],
+        "input": messages,
     }
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    response = requests.post(
+        "https://api.openai.com/v1/responses",
+        headers=headers,
+        json=payload,
+        timeout=config.request_timeout_seconds,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
+    return response_text(response.json())
+
+
+def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
+    messages = [
+        {"role": "system", "content": "Answer medical multiple choice questions with exactly one lowercase character: y, n, or m."},
+        {"role": "user", "content": prompt},
+    ]
     last_error = ""
     for attempt in range(max(1, config.retry_count)):
         try:
-            response = requests.post(
-                "https://api.openai.com/v1/responses",
-                headers=headers,
-                json=payload,
-                timeout=config.request_timeout_seconds,
-            )
-            if response.status_code == 429 or response.status_code >= 500:
-                last_error = f"HTTP {response.status_code}: {response.text[:500]}"
-                time.sleep(2.0 * (attempt + 1))
-                continue
-            if response.status_code >= 400:
-                raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
-            raw_text = response_text(response.json())
+            raw_text = openai_text(messages, config=config)
             return {"answer": parse_answer(raw_text), "raw_response": raw_text, "error": ""}
         except (requests.RequestException, ValueError, RuntimeError) as exc:
             last_error = str(exc)
@@ -142,6 +148,20 @@ def model_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
     if config.provider != "openai":
         raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
     return openai_answer(prompt, config=config)
+
+
+def model_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
+    if config.provider != "openai":
+        raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
+    last_error = ""
+    for attempt in range(max(1, config.retry_count)):
+        try:
+            return openai_text(messages, config=config)
+        except (requests.RequestException, RuntimeError) as exc:
+            last_error = str(exc)
+            if attempt + 1 < max(1, config.retry_count):
+                time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError(last_error)
 
 
 def prompt_parametric(question: str) -> str:
@@ -163,6 +183,313 @@ def prompt_contextual(question: str, citation: str, detail_label: str, detail_te
         f"Question: {question}\n\n"
         f"Context: {context}"
     )
+
+
+def normalized_detail_type(detail_type: str) -> str:
+    return detail_type.strip().lower().replace("-", "_")
+
+
+def stable_int(*parts: Any) -> int:
+    text = "::".join(str(part or "") for part in parts)
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return int(digest[:16], 16)
+
+
+def maybe_text(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def study_results(article: dict[str, Any]) -> str:
+    fields = [
+        ("Effect measure", article.get("effect_measure")),
+        ("Unit", article.get("unit_of_measure")),
+        ("Polarity", article.get("polarity_of_measure")),
+        ("Comparator effect", article.get("comparator_effect_measure") or article.get("line_of_no_effect")),
+        ("Effect estimate", article.get("effect_estimate")),
+        ("Confidence interval begin", article.get("confidence_interval_begin")),
+        ("Confidence interval end", article.get("confidence_interval_end")),
+        ("Confidence interval percentage", article.get("confidence_interval_percentage")),
+        ("Sample size", article.get("sample_size")),
+    ]
+    lines = [f"{label}: {maybe_text(value)}" for label, value in fields if maybe_text(value)]
+    return "\n".join(lines)
+
+
+def study_detail_sections(article: dict[str, Any]) -> dict[str, str]:
+    methods = maybe_text(article.get("characteristics_methods"))
+    interventions = maybe_text(article.get("characteristics_interventions"))
+    return {
+        "participants": maybe_text(article.get("characteristics_participants")),
+        "mic": "\n\n".join(part for part in (methods, interventions) if part),
+        "outcomes": maybe_text(article.get("characteristics_outcomes")),
+        "results": study_results(article),
+    }
+
+
+def format_study_sections(study_id: str, article: dict[str, Any], sections: dict[str, str], section_names: list[str]) -> str:
+    header = [
+        f"Study {study_id}",
+        f"Study label: {article.get('study_label') or ''}",
+        f"Article ID: {article.get('article_id') or ''}",
+        f"Citation: {article.get('citation') or ''}",
+    ]
+    body: list[str] = []
+    for name in section_names:
+        text = sections.get(name, "")
+        if text:
+            body.append(f"{name}:\n{text}")
+    return "\n".join(header) + "\n\n" + "\n\n".join(body)
+
+
+def initial_multiturn_sections(article: dict[str, Any], outcome: dict[str, Any]) -> tuple[list[str], list[str]]:
+    if stable_int(outcome.get("pmid"), outcome.get("outcome_id"), article.get("article_id"), "initial") % 2 == 0:
+        return ["participants", "mic"], ["outcomes", "results"]
+    return ["outcomes", "results"], ["participants", "mic"]
+
+
+def extract_json_object(text: str) -> dict[str, Any] | None:
+    stripped = text.strip()
+    candidates = [stripped]
+    match = re.search(r"\{.*\}", stripped, re.S)
+    if match:
+        candidates.append(match.group(0))
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            return data
+    return None
+
+
+def parse_multiturn_response(text: str) -> dict[str, Any]:
+    data = extract_json_object(text)
+    if data:
+        action = str(data.get("action") or "").strip().lower()
+        if action == "answer":
+            return {"action": "answer", "answer": parse_answer(str(data.get("answer") or "")), "questions": []}
+        if action == "follow_up":
+            questions = data.get("questions") or []
+            if isinstance(questions, dict):
+                questions = [questions]
+            parsed_questions = [
+                {"study_id": str(item.get("study_id") or "").strip(), "question": str(item.get("question") or "").strip()}
+                for item in questions
+                if isinstance(item, dict) and str(item.get("study_id") or "").strip() and str(item.get("question") or "").strip()
+            ]
+            if parsed_questions:
+                return {"action": "follow_up", "answer": "", "questions": parsed_questions}
+    return {"action": "answer", "answer": parse_answer(text), "questions": []}
+
+
+def classify_gatekeeper_question(
+    question: str,
+    *,
+    exposed_sections: dict[str, str],
+    hidden_sections: dict[str, str],
+    config: EvaluationConfig,
+) -> str:
+    prompt = (
+        "Classify the follow-up question using only these labels:\n"
+        "- prior: the answer is already contained in the prior exposed information.\n"
+        "- hidden: the question asks for information contained in the hidden information.\n"
+        "- unavailable: the question cannot be answered from either prior or hidden information.\n\n"
+        "Return JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\n"
+        f"Follow-up question: {question}\n\n"
+        f"Prior exposed information:\n{json.dumps(exposed_sections, indent=2, sort_keys=True)}\n\n"
+        f"Hidden information:\n{json.dumps(hidden_sections, indent=2, sort_keys=True)}"
+    )
+    raw = model_text(
+        [
+            {"role": "system", "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly."},
+            {"role": "user", "content": prompt},
+        ],
+        config=config,
+    )
+    data = extract_json_object(raw) or {}
+    classification = str(data.get("classification") or "").strip().lower()
+    if classification in {"prior", "hidden", "unavailable"}:
+        return classification
+    lowered = raw.lower()
+    if "hidden" in lowered:
+        return "hidden"
+    if "prior" in lowered:
+        return "prior"
+    return "unavailable"
+
+
+def gatekeeper_response(
+    request: dict[str, str],
+    *,
+    study_states: dict[str, dict[str, Any]],
+    follow_up_index: int,
+    config: EvaluationConfig,
+) -> dict[str, Any]:
+    study_id = request["study_id"]
+    state = study_states.get(study_id)
+    if not state:
+        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": "unavailable", "revealed_section": ""}
+
+    exposed_section_names = [*state["exposed_names"], *state["revealed_names"]]
+    exposed_sections = {name: state["sections"].get(name, "") for name in exposed_section_names}
+    hidden_sections = {name: state["sections"].get(name, "") for name in state["hidden_names"] if name not in state["revealed_names"] and state["sections"].get(name)}
+    if not hidden_sections:
+        try:
+            classification = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections={}, config=config)
+        except RuntimeError:
+            classification = "unavailable"
+        response = GATEKEEPER_PRIOR if classification == "prior" else GATEKEEPER_UNAVAILABLE
+        return {**request, "response": response, "classification": classification, "revealed_section": ""}
+
+    try:
+        classification = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections=hidden_sections, config=config)
+    except RuntimeError:
+        classification = "hidden"
+    if classification == "prior":
+        return {**request, "response": GATEKEEPER_PRIOR, "classification": classification, "revealed_section": ""}
+    if classification == "unavailable":
+        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": classification, "revealed_section": ""}
+
+    candidates = sorted(hidden_sections)
+    selected = candidates[stable_int(study_id, request["question"], follow_up_index, "reveal") % len(candidates)]
+    state["revealed_names"].append(selected)
+    text = hidden_sections[selected]
+    return {
+        **request,
+        "response": f"{selected}:\n{text}",
+        "classification": "hidden",
+        "revealed_section": selected,
+    }
+
+
+def prompt_multiturn_initial(question: str, studies_context: str, maximum_follow_ups: int) -> str:
+    return (
+        "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\n"
+        "Use exactly one of these JSON templates and no other text:\n"
+        "{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n"
+        "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\n"
+        "Answer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. "
+        "Direct each follow-up question to one individual study using its study_id. "
+        "Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. "
+        f"You may ask at most {maximum_follow_ups} rounds of follow-up questions; after that, you must answer.\n\n"
+        f"Question: {question}\n\n"
+        f"Study context:\n{studies_context}"
+    )
+
+
+def prompt_multiturn_force_answer(question: str) -> str:
+    return (
+        "You have reached the maximum number of follow-up rounds. "
+        "Answer now using exactly this JSON template and no other text: "
+        "{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n\n"
+        f"Question: {question}"
+    )
+
+
+def run_multiturn_char(
+    question: str,
+    outcome: dict[str, Any],
+    source_studies: list[dict[str, Any]],
+    *,
+    config: EvaluationConfig,
+) -> dict[str, Any]:
+    study_states: dict[str, dict[str, Any]] = {}
+    context_parts: list[str] = []
+    for index, article in enumerate(source_studies, start=1):
+        study_id = f"S{index}"
+        sections = study_detail_sections(article)
+        exposed_names, hidden_names = initial_multiturn_sections(article, outcome)
+        exposed_names = [name for name in exposed_names if sections.get(name)]
+        hidden_names = [name for name in hidden_names if sections.get(name)]
+        if not exposed_names and hidden_names:
+            exposed_names = [hidden_names.pop(0)]
+        if not exposed_names:
+            continue
+        study_states[study_id] = {
+            "article": article,
+            "sections": sections,
+            "exposed_names": exposed_names,
+            "hidden_names": hidden_names,
+            "revealed_names": [],
+        }
+        context_parts.append(format_study_sections(study_id, article, sections, exposed_names))
+
+    if not study_states:
+        return {"answer": "", "raw_response": "", "error": "No usable study characteristics/results for multiturn_char.", "multiturn": {"turns": []}}
+
+    messages = [
+        {"role": "system", "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly."},
+        {"role": "user", "content": prompt_multiturn_initial(question, "\n\n---\n\n".join(context_parts), config.maximum_follow_ups)},
+    ]
+    turns: list[dict[str, Any]] = []
+    final_raw = ""
+    final_answer = ""
+    error = ""
+    for follow_up_round in range(config.maximum_follow_ups + 1):
+        if follow_up_round == config.maximum_follow_ups:
+            messages.append({"role": "user", "content": prompt_multiturn_force_answer(question)})
+        try:
+            raw = model_text(messages, config=config)
+            parsed = parse_multiturn_response(raw)
+        except (RuntimeError, ValueError) as exc:
+            error = str(exc)
+            final_raw = ""
+            break
+        turn: dict[str, Any] = {"round": follow_up_round + 1, "raw_response": raw, "parsed": parsed}
+        turns.append(turn)
+        messages.append({"role": "assistant", "content": raw})
+        if parsed["action"] == "answer":
+            final_raw = raw
+            final_answer = parsed["answer"]
+            break
+        if follow_up_round == config.maximum_follow_ups:
+            final_raw = raw
+            error = "Model requested follow-up after maximum follow-up rounds."
+            break
+        gatekeeper_responses = [
+            gatekeeper_response(request, study_states=study_states, follow_up_index=follow_up_round + 1, config=config)
+            for request in parsed["questions"]
+        ]
+        turn["gatekeeper_responses"] = gatekeeper_responses
+        response_text_for_model = "\n\n".join(
+            f"Study {item['study_id']} question: {item['question']}\nGatekeeper response: {item['response']}"
+            for item in gatekeeper_responses
+        )
+        messages.append({"role": "user", "content": f"Gatekeeper responses:\n{response_text_for_model}\n\nContinue with one JSON response template."})
+
+    primary_state = next(iter(study_states.values()))
+    primary_article = primary_state["article"]
+    return {
+        "article_id": primary_article.get("article_id"),
+        "article_type": primary_article.get("article_type", "included_study"),
+        "citation": primary_article.get("citation"),
+        "title": primary_article.get("title"),
+        "pmid": primary_article.get("pmid"),
+        "abstract_path": primary_article.get("abstract_path"),
+        "full_text_path": primary_article.get("full_text_path"),
+        "wald_z": primary_article.get("wald_z"),
+        "wald_z_category": primary_article.get("wald_z_category"),
+        "detail_exposure_type": MULTITURN_CHAR_DETAIL_TYPE,
+        "irrelevant_doc_count": 0,
+        "answer": final_answer,
+        "raw_response": final_raw,
+        "error": error,
+        "multiturn": {
+            "maximum_follow_ups": config.maximum_follow_ups,
+            "study_count": len(study_states),
+            "studies": {
+                study_id: {
+                    "article_id": state["article"].get("article_id"),
+                    "initially_exposed_sections": state["exposed_names"],
+                    "initially_hidden_sections": state["hidden_names"],
+                    "revealed_sections": state["revealed_names"],
+                }
+                for study_id, state in study_states.items()
+            },
+            "turns": turns,
+        },
+    }
 
 
 def read_abstract(article: dict[str, Any]) -> str:
@@ -203,7 +530,7 @@ def is_very_low_certainty(value: Any) -> bool:
 
 
 def article_detail(article: dict[str, Any], detail_type: str) -> tuple[str, str]:
-    normalized = detail_type.strip().lower().replace("-", "_")
+    normalized = normalized_detail_type(detail_type)
     if normalized == "full_text":
         return "Full text", read_full_text(article)
     return "Abstract", read_abstract(article)
@@ -270,12 +597,17 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
         source_articles = [
             article
             for article in sorted(articles_by_outcome.get((str(outcome.get("pmid")), int(outcome.get("outcome_id") or 0)), []), key=lambda item: str(item.get("article_id") or ""))
-            if article.get("abstract_path")
         ]
         if config.max_contexts_per_outcome:
             source_articles = source_articles[: config.max_contexts_per_outcome]
         for article in source_articles:
             for detail_type in config.detail_exposure_types:
+                if normalized_detail_type(detail_type) == MULTITURN_CHAR_DETAIL_TYPE:
+                    print(f"  context {article.get('article_id')} ({detail_type})")
+                    multiturn_context = run_multiturn_char(question, outcome, [article], config=config)
+                    if multiturn_context.get("article_id"):
+                        contexts.append(multiturn_context)
+                    continue
                 detail_label, detail_text = article_detail(article, detail_type)
                 if not detail_text:
                     continue
@@ -345,6 +677,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
             "skipped_outcomes_not_very_low": skipped_for_certainty,
             "detail_exposure_types": list(config.detail_exposure_types),
             "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
+            "maximum_follow_ups": config.maximum_follow_ups,
         },
         "outcomes": results,
     }
