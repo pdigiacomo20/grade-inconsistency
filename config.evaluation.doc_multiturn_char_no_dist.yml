@@ -1,0 +1,26 @@
+task: evaluation
+run_id: doc-multiturn-char-no-dist
+provider: openai
+model: gpt-5.5
+evaluations_dir: data/evaluations
+
+aws_region: us-west-2
+dynamodb_endpoint_url: http://localhost:8000
+outcomes_table: outcomes
+articles_table: articles
+
+# Subset controls.
+# Start at this CSR ID in CSR index order.
+starting_review: CSR_0053
+# Evaluate at most this many outcome questions after applying starting_review.
+max_questions: 2
+# Optionally uncomment to limit the number of CSR IDs considered.
+# review_count: 10
+
+# DOC + DET + no DIST.
+# For multiturn_char, each context is one included-study document and no distractors
+# are added. Accuracy is computed against the repository's maybe target, m.
+detail_exposure_types:
+  - multiturn_char
+irrelevant_docs_per_context: 0
+maximum_follow_ups: 4

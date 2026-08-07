@@ -1,0 +1,644 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "completed_outcomes": 2,
+    "created_at": "2026-08-07T18:19:45.982462+00:00",
+    "detail_exposure_types": [
+      "multiturn_char"
+    ],
+    "filename": "doc-multiturn-char-no-dist-20260807T181945Z.json",
+    "finished_at": "2026-08-07T18:21:36.857322+00:00",
+    "ground_truth_answer": "m",
+    "irrelevant_docs_per_context": 0,
+    "max_questions": 2,
+    "maximum_follow_ups": 4,
+    "model": "gpt-5.5",
+    "outcomes_table": "outcomes",
+    "provider": "openai",
+    "review_count": null,
+    "run_id": "doc-multiturn-char-no-dist",
+    "skipped_outcomes_not_very_low": 0,
+    "starting_review": "CSR_0053",
+    "status": "complete",
+    "target_certainty": "very low",
+    "task": "evaluation",
+    "total_outcomes": 2
+  },
+  "metrics": {
+    "accuracy_by_article_type": {
+      "included_study": {
+        "accuracy": 0.5,
+        "correct_count": 3,
+        "incorrect_count": 3
+      }
+    },
+    "contextual_accuracy": 0.5,
+    "contextual_correct": 3,
+    "contextual_errors": 0,
+    "contextual_total": 6,
+    "memorization_rate": 0.5,
+    "memorization_rate_by_article_type": {
+      "included_study": {
+        "memorization_rate": 0.5,
+        "memory_count": 3,
+        "source_count": 3
+      }
+    },
+    "memorization_rate_by_parametric_answer_and_article_type": {
+      "y": {
+        "included_study": {
+          "memorization_rate": 0.5,
+          "memory_count": 3,
+          "source_count": 3
+        }
+      }
+    },
+    "memory_count": 3,
+    "outcome_count": 2,
+    "parametric_accuracy": 0.0,
+    "parametric_correct": 0,
+    "parametric_distribution": {
+      "m": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "n": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "y": {
+        "count": 2,
+        "percentage": 1.0
+      }
+    },
+    "parametric_total": 2,
+    "source_count": 3
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00934_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00934",
+          "article_type": "included_study",
+          "citation": "Bischoff HA, Hannes BS, Dick W, Akos R, Knecht M, Salis C, et al. Effects of vitamin D supplementation on falls: a randomized controlled trial. Journal of Bone and Mineral Research 2003;18(2):343-51.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00934",
+                "initially_exposed_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "classification": "unavailable",
+                    "gatekeeper": {
+                      "classification": "unavailable",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly.",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT\\n\\n**Intervention group:** 1. 800 IU oral cholecalciferol (vitamin D3) plus 1200 mg calcium daily for 12 weeks 2; 6-week pretreatment period and a 12-week treatment period\\n\\n**Comparator group:** 1200 mg calcium daily for 12 weeks\",\n  \"participants\": \"**Setting:** 2 hospitals with long-stay geriatric care units, Basel, Switzerland\\n\\n**Sample size:**\\n\\n* **Number randomised:** 122 participants\\n\\n**Particpant (baseline) characteristics:**\\n\\n* **Age:** mean 85.3 years; range, 63\\u201399 years\\n* **Gender:** 100% women\\n\\n**Inclusion criteria:** \\u201cage 60 or older and the ability to walk 3 m with or without a walking aid\\u201d\\n\\n**Exclusion criteria:** \\u201cwere primary hyperparathyroidism, hypocalcemia, hypercalciuria, renal insufficiency (creatinine > 117 \\u03bcM), and fracture or stroke within the last 3 months. Also excluded were those who had received any treatment with hormone replacement therapy, calcitonin, fluoride, or bisphosphonates during the previous 24 months\\u201d\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"Rate of falls, number of people falling, number sustaining a fracture (hip fractures), adverse events\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 1.93\\nConfidence interval begin: 0.18\\nConfidence interval end: 20.73\\nConfidence interval percentage: 95\\nSample size: 122\"\n}",
+                          "role": "user"
+                        }
+                      ],
+                      "prompt": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT\\n\\n**Intervention group:** 1. 800 IU oral cholecalciferol (vitamin D3) plus 1200 mg calcium daily for 12 weeks 2; 6-week pretreatment period and a 12-week treatment period\\n\\n**Comparator group:** 1200 mg calcium daily for 12 weeks\",\n  \"participants\": \"**Setting:** 2 hospitals with long-stay geriatric care units, Basel, Switzerland\\n\\n**Sample size:**\\n\\n* **Number randomised:** 122 participants\\n\\n**Particpant (baseline) characteristics:**\\n\\n* **Age:** mean 85.3 years; range, 63\\u201399 years\\n* **Gender:** 100% women\\n\\n**Inclusion criteria:** \\u201cage 60 or older and the ability to walk 3 m with or without a walking aid\\u201d\\n\\n**Exclusion criteria:** \\u201cwere primary hyperparathyroidism, hypocalcemia, hypercalciuria, renal insufficiency (creatinine > 117 \\u03bcM), and fracture or stroke within the last 3 months. Also excluded were those who had received any treatment with hormone replacement therapy, calcitonin, fluoride, or bisphosphonates during the previous 24 months\\u201d\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"Rate of falls, number of people falling, number sustaining a fracture (hip fractures), adverse events\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 1.93\\nConfidence interval begin: 0.18\\nConfidence interval end: 20.73\\nConfidence interval percentage: 95\\nSample size: 122\"\n}",
+                      "raw_response": "{\"classification\":\"unavailable\"}"
+                    },
+                    "question": "What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?",
+                    "response": "Information is not available.",
+                    "revealed_section": "",
+                    "study_id": "S1"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Bischoff 2003\nArticle ID: ART_00934\nCitation: Bischoff HA, Hannes BS, Dick W, Akos R, Knecht M, Salis C, et al. Effects of vitamin D supplementation on falls: a randomized controlled trial. Journal of Bone and Mineral Research 2003;18(2):343-51.\n\nparticipants:\n**Setting:** 2 hospitals with long-stay geriatric care units, Basel, Switzerland\n\n**Sample size:**\n\n* **Number randomised:** 122 participants\n\n**Particpant (baseline) characteristics:**\n\n* **Age:** mean 85.3 years; range, 63\u201399 years\n* **Gender:** 100% women\n\n**Inclusion criteria:** \u201cage 60 or older and the ability to walk 3 m with or without a walking aid\u201d\n\n**Exclusion criteria:** \u201cwere primary hyperparathyroidism, hypocalcemia, hypercalciuria, renal insufficiency (creatinine > 117 \u03bcM), and fracture or stroke within the last 3 months. Also excluded were those who had received any treatment with hormone replacement therapy, calcitonin, fluoride, or bisphosphonates during the previous 24 months\u201d\n\nmic:\nRCT\n\n**Intervention group:** 1. 800 IU oral cholecalciferol (vitamin D3) plus 1200 mg calcium daily for 12 weeks 2; 6-week pretreatment period and a 12-week treatment period\n\n**Comparator group:** 1200 mg calcium daily for 12 weeks",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "question": "What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?",
+                      "study_id": "S1"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Bischoff 2003\nArticle ID: ART_00934\nCitation: Bischoff HA, Hannes BS, Dick W, Akos R, Knecht M, Salis C, et al. Effects of vitamin D supplementation on falls: a randomized controlled trial. Journal of Bone and Mineral Research 2003;18(2):343-51.\n\nparticipants:\n**Setting:** 2 hospitals with long-stay geriatric care units, Basel, Switzerland\n\n**Sample size:**\n\n* **Number randomised:** 122 participants\n\n**Particpant (baseline) characteristics:**\n\n* **Age:** mean 85.3 years; range, 63\u201399 years\n* **Gender:** 100% women\n\n**Inclusion criteria:** \u201cage 60 or older and the ability to walk 3 m with or without a walking aid\u201d\n\n**Exclusion criteria:** \u201cwere primary hyperparathyroidism, hypocalcemia, hypercalciuria, renal insufficiency (creatinine > 117 \u03bcM), and fracture or stroke within the last 3 months. Also excluded were those who had received any treatment with hormone replacement therapy, calcitonin, fluoride, or bisphosphonates during the previous 24 months\u201d\n\nmic:\nRCT\n\n**Intervention group:** 1. 800 IU oral cholecalciferol (vitamin D3) plus 1200 mg calcium daily for 12 weeks 2; 6-week pretreatment period and a 12-week treatment period\n\n**Comparator group:** 1200 mg calcium daily for 12 weeks",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy S1 question: What were the baseline vitamin D levels of participants, and did the study report fracture outcomes (number of participants with fractures or fracture events) during the 12-week follow-up by intervention group versus calcium-only comparator?\nGatekeeper response: Information is not available.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "12568412",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Effects of vitamin D supplementation on falls: a randomized controlled trial",
+          "wald_z": 0.543031,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00935_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00935",
+          "article_type": "included_study",
+          "citation": "Chapuy MC, Pamphile R, Paris E, Kempf C, Schlichting M, Arnaud S, et al. Combined calcium and vitamin D3 supplementation in elderly women: confirmation of reversal of secondary hyperparathyroidism and hip fracture risk: the Decalyos II study. Osteoporosis International 2002;13(3):257-64.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00935",
+                "initially_exposed_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "classification": "unavailable",
+                    "gatekeeper": {
+                      "classification": "unavailable",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly.",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT (individual)\\n\\n**Intervention groups:** 800 IU of vitamin D3 + 1200 mg calcium carbonate fixed combination daily; 800 IU of vitamin D3 + 1200 mg calcium carbonate separately daily\\n\\n**Comparator group:** placebo\",\n  \"participants\": \"**Setting:** 55 intermediate nursing care facilities, France\\n\\n**Number randomised:** 610 participants\\n\\n**Sample:** 100% women\\n\\n**Age (years):** mean 85.2 (SD 7.1)\\n\\n**Inclusion criteria:** ambulatory; life expectancy > 2 years\\n\\n**Exclusion criteria:** malabsorption; serum calcium > 2.63 mmol/L; chronic renal failure (serum creatinine >150 \\u03bcmol/L), taking bone metabolism altering medications within the past year, e.g. corticosteroids, anticonvulsants or high doses of thyroxine; fluoride salts (43 months), bisphosphonates, calcitonin (41 month), calcium (4500 mg/day) and vitamin D (4100 IU/day) during the last 12 months\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"* Number of people falling\\n* Number sustaining a fracture (hip fracture)\\n* Adverse events\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 0.62\\nConfidence interval begin: 0.36\\nConfidence interval end: 1.07\\nConfidence interval percentage: 95\\nSample size: 583\"\n}",
+                          "role": "user"
+                        }
+                      ],
+                      "prompt": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT (individual)\\n\\n**Intervention groups:** 800 IU of vitamin D3 + 1200 mg calcium carbonate fixed combination daily; 800 IU of vitamin D3 + 1200 mg calcium carbonate separately daily\\n\\n**Comparator group:** placebo\",\n  \"participants\": \"**Setting:** 55 intermediate nursing care facilities, France\\n\\n**Number randomised:** 610 participants\\n\\n**Sample:** 100% women\\n\\n**Age (years):** mean 85.2 (SD 7.1)\\n\\n**Inclusion criteria:** ambulatory; life expectancy > 2 years\\n\\n**Exclusion criteria:** malabsorption; serum calcium > 2.63 mmol/L; chronic renal failure (serum creatinine >150 \\u03bcmol/L), taking bone metabolism altering medications within the past year, e.g. corticosteroids, anticonvulsants or high doses of thyroxine; fluoride salts (43 months), bisphosphonates, calcitonin (41 month), calcium (4500 mg/day) and vitamin D (4100 IU/day) during the last 12 months\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"* Number of people falling\\n* Number sustaining a fracture (hip fracture)\\n* Adverse events\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 0.62\\nConfidence interval begin: 0.36\\nConfidence interval end: 1.07\\nConfidence interval percentage: 95\\nSample size: 583\"\n}",
+                      "raw_response": "{\"classification\":\"unavailable\"}"
+                    },
+                    "question": "What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?",
+                    "response": "Information is not available.",
+                    "revealed_section": "",
+                    "study_id": "S1"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Chapuy 2002\nArticle ID: ART_00935\nCitation: Chapuy MC, Pamphile R, Paris E, Kempf C, Schlichting M, Arnaud S, et al. Combined calcium and vitamin D3 supplementation in elderly women: confirmation of reversal of secondary hyperparathyroidism and hip fracture risk: the Decalyos II study. Osteoporosis International 2002;13(3):257-64.\n\nparticipants:\n**Setting:** 55 intermediate nursing care facilities, France\n\n**Number randomised:** 610 participants\n\n**Sample:** 100% women\n\n**Age (years):** mean 85.2 (SD 7.1)\n\n**Inclusion criteria:** ambulatory; life expectancy > 2 years\n\n**Exclusion criteria:** malabsorption; serum calcium > 2.63 mmol/L; chronic renal failure (serum creatinine >150 \u03bcmol/L), taking bone metabolism altering medications within the past year, e.g. corticosteroids, anticonvulsants or high doses of thyroxine; fluoride salts (43 months), bisphosphonates, calcitonin (41 month), calcium (4500 mg/day) and vitamin D (4100 IU/day) during the last 12 months\n\nmic:\nRCT (individual)\n\n**Intervention groups:** 800 IU of vitamin D3 + 1200 mg calcium carbonate fixed combination daily; 800 IU of vitamin D3 + 1200 mg calcium carbonate separately daily\n\n**Comparator group:** placebo",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "question": "What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?",
+                      "study_id": "S1"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Chapuy 2002\nArticle ID: ART_00935\nCitation: Chapuy MC, Pamphile R, Paris E, Kempf C, Schlichting M, Arnaud S, et al. Combined calcium and vitamin D3 supplementation in elderly women: confirmation of reversal of secondary hyperparathyroidism and hip fracture risk: the Decalyos II study. Osteoporosis International 2002;13(3):257-64.\n\nparticipants:\n**Setting:** 55 intermediate nursing care facilities, France\n\n**Number randomised:** 610 participants\n\n**Sample:** 100% women\n\n**Age (years):** mean 85.2 (SD 7.1)\n\n**Inclusion criteria:** ambulatory; life expectancy > 2 years\n\n**Exclusion criteria:** malabsorption; serum calcium > 2.63 mmol/L; chronic renal failure (serum creatinine >150 \u03bcmol/L), taking bone metabolism altering medications within the past year, e.g. corticosteroids, anticonvulsants or high doses of thyroxine; fluoride salts (43 months), bisphosphonates, calcitonin (41 month), calcium (4500 mg/day) and vitamin D (4100 IU/day) during the last 12 months\n\nmic:\nRCT (individual)\n\n**Intervention groups:** 800 IU of vitamin D3 + 1200 mg calcium carbonate fixed combination daily; 800 IU of vitamin D3 + 1200 mg calcium carbonate separately daily\n\n**Comparator group:** placebo",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy S1 question: What were the fracture outcome results at 3 to 24 months for vitamin D plus calcium versus placebo/usual care (e.g., number of participants with any fracture, nonvertebral fracture, or hip fracture in each group, and whether differences were statistically significant)?\nGatekeeper response: Information is not available.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "11991447",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Combined calcium and vitamin D3 supplementation in elderly women: confirmation of reversal of secondary hyperparathyroidism and hip fracture risk: the Decalyos II study",
+          "wald_z": -1.720232,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00936_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00936",
+          "article_type": "included_study",
+          "citation": "Flicker L, MacInnis R, Stein M, Scherer S, Mead K, Nowson C, et al. Should older people in residential care receive Vitamin D to prevent falls? Results of a randomized trial. Journal of the American Geriatrics Society 2005;53(11):1881-8.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00936",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Flicker 2005\nArticle ID: ART_00936\nCitation: Flicker L, MacInnis R, Stein M, Scherer S, Mead K, Nowson C, et al. Should older people in residential care receive Vitamin D to prevent falls? Results of a randomized trial. Journal of the American Geriatrics Society 2005;53(11):1881-8.\n\noutcomes:\n* Rate of falls\n* Number of people falling\n* Number sustaining a fracture (all fractures)\n* Adverse events\n\nresults:\nEffect measure: risk ratio\nUnit: not applicable\nPolarity: lower favors intervention\nComparator effect: 1.0\nEffect estimate: 0.71\nConfidence interval begin: 0.44\nConfidence interval end: 1.16\nConfidence interval percentage: 95\nSample size: 625",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "16274368",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Should older people in residential care receive Vitamin D to prevent falls? Results of a randomized trial",
+          "wald_z": -1.384915,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00937_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00937",
+          "article_type": "included_study",
+          "citation": "Law M, Withers H, Morris J, Anderson F. Vitamin D supplementation and the prevention of fractures and falls: results of a randomised trial in elderly people in residential accommodation. Age and Ageing 2006;35(5):482-6.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00937",
+                "initially_exposed_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "classification": "unavailable",
+                    "gatekeeper": {
+                      "classification": "unavailable",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly.",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT (cluster)\\n\\n**Intervention group:** 2.5 mg oral ergocalciferol (vitamin D2) every 3 months (equivalent to 1100 IU/day)\\n\\n**Comparator group:** Usual care (no placebo)\",\n  \"participants\": \"**Setting:** 118 homes for elderly people, 223 units (intermediate- and high-level care), throughout the UK\\n\\n**Number randomised:** 3717 residents. 223 clusters (units).\\n\\n**Sample:** 76% women\\n\\n**Age (years):** mean 85\\n\\n**Inclusion criteria:** facility resident; aged \\u2265 60\\n\\n**Exclusion criteria:** temporary residents; taking vitamin D or calcium supplements or medications to increase bone density; sarcoidosis; malignancy; life threatening illness\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"* Rate of falls\\n* Number of people falling\\n* Number sustaining a fracture (non vertebral fractures)\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 1.48\\nConfidence interval begin: 1.00\\nConfidence interval end: 2.19\\nConfidence interval percentage: 95\\nSample size: 3717\"\n}",
+                          "role": "user"
+                        }
+                      ],
+                      "prompt": "Classify the follow-up question using only these labels:\n- prior: the answer is already contained in the prior exposed information.\n- hidden: the question asks for information contained in the hidden information.\n- unavailable: the question cannot be answered from either prior or hidden information.\n\nReturn JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\nFollow-up question: What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?\n\nPrior exposed information:\n{\n  \"mic\": \"RCT (cluster)\\n\\n**Intervention group:** 2.5 mg oral ergocalciferol (vitamin D2) every 3 months (equivalent to 1100 IU/day)\\n\\n**Comparator group:** Usual care (no placebo)\",\n  \"participants\": \"**Setting:** 118 homes for elderly people, 223 units (intermediate- and high-level care), throughout the UK\\n\\n**Number randomised:** 3717 residents. 223 clusters (units).\\n\\n**Sample:** 76% women\\n\\n**Age (years):** mean 85\\n\\n**Inclusion criteria:** facility resident; aged \\u2265 60\\n\\n**Exclusion criteria:** temporary residents; taking vitamin D or calcium supplements or medications to increase bone density; sarcoidosis; malignancy; life threatening illness\"\n}\n\nHidden information:\n{\n  \"outcomes\": \"* Rate of falls\\n* Number of people falling\\n* Number sustaining a fracture (non vertebral fractures)\",\n  \"results\": \"Effect measure: risk ratio\\nUnit: not applicable\\nPolarity: lower favors intervention\\nComparator effect: 1.0\\nEffect estimate: 1.48\\nConfidence interval begin: 1.00\\nConfidence interval end: 2.19\\nConfidence interval percentage: 95\\nSample size: 3717\"\n}",
+                      "raw_response": "{\"classification\":\"unavailable\"}"
+                    },
+                    "question": "What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?",
+                    "response": "Information is not available.",
+                    "revealed_section": "",
+                    "study_id": "S1"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Law 2006\nArticle ID: ART_00937\nCitation: Law M, Withers H, Morris J, Anderson F. Vitamin D supplementation and the prevention of fractures and falls: results of a randomised trial in elderly people in residential accommodation. Age and Ageing 2006;35(5):482-6.\n\nparticipants:\n**Setting:** 118 homes for elderly people, 223 units (intermediate- and high-level care), throughout the UK\n\n**Number randomised:** 3717 residents. 223 clusters (units).\n\n**Sample:** 76% women\n\n**Age (years):** mean 85\n\n**Inclusion criteria:** facility resident; aged \u2265 60\n\n**Exclusion criteria:** temporary residents; taking vitamin D or calcium supplements or medications to increase bone density; sarcoidosis; malignancy; life threatening illness\n\nmic:\nRCT (cluster)\n\n**Intervention group:** 2.5 mg oral ergocalciferol (vitamin D2) every 3 months (equivalent to 1100 IU/day)\n\n**Comparator group:** Usual care (no placebo)",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "question": "What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?",
+                      "study_id": "S1"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Law 2006\nArticle ID: ART_00937\nCitation: Law M, Withers H, Morris J, Anderson F. Vitamin D supplementation and the prevention of fractures and falls: results of a randomised trial in elderly people in residential accommodation. Age and Ageing 2006;35(5):482-6.\n\nparticipants:\n**Setting:** 118 homes for elderly people, 223 units (intermediate- and high-level care), throughout the UK\n\n**Number randomised:** 3717 residents. 223 clusters (units).\n\n**Sample:** 76% women\n\n**Age (years):** mean 85\n\n**Inclusion criteria:** facility resident; aged \u2265 60\n\n**Exclusion criteria:** temporary residents; taking vitamin D or calcium supplements or medications to increase bone density; sarcoidosis; malignancy; life threatening illness\n\nmic:\nRCT (cluster)\n\n**Intervention group:** 2.5 mg oral ergocalciferol (vitamin D2) every 3 months (equivalent to 1100 IU/day)\n\n**Comparator group:** Usual care (no placebo)",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy S1 question: What were the baseline vitamin D levels/status of participants, and what were the fracture outcomes (number of fractures or risk estimates) for vitamin D versus usual care during 3 to 24 months of follow-up?\nGatekeeper response: Information is not available.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "16641143",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Vitamin D supplementation and the prevention of fractures and falls: results of a randomised trial in elderly people in residential accommodation",
+          "wald_z": 1.960421,
+          "wald_z_category": "COM-Z1"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "y",
+        "error": "",
+        "raw_response": "y"
+      },
+      "pmid": "40832852",
+      "question": "Does vitamin D supplementation, with or without calcium or as part of a multivitamin supplement, reduce the risk of fracture relative to usual care or calcium supplementation in older residents of care facilities with low or very low baseline vitamin D levels, at 3 to 24 months of follow-up?",
+      "review_id": "CSR_0053",
+      "source_mc_answer": "m"
+    },
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00938_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00938",
+          "article_type": "included_study",
+          "citation": "He JC, Kreiner LA, Sajankila N, Allen DL, Claridge JA. Performance of a regional trauma network: a statewide analysis. Journal of Trauma and Acute Care Surgery 2016;81(1):190-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00938",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does an organised trauma system reduce mortality or improve survival among injured patients relative to usual care at 6 to 9 years of follow-up?\n\nStudy context:\nStudy S1\nStudy label: He 2016\nArticle ID: ART_00938\nCitation: He JC, Kreiner LA, Sajankila N, Allen DL, Claridge JA. Performance of a regional trauma network: a statewide analysis. Journal of Trauma and Acute Care Surgery 2016;81(1):190-5.\n\noutcomes:\nTwo analyses were done for the post-NOTS period:\n\n1. A county analysis, comparing Cuyahoga County, the county containing NOTS L1TC, with other counties containing L1TCs.\n2. A regional analysis, comparing the NOTS region with other Ohio regions with L1TC coverage.\n\nBoth the county and regional analyses showed the overall NOTS patients were 1 to 4 years older (p < 0.05), had similar or higher Injury Severity Score (p < 0.05), and were treated more often at lower-level TCs (p < 0.001). County analysis demonstrated that Cuyahoga County had approximately 1% lower mortality in geriatrics patients than non-NOTS counties. Regional analysis showed lower mortality in the NOTS region for the overall patient group and geriatric and blunt injuries subgroups. Cuyahoga was the only county that decreased mortality for both the general and groups over time (all p < 0.05).\n\n**Outcome variables:** comparison of, demography (age/sex), treatment location (proportion of patients per TCs) and mechanism of injury (blunt, penetrating, burns, asphyxia), trauma incident per location and mortality.\n\nresults:\nEffect measure: change in level\nUnit: mortality cases per quarter\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -2.02\nConfidence interval begin: -3.17\nConfidence interval end: -0.86\nConfidence interval percentage: 95\nSample size: 20357",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "27032008",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Performance of a regional trauma network: a statewide analysis",
+          "wald_z": -3.427816,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00939_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00939",
+          "article_type": "included_study",
+          "citation": "Moran CG, Lecky F, Bouamra O, Lawrence T, Edwards A, Woodford M, et al. Changing the system \u2013 major trauma patients and their outcomes in the NHS (England). EClinicalMedicine 2018;2:13-21.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00939_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "maximum_follow_ups": 4,
+            "studies": {
+              "S1": {
+                "article_id": "ART_00939",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "mic"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does an organised trauma system reduce mortality or improve survival among injured patients relative to usual care at 6 to 9 years of follow-up?\n\nStudy context:\nStudy S1\nStudy label: Moran 2018\nArticle ID: ART_00939\nCitation: Moran CG, Lecky F, Bouamra O, Lawrence T, Edwards A, Woodford M, et al. Changing the system \u2013 major trauma patients and their outcomes in the NHS (England). EClinicalMedicine 2018;2:13-21.\n\noutcomes:\nStudy outcomes were: trends of patient's characteristics, process of care and patient outcomes such as adjusted survival rate and mortality. these included, patient flow, the evolution of consultant-led care and imaging, increase in older age of trauma admission, and establishment of newer clinical care protocols (i.e., massive transfusion protocols and tranexamic acid protocols). There were 10247 (9.2%) deaths in the 110863 patients with an ISS of 9 or more.\n\nThere were no changes in unadjusted mortality. Risk-adjusted survival showed a 19% (95% CI 3%-36%) increase in the case-mix adjusted odds of survival in severe injury over the 9-year study period. Interrupted time series analysis showed a significant positive change in the slope after the intervention time point of April 2012 (+0.08% excess survivors per quarter, p = 0.023), i.e., an increase of 0.08 more survivors per 100 patients every quarter.\n\n**Patient characteristic trends:** demography (age, sex etc.), injury severity (ISS), mechanism of injury (penetrating/blunt, falls) and comorbidities.\n\n**Process of care:** time to arrival to ED, time to intubation at ED, Consultant led care at ED, time to Blood transfusion, time to surgery, percentage admitted to ICU, length of stay in hospital/ICU.\n\nresults:\nEffect measure: change in level\nUnit: survival cases per quarter\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.13\nConfidence interval begin: -0.50\nConfidence interval end: 0.76\nConfidence interval percentage: 95\nSample size: 110863",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "31193723",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Changing the system \u2013 major trauma patients and their outcomes in the NHS (England)",
+          "wald_z": -0.404437,
+          "wald_z_category": "INT-Z0"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "y",
+        "error": "",
+        "raw_response": "y"
+      },
+      "pmid": "40747779",
+      "question": "Does an organised trauma system reduce mortality or improve survival among injured patients relative to usual care at 6 to 9 years of follow-up?",
+      "review_id": "CSR_0062",
+      "source_mc_answer": "m"
+    }
+  ],
+  "task": "evaluation"
+}

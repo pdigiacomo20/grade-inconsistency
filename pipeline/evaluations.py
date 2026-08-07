@@ -61,6 +61,10 @@ def list_runs(directory: str | Path | None = None) -> list[dict[str, Any]]:
                 "model": metadata.get("model") or data.get("model") or "",
                 "provider": metadata.get("provider") or data.get("provider") or "",
                 "created_at": metadata.get("created_at") or data.get("created_at") or "",
+                "finished_at": metadata.get("finished_at") or data.get("finished_at") or "",
+                "status": metadata.get("status") or ("complete" if metadata.get("finished_at") or data.get("finished_at") else ""),
+                "completed_outcomes": metadata.get("completed_outcomes"),
+                "total_outcomes": metadata.get("total_outcomes"),
                 "metrics": compute_metrics(data),
             }
         )

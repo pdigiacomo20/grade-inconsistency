@@ -289,7 +289,7 @@ def classify_gatekeeper_question(
     exposed_sections: dict[str, str],
     hidden_sections: dict[str, str],
     config: EvaluationConfig,
-) -> str:
+) -> dict[str, Any]:
     prompt = (
         "Classify the follow-up question using only these labels:\n"
         "- prior: the answer is already contained in the prior exposed information.\n"
@@ -300,23 +300,29 @@ def classify_gatekeeper_question(
         f"Prior exposed information:\n{json.dumps(exposed_sections, indent=2, sort_keys=True)}\n\n"
         f"Hidden information:\n{json.dumps(hidden_sections, indent=2, sort_keys=True)}"
     )
-    raw = model_text(
-        [
-            {"role": "system", "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly."},
-            {"role": "user", "content": prompt},
-        ],
-        config=config,
-    )
+    messages = [
+        {"role": "system", "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly."},
+        {"role": "user", "content": prompt},
+    ]
+    raw = model_text(messages, config=config)
     data = extract_json_object(raw) or {}
     classification = str(data.get("classification") or "").strip().lower()
     if classification in {"prior", "hidden", "unavailable"}:
-        return classification
-    lowered = raw.lower()
-    if "hidden" in lowered:
-        return "hidden"
-    if "prior" in lowered:
-        return "prior"
-    return "unavailable"
+        normalized = classification
+    else:
+        lowered = raw.lower()
+        if "hidden" in lowered:
+            normalized = "hidden"
+        elif "prior" in lowered:
+            normalized = "prior"
+        else:
+            normalized = "unavailable"
+    return {
+        "classification": normalized,
+        "messages": messages,
+        "prompt": prompt,
+        "raw_response": raw,
+    }
 
 
 def gatekeeper_response(
@@ -335,21 +341,27 @@ def gatekeeper_response(
     exposed_sections = {name: state["sections"].get(name, "") for name in exposed_section_names}
     hidden_sections = {name: state["sections"].get(name, "") for name in state["hidden_names"] if name not in state["revealed_names"] and state["sections"].get(name)}
     if not hidden_sections:
+        gatekeeper_log: dict[str, Any] = {}
         try:
-            classification = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections={}, config=config)
-        except RuntimeError:
+            gatekeeper_log = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections={}, config=config)
+            classification = str(gatekeeper_log.get("classification") or "unavailable")
+        except RuntimeError as exc:
             classification = "unavailable"
+            gatekeeper_log = {"error": str(exc)}
         response = GATEKEEPER_PRIOR if classification == "prior" else GATEKEEPER_UNAVAILABLE
-        return {**request, "response": response, "classification": classification, "revealed_section": ""}
+        return {**request, "response": response, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
 
+    gatekeeper_log = {}
     try:
-        classification = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections=hidden_sections, config=config)
-    except RuntimeError:
+        gatekeeper_log = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections=hidden_sections, config=config)
+        classification = str(gatekeeper_log.get("classification") or "hidden")
+    except RuntimeError as exc:
         classification = "hidden"
+        gatekeeper_log = {"error": str(exc)}
     if classification == "prior":
-        return {**request, "response": GATEKEEPER_PRIOR, "classification": classification, "revealed_section": ""}
+        return {**request, "response": GATEKEEPER_PRIOR, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
     if classification == "unavailable":
-        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": classification, "revealed_section": ""}
+        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
 
     candidates = sorted(hidden_sections)
     selected = candidates[stable_int(study_id, request["question"], follow_up_index, "reveal") % len(candidates)]
@@ -360,6 +372,7 @@ def gatekeeper_response(
         "response": f"{selected}:\n{text}",
         "classification": "hidden",
         "revealed_section": selected,
+        "gatekeeper": gatekeeper_log,
     }
 
 
@@ -418,9 +431,10 @@ def run_multiturn_char(
     if not study_states:
         return {"answer": "", "raw_response": "", "error": "No usable study characteristics/results for multiturn_char.", "multiturn": {"turns": []}}
 
+    initial_prompt = prompt_multiturn_initial(question, "\n\n---\n\n".join(context_parts), config.maximum_follow_ups)
     messages = [
         {"role": "system", "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly."},
-        {"role": "user", "content": prompt_multiturn_initial(question, "\n\n---\n\n".join(context_parts), config.maximum_follow_ups)},
+        {"role": "user", "content": initial_prompt},
     ]
     turns: list[dict[str, Any]] = []
     final_raw = ""
@@ -429,6 +443,7 @@ def run_multiturn_char(
     for follow_up_round in range(config.maximum_follow_ups + 1):
         if follow_up_round == config.maximum_follow_ups:
             messages.append({"role": "user", "content": prompt_multiturn_force_answer(question)})
+        llm_request = {"messages": [dict(message) for message in messages]}
         try:
             raw = model_text(messages, config=config)
             parsed = parse_multiturn_response(raw)
@@ -436,7 +451,7 @@ def run_multiturn_char(
             error = str(exc)
             final_raw = ""
             break
-        turn: dict[str, Any] = {"round": follow_up_round + 1, "raw_response": raw, "parsed": parsed}
+        turn: dict[str, Any] = {"round": follow_up_round + 1, "llm_request": llm_request, "raw_response": raw, "parsed": parsed}
         turns.append(turn)
         messages.append({"role": "assistant", "content": raw})
         if parsed["action"] == "answer":
@@ -560,6 +575,11 @@ def choose_distractors(
     return selected
 
 
+def write_run_snapshot(destination: Path, run: dict[str, Any]) -> None:
+    run["metrics"] = compute_metrics(run)
+    destination.write_text(json.dumps(run, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     resource = dynamodb_resource(config)
     outcomes = sorted(
@@ -588,7 +608,41 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
         articles_by_outcome.setdefault(key, []).append(article)
 
     started_at = datetime.now(UTC).isoformat()
+    safe_run_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", config.run_id).strip("._") or "evaluation"
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    filename = f"{safe_run_id}-{timestamp}.json"
+    root = evaluations_dir(config.evaluations_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    destination = root / filename
     results: list[dict[str, Any]] = []
+    run = {
+        "task": config.task,
+        "metadata": {
+            "task": config.task,
+            "run_id": config.run_id,
+            "provider": config.provider,
+            "model": config.model,
+            "created_at": started_at,
+            "finished_at": "",
+            "filename": filename,
+            "status": "running",
+            "completed_outcomes": 0,
+            "total_outcomes": len(outcomes),
+            "outcomes_table": config.outcomes_table,
+            "articles_table": config.articles_table,
+            "starting_review": config.starting_review,
+            "review_count": config.review_count,
+            "max_questions": config.max_questions,
+            "target_certainty": "very low",
+            "ground_truth_answer": GROUND_TRUTH_ANSWER,
+            "skipped_outcomes_not_very_low": skipped_for_certainty,
+            "detail_exposure_types": list(config.detail_exposure_types),
+            "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
+            "maximum_follow_ups": config.maximum_follow_ups,
+        },
+        "outcomes": results,
+    }
+    write_run_snapshot(destination, run)
     for index, outcome in enumerate(outcomes, start=1):
         question = str(outcome.get("question") or "")
         print(f"[{index}/{len(outcomes)}] PMID {outcome.get('pmid')} outcome {outcome.get('outcome_id')} accuracy target={GROUND_TRUTH_ANSWER}")
@@ -653,39 +707,14 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
                 "contexts": contexts,
             }
         )
+        run["metadata"]["completed_outcomes"] = len(results)
+        write_run_snapshot(destination, run)
 
     finished_at = datetime.now(UTC).isoformat()
-    safe_run_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", config.run_id).strip("._") or "evaluation"
-    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    filename = f"{safe_run_id}-{timestamp}.json"
-    run = {
-        "task": config.task,
-        "metadata": {
-            "task": config.task,
-            "run_id": config.run_id,
-            "provider": config.provider,
-            "model": config.model,
-            "created_at": started_at,
-            "finished_at": finished_at,
-            "filename": filename,
-            "outcomes_table": config.outcomes_table,
-            "articles_table": config.articles_table,
-            "starting_review": config.starting_review,
-            "review_count": config.review_count,
-            "target_certainty": "very low",
-            "ground_truth_answer": GROUND_TRUTH_ANSWER,
-            "skipped_outcomes_not_very_low": skipped_for_certainty,
-            "detail_exposure_types": list(config.detail_exposure_types),
-            "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
-            "maximum_follow_ups": config.maximum_follow_ups,
-        },
-        "outcomes": results,
-    }
-    run["metrics"] = compute_metrics(run)
-    root = evaluations_dir(config.evaluations_dir)
-    root.mkdir(parents=True, exist_ok=True)
-    destination = root / filename
-    destination.write_text(json.dumps(run, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    run["metadata"]["finished_at"] = finished_at
+    run["metadata"]["status"] = "complete"
+    run["metadata"]["completed_outcomes"] = len(results)
+    write_run_snapshot(destination, run)
     print(f"Wrote {destination}")
     print(json.dumps(run["metrics"], indent=2, sort_keys=True))
     return run

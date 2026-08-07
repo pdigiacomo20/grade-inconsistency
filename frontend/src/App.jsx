@@ -705,6 +705,101 @@ function EvaluationAccuracyExplorer({ run }) {
   );
 }
 
+function MessageLog({ messages }) {
+  if (!messages?.length) return null;
+  return (
+    <div className="messageStack">
+      {messages.map((message, index) => (
+        <div className="messageBlock" key={index}>
+          <div className="messageRole">{message.role || `message ${index + 1}`}</div>
+          <pre>{message.content || ""}</pre>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MultiturnTranscript({ run }) {
+  const rows = [];
+  for (const outcome of run?.outcomes || []) {
+    for (const context of outcome.contexts || []) {
+      if (context.detail_exposure_type === "multiturn_char" || context.multiturn?.turns?.length) {
+        rows.push({ outcome, context });
+      }
+    }
+  }
+
+  if (!rows.length) return null;
+
+  return (
+    <section className="transcriptPanel">
+      <div className="sectionHeader transcriptHeader">
+        <div>
+          <h2>Multiturn Conversation Logs</h2>
+          <p>Exact saved prompts and outputs for the evaluated model and gatekeeper classifier.</p>
+        </div>
+        <Pill>{rows.length} contexts</Pill>
+      </div>
+      <div className="transcriptList">
+        {rows.map(({ outcome, context }, index) => (
+          <details className="transcriptItem" key={`${outcome.pmid}-${outcome.outcome_id}-${context.article_id}-${index}`}>
+            <summary>
+              <span>Q{outcome.outcome_id} · {outcome.review_id || outcome.pmid} · {context.article_id}</span>
+              <span>
+                <Pill tone={context.answer === "m" ? "neutral" : "warn"}>{context.answer || "error"}</Pill>
+              </span>
+            </summary>
+            <div className="transcriptMeta">
+              <div><strong>Question</strong><p>{outcome.question}</p></div>
+              <div><strong>Study</strong><p>{context.title || context.citation || context.article_id}</p></div>
+              {context.error ? <div><strong>Error</strong><p>{context.error}</p></div> : null}
+            </div>
+            {(context.multiturn?.turns || []).map((turn) => (
+              <div className="turnLog" key={turn.round}>
+                <h3>Evaluated LLM Turn {turn.round}</h3>
+                <h4>Prompt</h4>
+                <MessageLog messages={turn.llm_request?.messages || []} />
+                <h4>Output</h4>
+                <pre>{turn.raw_response || ""}</pre>
+                {turn.gatekeeper_responses?.length ? (
+                  <div className="gatekeeperLogs">
+                    <h3>Gatekeeper</h3>
+                    {turn.gatekeeper_responses.map((response, responseIndex) => (
+                      <details className="gatekeeperItem" key={`${turn.round}-${responseIndex}`}>
+                        <summary>
+                          <span>{response.study_id}: {response.classification}</span>
+                          <span>{response.revealed_section || "no reveal"}</span>
+                        </summary>
+                        <div className="messageBlock">
+                          <div className="messageRole">follow-up question</div>
+                          <pre>{response.question || ""}</pre>
+                        </div>
+                        <h4>Gatekeeper Prompt</h4>
+                        <MessageLog messages={response.gatekeeper?.messages || []} />
+                        {response.gatekeeper?.raw_response ? (
+                          <>
+                            <h4>Gatekeeper Output</h4>
+                            <pre>{response.gatekeeper.raw_response}</pre>
+                          </>
+                        ) : null}
+                        {response.gatekeeper?.error ? (
+                          <div className="error compactError">{response.gatekeeper.error}</div>
+                        ) : null}
+                        <h4>Response Sent To Evaluated LLM</h4>
+                        <pre>{response.response || ""}</pre>
+                      </details>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ExtractionPanel({ title, kind, value, onChange, onSubmit, busy, performed, rawText, editing, onEdit }) {
   if (performed && !editing) {
     return (
@@ -740,14 +835,20 @@ function EvaluationsView() {
   const [run, setRun] = useState(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadRuns = () => {
     fetchJson("/api/evaluations")
       .then((data) => {
         const items = data.evaluations || [];
         setRuns(items);
-        if (items[0]) setSelected(items[0].filename);
+        setSelected((current) => current || items[0]?.filename || "");
       })
       .catch((err) => setError(err.message));
+  };
+
+  useEffect(() => {
+    loadRuns();
+    const timer = window.setInterval(loadRuns, 4000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -755,9 +856,14 @@ function EvaluationsView() {
       setRun(null);
       return;
     }
-    fetchJson(`/api/evaluations/${encodeURIComponent(selected)}`)
-      .then(setRun)
-      .catch((err) => setError(err.message));
+    const loadSelectedRun = () => {
+      fetchJson(`/api/evaluations/${encodeURIComponent(selected)}`)
+        .then(setRun)
+        .catch((err) => setError(err.message));
+    };
+    loadSelectedRun();
+    const timer = window.setInterval(loadSelectedRun, 4000);
+    return () => window.clearInterval(timer);
   }, [selected]);
 
   return (
@@ -777,10 +883,15 @@ function EvaluationsView() {
           <section className="detailHeader">
             <div>
               <h2>{run.metadata?.run_id || run.task}: {run.metadata?.model}</h2>
-              <p>{run.metadata?.provider} · {run.metadata?.created_at} · {selected}</p>
+              <p>
+                {run.metadata?.provider} · {run.metadata?.created_at} · {selected}
+                {run.metadata?.status ? ` · ${run.metadata.status}` : ""}
+                {run.metadata?.total_outcomes ? ` · ${run.metadata.completed_outcomes || 0}/${run.metadata.total_outcomes} outcomes` : ""}
+              </p>
             </div>
           </section>
           <EvaluationAccuracyExplorer run={run} />
+          <MultiturnTranscript run={run} />
         </>
       ) : (
         <div className="empty">No evaluation runs found.</div>
