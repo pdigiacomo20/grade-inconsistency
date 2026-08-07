@@ -23,8 +23,15 @@ from pipeline.evaluations import clean_answer, compute_metrics, evaluations_dir
 ANSWER_RE = re.compile(r"\b([ynm])\b", re.IGNORECASE)
 GROUND_TRUTH_ANSWER = "m"
 MULTITURN_CHAR_DETAIL_TYPE = "multiturn_char"
-GATEKEEPER_PRIOR = "Information contained in prior context provided."
 GATEKEEPER_UNAVAILABLE = "Information is not available."
+MULTITURN_CATEGORIES = ("Methods", "Intervention/Comparator", "Participants", "Outcomes", "Results")
+CATEGORY_KEY_BY_LABEL = {
+    "Methods": "methods",
+    "Intervention/Comparator": "intervention_comparator",
+    "Participants": "participants",
+    "Outcomes": "outcomes",
+    "Results": "results",
+}
 
 
 @dataclass(frozen=True)
@@ -216,35 +223,65 @@ def study_results(article: dict[str, Any]) -> str:
 
 
 def study_detail_sections(article: dict[str, Any]) -> dict[str, str]:
-    methods = maybe_text(article.get("characteristics_methods"))
-    interventions = maybe_text(article.get("characteristics_interventions"))
     return {
         "participants": maybe_text(article.get("characteristics_participants")),
-        "mic": "\n\n".join(part for part in (methods, interventions) if part),
+        "methods": maybe_text(article.get("characteristics_methods")),
+        "intervention_comparator": maybe_text(article.get("characteristics_interventions")),
         "outcomes": maybe_text(article.get("characteristics_outcomes")),
         "results": study_results(article),
     }
 
 
-def format_study_sections(study_id: str, article: dict[str, Any], sections: dict[str, str], section_names: list[str]) -> str:
-    header = [
-        f"Study {study_id}",
-        f"Study label: {article.get('study_label') or ''}",
-        f"Article ID: {article.get('article_id') or ''}",
-        f"Citation: {article.get('citation') or ''}",
-    ]
+def section_label(section_name: str) -> str:
+    labels = {
+        "methods": "Methods",
+        "intervention_comparator": "Intervention/Comparator",
+        "participants": "Participants",
+        "outcomes": "Outcomes",
+        "results": "Results",
+    }
+    return labels.get(section_name, section_name)
+
+
+def normalize_multiturn_category(value: Any) -> tuple[str, str]:
+    normalized = re.sub(r"[^a-z]+", " ", str(value or "").lower()).strip()
+    aliases = {
+        "method": "Methods",
+        "methods": "Methods",
+        "intervention": "Intervention/Comparator",
+        "interventions": "Intervention/Comparator",
+        "intervention comparator": "Intervention/Comparator",
+        "interventions comparator": "Intervention/Comparator",
+        "intervention comparators": "Intervention/Comparator",
+        "interventions comparators": "Intervention/Comparator",
+        "comparator": "Intervention/Comparator",
+        "comparators": "Intervention/Comparator",
+        "participants": "Participants",
+        "participant": "Participants",
+        "population": "Participants",
+        "outcome": "Outcomes",
+        "outcomes": "Outcomes",
+        "result": "Results",
+        "results": "Results",
+    }
+    label = aliases.get(normalized, "")
+    return label, CATEGORY_KEY_BY_LABEL.get(label, "")
+
+
+def format_study_sections(study_id: str, sections: dict[str, str], section_names: list[str]) -> str:
+    header = [f"Study ID: {study_id}"]
     body: list[str] = []
     for name in section_names:
         text = sections.get(name, "")
         if text:
-            body.append(f"{name}:\n{text}")
+            body.append(f"{section_label(name)}:\n{text}")
     return "\n".join(header) + "\n\n" + "\n\n".join(body)
 
 
 def initial_multiturn_sections(article: dict[str, Any], outcome: dict[str, Any]) -> tuple[list[str], list[str]]:
     if stable_int(outcome.get("pmid"), outcome.get("outcome_id"), article.get("article_id"), "initial") % 2 == 0:
-        return ["participants", "mic"], ["outcomes", "results"]
-    return ["outcomes", "results"], ["participants", "mic"]
+        return ["participants", "methods", "intervention_comparator"], ["outcomes", "results"]
+    return ["outcomes", "results"], ["participants", "methods", "intervention_comparator"]
 
 
 def extract_json_object(text: str) -> dict[str, Any] | None:
@@ -273,117 +310,97 @@ def parse_multiturn_response(text: str) -> dict[str, Any]:
             questions = data.get("questions") or []
             if isinstance(questions, dict):
                 questions = [questions]
-            parsed_questions = [
-                {"study_id": str(item.get("study_id") or "").strip(), "question": str(item.get("question") or "").strip()}
-                for item in questions
-                if isinstance(item, dict) and str(item.get("study_id") or "").strip() and str(item.get("question") or "").strip()
-            ]
+            parsed_questions = []
+            for item in questions:
+                if not isinstance(item, dict):
+                    continue
+                study_id = str(item.get("study_id") or "").strip()
+                question = str(item.get("question") or "").strip()
+                category_label, category_key = normalize_multiturn_category(item.get("category"))
+                if study_id and question:
+                    parsed_questions.append(
+                        {
+                            "study_id": study_id,
+                            "category": category_label,
+                            "category_key": category_key,
+                            "question": question,
+                        }
+                    )
             if parsed_questions:
                 return {"action": "follow_up", "answer": "", "questions": parsed_questions}
     return {"action": "answer", "answer": parse_answer(text), "questions": []}
-
-
-def classify_gatekeeper_question(
-    question: str,
-    *,
-    exposed_sections: dict[str, str],
-    hidden_sections: dict[str, str],
-    config: EvaluationConfig,
-) -> dict[str, Any]:
-    prompt = (
-        "Classify the follow-up question using only these labels:\n"
-        "- prior: the answer is already contained in the prior exposed information.\n"
-        "- hidden: the question asks for information contained in the hidden information.\n"
-        "- unavailable: the question cannot be answered from either prior or hidden information.\n\n"
-        "Return JSON only: {\"classification\":\"prior|hidden|unavailable\"}.\n\n"
-        f"Follow-up question: {question}\n\n"
-        f"Prior exposed information:\n{json.dumps(exposed_sections, indent=2, sort_keys=True)}\n\n"
-        f"Hidden information:\n{json.dumps(hidden_sections, indent=2, sort_keys=True)}"
-    )
-    messages = [
-        {"role": "system", "content": "You are a gatekeeper for a medical evidence evaluation. Classify information availability exactly."},
-        {"role": "user", "content": prompt},
-    ]
-    raw = model_text(messages, config=config)
-    data = extract_json_object(raw) or {}
-    classification = str(data.get("classification") or "").strip().lower()
-    if classification in {"prior", "hidden", "unavailable"}:
-        normalized = classification
-    else:
-        lowered = raw.lower()
-        if "hidden" in lowered:
-            normalized = "hidden"
-        elif "prior" in lowered:
-            normalized = "prior"
-        else:
-            normalized = "unavailable"
-    return {
-        "classification": normalized,
-        "messages": messages,
-        "prompt": prompt,
-        "raw_response": raw,
-    }
 
 
 def gatekeeper_response(
     request: dict[str, str],
     *,
     study_states: dict[str, dict[str, Any]],
-    follow_up_index: int,
-    config: EvaluationConfig,
 ) -> dict[str, Any]:
     study_id = request["study_id"]
     state = study_states.get(study_id)
     if not state:
-        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": "unavailable", "revealed_section": ""}
+        return {
+            **request,
+            "response": GATEKEEPER_UNAVAILABLE,
+            "classification": "unavailable",
+            "revealed_section": "",
+            "gatekeeper": {"mode": "deterministic_category", "raw_response": GATEKEEPER_UNAVAILABLE},
+        }
 
-    exposed_section_names = [*state["exposed_names"], *state["revealed_names"]]
-    exposed_sections = {name: state["sections"].get(name, "") for name in exposed_section_names}
-    hidden_sections = {name: state["sections"].get(name, "") for name in state["hidden_names"] if name not in state["revealed_names"] and state["sections"].get(name)}
-    if not hidden_sections:
-        gatekeeper_log: dict[str, Any] = {}
-        try:
-            gatekeeper_log = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections={}, config=config)
-            classification = str(gatekeeper_log.get("classification") or "unavailable")
-        except RuntimeError as exc:
-            classification = "unavailable"
-            gatekeeper_log = {"error": str(exc)}
-        response = GATEKEEPER_PRIOR if classification == "prior" else GATEKEEPER_UNAVAILABLE
-        return {**request, "response": response, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
+    category = request.get("category") or ""
+    category_key = request.get("category_key") or ""
+    if not category_key:
+        response = GATEKEEPER_UNAVAILABLE
+        return {
+            **request,
+            "response": response,
+            "classification": "unavailable",
+            "revealed_section": "",
+            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+        }
 
-    gatekeeper_log = {}
-    try:
-        gatekeeper_log = classify_gatekeeper_question(request["question"], exposed_sections=exposed_sections, hidden_sections=hidden_sections, config=config)
-        classification = str(gatekeeper_log.get("classification") or "hidden")
-    except RuntimeError as exc:
-        classification = "hidden"
-        gatekeeper_log = {"error": str(exc)}
-    if classification == "prior":
-        return {**request, "response": GATEKEEPER_PRIOR, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
-    if classification == "unavailable":
-        return {**request, "response": GATEKEEPER_UNAVAILABLE, "classification": classification, "revealed_section": "", "gatekeeper": gatekeeper_log}
+    exposed_names = [*state["exposed_names"], *state["revealed_names"]]
+    if category_key in exposed_names:
+        response = f"Complete {category} information provided."
+        return {
+            **request,
+            "response": response,
+            "classification": "prior",
+            "revealed_section": "",
+            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+        }
 
-    candidates = sorted(hidden_sections)
-    selected = candidates[stable_int(study_id, request["question"], follow_up_index, "reveal") % len(candidates)]
-    state["revealed_names"].append(selected)
-    text = hidden_sections[selected]
+    if category_key in state["hidden_names"] and state["sections"].get(category_key):
+        state["revealed_names"].append(category_key)
+        response = f"{category}:\n{state['sections'][category_key]}"
+        return {
+            **request,
+            "response": response,
+            "classification": "hidden",
+            "revealed_section": category_key,
+            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+        }
+
+    response = GATEKEEPER_UNAVAILABLE
     return {
         **request,
-        "response": f"{selected}:\n{text}",
-        "classification": "hidden",
-        "revealed_section": selected,
-        "gatekeeper": gatekeeper_log,
+        "response": response,
+        "classification": "unavailable",
+        "revealed_section": "",
+        "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
     }
 
 
 def prompt_multiturn_initial(question: str, studies_context: str, maximum_follow_ups: int) -> str:
+    categories = ", ".join(MULTITURN_CATEGORIES)
     return (
         "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\n"
         "Use exactly one of these JSON templates and no other text:\n"
         "{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n"
-        "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"S1\",\"question\":\"...\"}]}\n\n"
+        "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\",\"question\":\"...\"}]}\n\n"
         "Answer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. "
         "Direct each follow-up question to one individual study using its study_id. "
+        f"For each follow-up question, choose exactly one category from: {categories}. "
         "Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. "
         f"You may ask at most {maximum_follow_ups} rounds of follow-up questions; after that, you must answer.\n\n"
         f"Question: {question}\n\n"
@@ -410,7 +427,7 @@ def run_multiturn_char(
     study_states: dict[str, dict[str, Any]] = {}
     context_parts: list[str] = []
     for index, article in enumerate(source_studies, start=1):
-        study_id = f"S{index}"
+        study_id = str(article.get("article_id") or f"ART_{index:05d}")
         sections = study_detail_sections(article)
         exposed_names, hidden_names = initial_multiturn_sections(article, outcome)
         exposed_names = [name for name in exposed_names if sections.get(name)]
@@ -426,7 +443,7 @@ def run_multiturn_char(
             "hidden_names": hidden_names,
             "revealed_names": [],
         }
-        context_parts.append(format_study_sections(study_id, article, sections, exposed_names))
+        context_parts.append(format_study_sections(study_id, sections, exposed_names))
 
     if not study_states:
         return {"answer": "", "raw_response": "", "error": "No usable study characteristics/results for multiturn_char.", "multiturn": {"turns": []}}
@@ -463,12 +480,14 @@ def run_multiturn_char(
             error = "Model requested follow-up after maximum follow-up rounds."
             break
         gatekeeper_responses = [
-            gatekeeper_response(request, study_states=study_states, follow_up_index=follow_up_round + 1, config=config)
+            gatekeeper_response(request, study_states=study_states)
             for request in parsed["questions"]
         ]
         turn["gatekeeper_responses"] = gatekeeper_responses
         response_text_for_model = "\n\n".join(
-            f"Study {item['study_id']} question: {item['question']}\nGatekeeper response: {item['response']}"
+            f"Study {item['study_id']} category: {item.get('category') or 'unavailable'}\n"
+            f"Question: {item['question']}\n"
+            f"Gatekeeper response: {item['response']}"
             for item in gatekeeper_responses
         )
         messages.append({"role": "user", "content": f"Gatekeeper responses:\n{response_text_for_model}\n\nContinue with one JSON response template."})

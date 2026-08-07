@@ -736,7 +736,7 @@ function MultiturnTranscript({ run }) {
       <div className="sectionHeader transcriptHeader">
         <div>
           <h2>Multiturn Conversation Logs</h2>
-          <p>Exact saved prompts and outputs for the evaluated model and gatekeeper classifier.</p>
+          <p>Exact saved prompts and outputs for the evaluated model, plus deterministic gatekeeper responses.</p>
         </div>
         <Pill>{rows.length} contexts</Pill>
       </div>
@@ -767,15 +767,24 @@ function MultiturnTranscript({ run }) {
                     {turn.gatekeeper_responses.map((response, responseIndex) => (
                       <details className="gatekeeperItem" key={`${turn.round}-${responseIndex}`}>
                         <summary>
-                          <span>{response.study_id}: {response.classification}</span>
+                          <span>{response.study_id}: {response.category || "No category"} · {response.classification}</span>
                           <span>{response.revealed_section || "no reveal"}</span>
                         </summary>
                         <div className="messageBlock">
                           <div className="messageRole">follow-up question</div>
                           <pre>{response.question || ""}</pre>
                         </div>
-                        <h4>Gatekeeper Prompt</h4>
-                        <MessageLog messages={response.gatekeeper?.messages || []} />
+                        {response.gatekeeper?.messages?.length ? (
+                          <>
+                            <h4>Gatekeeper Prompt</h4>
+                            <MessageLog messages={response.gatekeeper.messages} />
+                          </>
+                        ) : (
+                          <div className="messageBlock">
+                            <div className="messageRole">gatekeeper mode</div>
+                            <pre>{response.gatekeeper?.mode || "deterministic_category"}</pre>
+                          </div>
+                        )}
                         {response.gatekeeper?.raw_response ? (
                           <>
                             <h4>Gatekeeper Output</h4>
