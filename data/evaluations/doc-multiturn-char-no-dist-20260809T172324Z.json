@@ -1,0 +1,1929 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "completed_outcomes": 1,
+    "created_at": "2026-08-09T17:23:24.000463+00:00",
+    "detail_exposure_types": [
+      "multiturn_char"
+    ],
+    "filename": "doc-multiturn-char-no-dist-20260809T172324Z.json",
+    "finished_at": "2026-08-09T17:27:08.786972+00:00",
+    "gatekeeper_type": "free_response",
+    "ground_truth_answer": "m",
+    "irrelevant_docs_per_context": 0,
+    "max_questions": 1,
+    "maximum_follow_ups": 4,
+    "model": "gpt-5.5",
+    "outcomes_table": "outcomes",
+    "provider": "openai",
+    "review_count": null,
+    "run_id": "doc-multiturn-char-no-dist",
+    "skipped_outcomes_not_very_low": 0,
+    "starting_review": "CSR_0279",
+    "status": "complete",
+    "target_certainty": "very low",
+    "task": "evaluation",
+    "total_outcomes": 1
+  },
+  "metrics": {
+    "accuracy_by_article_type": {
+      "included_study": {
+        "accuracy": 0.35,
+        "correct_count": 7,
+        "incorrect_count": 13
+      }
+    },
+    "contextual_accuracy": 0.35,
+    "contextual_correct": 7,
+    "contextual_errors": 0,
+    "contextual_total": 20,
+    "memorization_rate": 0.35,
+    "memorization_rate_by_article_type": {
+      "included_study": {
+        "memorization_rate": 0.35,
+        "memory_count": 7,
+        "source_count": 13
+      }
+    },
+    "memorization_rate_by_parametric_answer_and_article_type": {
+      "m": {
+        "included_study": {
+          "memorization_rate": 0.35,
+          "memory_count": 7,
+          "source_count": 13
+        }
+      }
+    },
+    "memory_count": 7,
+    "outcome_count": 1,
+    "parametric_accuracy": 1.0,
+    "parametric_correct": 1,
+    "parametric_distribution": {
+      "m": {
+        "count": 1,
+        "percentage": 1.0
+      },
+      "n": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "y": {
+        "count": 0,
+        "percentage": 0.0
+      }
+    },
+    "parametric_total": 1,
+    "source_count": 13
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00607_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00607",
+          "article_type": "included_study",
+          "citation": "Aloraini AM. Effects of constraint-induced movement therapy for the lower extremity among individuals post-stroke: a randomized controlled clinical trial. NeuroRehabilitation 2022;51(3):421-31. [DOI: 10.3233/NRE-220139]",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00607": {
+                "article_id": "ART_00607",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00607\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: NR\n\nMeasures of balance: Berg Balance Scale\n\nMeasures of gait velocity: NR\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: Modified Ashworth Scale, Action Reach Arm Scale, dynamic gait index\n\nTime points when outcomes were assessed: before and after the intervention\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.92\nConfidence interval begin: -1.59\nConfidence interval end: -0.25\nConfidence interval percentage: 95\nSample size: 38",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "35964211",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Effects of constraint-induced movement therapy for the lower extremity among individuals post-stroke: a randomized controlled clinical trial",
+          "wald_z": 2.691294,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00608",
+          "article_type": "included_study",
+          "citation": "Chen Guijun, Liu Yijing. Influence of early limb function exercise on hemiplegia patients with cerebral infarction [\u65e9\u671f \u80a2\u4f53\u529f\u80fd\u953b\u70bc\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u75c5\u2f08\u7684\u5f71\u54cd]. Chinese Nursing Research 2014;28(5):1846-7.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00608": {
+                "article_id": "ART_00608",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00608\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: Fugl Meyer assessment\n\nMeasures of balance: NR\n\nMeasures of gait velocity: NR\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: NR\n\nTime points when outcomes were assessed: admission, month 3 and 6\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.58\nConfidence interval end: 0.30\nConfidence interval percentage: 95\nSample size: 80",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Influence of early limb function exercise on hemiplegia patients with cerebral infarction [\u65e9\u671f \u80a2\u4f53\u529f\u80fd\u953b\u70bc\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u75c5\u2f08\u7684\u5f71\u54cd]",
+          "wald_z": 0.623625,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00609",
+          "article_type": "included_study",
+          "citation": "Chen Peishun, Zhong Tao, Tang Xiumei, Yang Huixian, Tan Bidong, Su Rutong, et al. Effects of functional exercise training on lower limb muscle strength and muscle tone in stroke patients with hemiplegia. Nerve Injury and Functional Reconstruction (translated from Chinese) 2014;9(2):161-2. [DOI: 10.3870/sjsscj.2014.02.022]",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00609": {
+                "article_id": "ART_00609",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00609\n\nParticipants:\nStudy population (number randomised): 140\n\nInclusion criteria:\n\n- Clinically diagnosed with stroke and lower limb spasticity\n\n- Able to comprehend and follow instructions\n\nExclusion criteria:\n\n- Cognitive impairment with MMSE < 18\n\n- Pre-existing history of anxiety or depression as measured by HADS\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to evaluate the effectiveness of advanced practice nurse guided home-based rehabilitation exercise programme (HREPro) in people with post-stroke lower limb spasticity\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Home-based rehabilitation exercise programme (HREPro)\n\n\"Patients in the intervention group were provided with an HREPro in addition to the conventional rehabilitation regimen. The HREPro was an individually tailored, year-long rehabilitation intervention programme conducted at the participants' homes by an ARPN who had received professional physiotherapy training. The HREPro consisted of familiarizing the patient with navigating their home environment, as well as psychological preparation, and an exercise component. A nurse, during their first visit, evaluated the home environment, modified any environmental hazards, and guided the patient regarding how to walk safely in their home. The program involved fostering meaningful communication between the nurse and the patient. This helped the nurse understand each patient's specific concerns, including the fear of falling and satisfaction with particular walking aids. This, in turn, enabled them to motivate the patient on the basis of their own self-sufficiency. It was hoped that this would improve the patient's confidence in their own recovery and also help optimize program adherence. A comprehensive exercise program was used, which mainly included strengthening the lower limb muscle groups with exercises, such as joint training, sit-ups, balance training while standing, standing, bending to pick things up, straight leg-lifting, and climbing stairs. The exercise regimen was formulated with a view to reducing lower limb spasticity and Chen S 2021 improving mobility after stroke. Patients underwent three exercise sessions per week during the first 3 months, supervised by an APRN, with each session lasting 30 minutes. This was followed by one supervised session per week during the next 3 months. Thereafter, the frequency of the supervised exercise dropped to once a month, and once every other month, up to 12 months. HREPro was guided by the APRN with the assistance of family members who participated in all training sessions. If the patient encountered any difficulty during the whole training period, they could communicate with the nurse via email or phone at any time.\"\n\n(2) Control\n\n\"Patients in the CG were provided conventional rehabilitation after discharge from the hospital. This included issuing a rehabilitation manual for stroke (standard health education, consisting of information on physical activity, drugs, diet, follow-up time, etc.), performing telephonic follow-up (within 1 month), and completing follow-up medical appointments for assessment of recovery at 3, 6, and 12 months\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Effects of functional exercise training on lower limb muscle strength and muscle tone in stroke patients with hemiplegia",
+          "wald_z": -7.460508,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00610",
+          "article_type": "included_study",
+          "citation": "Ding Yanying, Liu Wanyan. Patients with hemiplegic cerebral infarction in early stage of targeted limb task function. The effect of strength training. [\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005\u5728\u65e9\u671f\u2f8f\u9488 \u5bf9\u6027\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u7684\u6548\u679c]. China Prac Med 2015;10(17):271-3. [DOI: 10.14163/j.cnki.11-5547/r.2015.17.186]",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00610": {
+                "article_id": "ART_00610",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00610\nFollow-up question: For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.53\nConfidence interval end: 0.25\nConfidence interval percentage: 95\nSample size: 100",
+                      "selected_category": "Results"
+                    },
+                    "question": "For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.53\nConfidence interval end: 0.25\nConfidence interval percentage: 95\nSample size: 100",
+                    "revealed_section": "results",
+                    "study_id": "ART_00610"
+                  },
+                  {
+                    "category": "Intervention/Comparator",
+                    "category_key": "intervention_comparator",
+                    "classification": "prior",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Intervention/Comparator\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00610\nFollow-up question: Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Complete Intervention/Comparator information provided.",
+                      "selected_category": "Intervention/Comparator"
+                    },
+                    "question": "Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?",
+                    "response": "Complete Intervention/Comparator information provided.",
+                    "revealed_section": "",
+                    "study_id": "ART_00610"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00610\n\nParticipants:\nStudy population (number randomised): 75\n\nInclusion criteria:\n\n- Aged 18 years+\n\n- Within 10 weeks of stroke with lower extremity hemiparesis (< 4/5 manual muscle grade in at least\n\none of the major lower extremity muscles)\n\n- Pre-stroke disability < 2 on the modified Rankin Scale\n\n- Able to ambulate \u22655 metres with up to one person maximum assist and assistive/orthotic device\n\n- Overground walking speed < 1.0 m/s\n\n- Able to understand and follow directions\n\n- Successful completion of a graded exercise stress test using criteria established by the American\n\nCollege of Sports Medicine\n\nExclusion criteria:\n\n- Pre-existing health condition that included a gait disorder\n\n- Another neurological condition (e.g. Parkinson\u2019s)\n\n- Serious medical or painful condition (e.g. active cancer)\n\n- Enrolled in a drug or exercise rehabilitation study\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: investigated the effect of higher therapeutic exercise doses on walking during inpatient rehabilitation\n\nDesign: multi-arm RCT (3-arm)\n\nCountry: Canada\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) DOSE1\n\n\"Participants randomized to the DOSE1 intervention will have their standard inpatient physical therapy session replaced by the experimental intervention program for a total of 20 sessions (1 h/day, 5 days/week, for four weeks). The intervention protocol will focus on the completion of a minimum of 30 min of weight-bearing, walking-related activities that will progressively increase in intensity (heart rate and step count) over the four-week intervention period using the available equipment in a standard stroke rehabilitation setting (e.g. parallel bars, overhead harness, treadmill support harness). The remaining time in the 60 min therapy session will be allocated to other physical therapy activities specific to the participant\u2019s recovery (e.g. upper extremity exercises, home exercise program). Participants will wear the same monitoring equipment as the control group, but they will be worn in all 20 intervention sessions.\"\n\n(2) DOSE2\n\n\"Participants randomized to the DOSE2 intervention group will have their standard inpatient physical therapy session replaced by the exact same procedures that the DOSE1 group receives. In addition, theDOSE2 group will also receive an extra, 1 h exercise session, 5 days/week, for four weeks, that will occur outside of the standard rehabilitation day (i.e. from 4 to 5 pm daily). The content of the second daily exercise session will be similar to the DOSE1 protocol, in that it will contain a minimum of 30 min of weight-bearing, walking-related activities and the remaining time will be dedicated to weight-bearing lower extremity exercises (e.g. strengthening, balanceexercises).\"\n\n(3) Control - usual care\n\n\"The control intervention consisted of usual care, inpatient physical therapy which progressed upper and lower limb functional exercises as tolerated and typically provided 5, 1-hour sessions per week, until the subject was discharged (normally after 4\u20136 weeks of inpatient rehabilitation)\"\n\n\"usual care, inpatient physical therapy for four weeks, which typically progresses upper and lower limb functional exercises as tolerated. The physicaltherapist(s) treating control participants will have no information on the study protocol. During 10 of the physical therapy sessions, the study coordinator will place monitoring equipment on the participant, but will not disclose any of the monitoring information to the participant or treating therapist. The study coordinator will advise the treating physical therapist to provide the participant\u2019s usual physical therapy care, using the available equipment in a standard stroke rehabilitation setting (e.g. parallel bars, overhead harness, treadmill support harness), when the participant is wearing the monitoring devices.\n\n\"The therapy sessions for both DOSE1 and DOSE2 were \u224810 minutes longer than Usual Care because the protocol dictated the duration of the DOSE sessions while the Usual Care duration varied depending on the site\u2019s usual practice\" Comparison relevant to this review = DOSE1 vs usual care",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?",
+                      "study_id": "ART_00610"
+                    },
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?",
+                      "study_id": "ART_00610"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00610\",\"question\":\"For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?\"},{\"study_id\":\"ART_00610\",\"question\":\"Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00610\n\nParticipants:\nStudy population (number randomised): 75\n\nInclusion criteria:\n\n- Aged 18 years+\n\n- Within 10 weeks of stroke with lower extremity hemiparesis (< 4/5 manual muscle grade in at least\n\none of the major lower extremity muscles)\n\n- Pre-stroke disability < 2 on the modified Rankin Scale\n\n- Able to ambulate \u22655 metres with up to one person maximum assist and assistive/orthotic device\n\n- Overground walking speed < 1.0 m/s\n\n- Able to understand and follow directions\n\n- Successful completion of a graded exercise stress test using criteria established by the American\n\nCollege of Sports Medicine\n\nExclusion criteria:\n\n- Pre-existing health condition that included a gait disorder\n\n- Another neurological condition (e.g. Parkinson\u2019s)\n\n- Serious medical or painful condition (e.g. active cancer)\n\n- Enrolled in a drug or exercise rehabilitation study\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: investigated the effect of higher therapeutic exercise doses on walking during inpatient rehabilitation\n\nDesign: multi-arm RCT (3-arm)\n\nCountry: Canada\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) DOSE1\n\n\"Participants randomized to the DOSE1 intervention will have their standard inpatient physical therapy session replaced by the experimental intervention program for a total of 20 sessions (1 h/day, 5 days/week, for four weeks). The intervention protocol will focus on the completion of a minimum of 30 min of weight-bearing, walking-related activities that will progressively increase in intensity (heart rate and step count) over the four-week intervention period using the available equipment in a standard stroke rehabilitation setting (e.g. parallel bars, overhead harness, treadmill support harness). The remaining time in the 60 min therapy session will be allocated to other physical therapy activities specific to the participant\u2019s recovery (e.g. upper extremity exercises, home exercise program). Participants will wear the same monitoring equipment as the control group, but they will be worn in all 20 intervention sessions.\"\n\n(2) DOSE2\n\n\"Participants randomized to the DOSE2 intervention group will have their standard inpatient physical therapy session replaced by the exact same procedures that the DOSE1 group receives. In addition, theDOSE2 group will also receive an extra, 1 h exercise session, 5 days/week, for four weeks, that will occur outside of the standard rehabilitation day (i.e. from 4 to 5 pm daily). The content of the second daily exercise session will be similar to the DOSE1 protocol, in that it will contain a minimum of 30 min of weight-bearing, walking-related activities and the remaining time will be dedicated to weight-bearing lower extremity exercises (e.g. strengthening, balanceexercises).\"\n\n(3) Control - usual care\n\n\"The control intervention consisted of usual care, inpatient physical therapy which progressed upper and lower limb functional exercises as tolerated and typically provided 5, 1-hour sessions per week, until the subject was discharged (normally after 4\u20136 weeks of inpatient rehabilitation)\"\n\n\"usual care, inpatient physical therapy for four weeks, which typically progresses upper and lower limb functional exercises as tolerated. The physicaltherapist(s) treating control participants will have no information on the study protocol. During 10 of the physical therapy sessions, the study coordinator will place monitoring equipment on the participant, but will not disclose any of the monitoring information to the participant or treating therapist. The study coordinator will advise the treating physical therapist to provide the participant\u2019s usual physical therapy care, using the available equipment in a standard stroke rehabilitation setting (e.g. parallel bars, overhead harness, treadmill support harness), when the participant is wearing the monitoring devices.\n\n\"The therapy sessions for both DOSE1 and DOSE2 were \u224810 minutes longer than Usual Care because the protocol dictated the duration of the DOSE sessions while the Usual Care duration varied depending on the site\u2019s usual practice\" Comparison relevant to this review = DOSE1 vs usual care",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00610\",\"question\":\"For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?\"},{\"study_id\":\"ART_00610\",\"question\":\"Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00610\nQuestion: For the DOSE1 versus usual care comparison, what were the immediate post-intervention motor function results (including the outcome measure, group means or change scores, and whether the between-group difference was statistically significant)?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.53\nConfidence interval end: 0.25\nConfidence interval percentage: 95\nSample size: 100\n\nStudy ART_00610\nQuestion: Was the usual care comparator delivered at an equal overall dose to DOSE1, and did it include less or no functional task training compared with DOSE1?\nGatekeeper response: Complete Intervention/Comparator information provided.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Patients with hemiplegic cerebral infarction in early stage of targeted limb task function",
+          "wald_z": 0.703577,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00611_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00611",
+          "article_type": "included_study",
+          "citation": "van de Port I, Wevers LE, Lindeman E, Kwakkel G. Effects of circuit training as alternative to usual physiotherapy after stroke: randomised controlled trial. BMJ 2012;344:e2672.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00611_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00611": {
+                "article_id": "ART_00611",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00611\n\nOutcomes:\nIndependence in ADL scales: Barthel Index\n\nMotor function scales: MAS; Sodring Motor Evaluation\n\nMeasures of balance: NR\n\nMeasures of gait velocity: NR\n\nLength of stay: length of stay\n\nAdverse events: NR\n\nOther measures: Nottingham Health Profile, use of assistive devices, discharge destination\n\nTime points when outcomes were assessed: \"patients were tested three times: (1) three days after admission to the hospital, (2) two weeks thereafter, and (3) three months post stroke\". Data for 3 months were used in the immediate time point analyses. Follow-up outcomes were measured at 1 and 4 years post stroke. Data for 1-year follow-up were used in follow-up time point analyses.\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.39\nConfidence interval begin: 0.13\nConfidence interval end: 0.64\nConfidence interval percentage: 95\nSample size: 242",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "22577186",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Effects of circuit training as alternative to usual physiotherapy after stroke: randomised controlled trial",
+          "wald_z": -2.997592,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00612_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00612",
+          "article_type": "included_study",
+          "citation": "Langhammer B, Lindmark B, Stanghelle JK. Stroke patients and long-term training: is it worthwhile? A randomized comparison of two different training strategies after rehabilitation. Clinical Rehabilitation 2007;21(6):495-510.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00612": {
+                "article_id": "ART_00612",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00612\n\nParticipants:\nStudy population (number randomised): 380\n\nInclusion criteria:\n\n- Aged \u2265 18 years\n\n- Confirmed first-ever or recurrent stroke (infarction or intracerebral haemorrhage)\n\n- Discharged from hospital or inpatient rehabilitation and were community dwelling\n\n- Modified Rankin Scale (mRS) score < 5\n\n- No serious comorbidities that made it difficult to perform the intervention, and were capable of\n\nproviding consent LAST 2018\n\nExclusion criteria:\n\n- Serious medical comorbidity with short life expectancy\n\n- Cognitive deficits as evaluated by the MMSE < 21 (or < 17 for people with aphasia)\n\n- Contraindication to participation in motor training, or inclusion in another study\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to evaluate the efficacy and safety of an 18-month follow-up programme of individualised regular coaching on physical activity and exercise\n\nDesign: parallel-group RCT ('pragmatic')\n\nCountry: Norway\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Long-term follow-up programme/individualised coaching (n = 186) In addition to standard care - \"Patients will in addition to usual care be given a long term follow-up program comprising a physiotherapist who will meet and coach the patients, preferably in the patients' home, on a monthly basis for 18 consecutive months. The intevention consists of coaching on physical activity which is a significant part of health coaching, an exercise schedule in accordance with [the patient's] goal and phyysical activity preferences will be made. The program will comprise 45-60 minutes of physical excercise once a week and 30 minutes of physical activity every day.\"\n\n(2) Usual care (n = 194)\n\n\"Patients randomised to usual care will be given standard community based treatment, given as outpatient rehabilitation or as rehabilitation in the patients' home according to the patients' needs. The main approach for physiotherapists is a nonspecialised approach, which means that they are expected to treat a range of different patient groups at older age\"\n\n\"Usually consists of 45 minutes of physiotherapy per week, often limited to the first 3 months, but can last for up to 6 months\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "17613581",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Stroke patients and long-term training: is it worthwhile? A randomized comparison of two different training strategies after rehabilitation",
+          "wald_z": 0.752309,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00613",
+          "article_type": "included_study",
+          "citation": "Li Q, Zhong C, Li W, Guo C, Gao Y, Yin J. Analysis on basic training on stroke prognosis early enhancement [\u65e9\u671f\u5f3a\u5316 \u6b65\u2f8f\u57fa\u672c\u529f\u8bad\u7ec3\u5bf9\u8111\u5352\u4e2d\u7684\u9884\u540e\u5206\u6790]. Progress in Modern Biomedicine 2013;13(27):5306-9.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00613": {
+                "article_id": "ART_00613",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00613\nFollow-up question: What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.56\nConfidence interval begin: 0.26\nConfidence interval end: 0.86\nConfidence interval percentage: 95\nSample size: 176",
+                      "selected_category": "Results"
+                    },
+                    "question": "What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.56\nConfidence interval begin: 0.26\nConfidence interval end: 0.86\nConfidence interval percentage: 95\nSample size: 176",
+                    "revealed_section": "results",
+                    "study_id": "ART_00613"
+                  },
+                  {
+                    "category": "Intervention/Comparator",
+                    "category_key": "intervention_comparator",
+                    "classification": "prior",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Intervention/Comparator\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00613\nFollow-up question: Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Complete Intervention/Comparator information provided.",
+                      "selected_category": "Intervention/Comparator"
+                    },
+                    "question": "Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?",
+                    "response": "Complete Intervention/Comparator information provided.",
+                    "revealed_section": "",
+                    "study_id": "ART_00613"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00613\n\nParticipants:\nStudy population (number randomised): 120\n\nInclusion criteria:\n\n- Met the diagnostic criteria adopted by the Fourth National Cerebrovascular Disease Academic\n\nConference\n\n- Stroke confirmed by head CT or MRI\n\nExclusion criteria:\n\n- Not reported\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to examine the effectiveness of exercise re-learning rehabilitation training for stroke patients\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Motor re-learning\n\n\"The treatment group underwent rehabilitation function training according to the motor relearning program. Each patient developed an individualized training plan after evaluation, and the training content mainly consisted of 7 parts: upper limb function, orofacial function, bedside sitting, sitting balance, standing and sitting, standing balance, and walking [2]. Training once a day for 45 minutes each time.\"\n\nIncludes: \"1. Motor re-learning has a complete evaluation system, which should be followed every day during training: evaluation-treatment-re-evaluation-re-treatment. 2. Active movement should be induced in the position that is most likely to induce active movement, so as to enhance the patient's confidence in recovery. 3. Emphasize that in the early stage, as long as the vital signs are stable, start rehabilitation training, including getting out of bed and standing. 4. Emphasize active movement. Only active movement is the patient's own movement. 5. Emphasize feedback to promote neuromuscular recovery. 6. Guided by functional rehabilitation, it is easier for patients to re- Li Jingqian 2013 turn to society and integrate into daily life. 7. Let patients and their families learn the basics of exercise re-learning so that they can enter community rehabilitation and family rehabilitation. \"\n\n(2) Conventional rehabilitation\n\n\"Both groups received conventional treatments such as acupuncture, physiotherapy, and exercise therapy. \" (no further details provided)",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?",
+                      "study_id": "ART_00613"
+                    },
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?",
+                      "study_id": "ART_00613"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00613\",\"question\":\"What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?\"},{\"study_id\":\"ART_00613\",\"question\":\"Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00613\n\nParticipants:\nStudy population (number randomised): 120\n\nInclusion criteria:\n\n- Met the diagnostic criteria adopted by the Fourth National Cerebrovascular Disease Academic\n\nConference\n\n- Stroke confirmed by head CT or MRI\n\nExclusion criteria:\n\n- Not reported\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to examine the effectiveness of exercise re-learning rehabilitation training for stroke patients\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Motor re-learning\n\n\"The treatment group underwent rehabilitation function training according to the motor relearning program. Each patient developed an individualized training plan after evaluation, and the training content mainly consisted of 7 parts: upper limb function, orofacial function, bedside sitting, sitting balance, standing and sitting, standing balance, and walking [2]. Training once a day for 45 minutes each time.\"\n\nIncludes: \"1. Motor re-learning has a complete evaluation system, which should be followed every day during training: evaluation-treatment-re-evaluation-re-treatment. 2. Active movement should be induced in the position that is most likely to induce active movement, so as to enhance the patient's confidence in recovery. 3. Emphasize that in the early stage, as long as the vital signs are stable, start rehabilitation training, including getting out of bed and standing. 4. Emphasize active movement. Only active movement is the patient's own movement. 5. Emphasize feedback to promote neuromuscular recovery. 6. Guided by functional rehabilitation, it is easier for patients to re- Li Jingqian 2013 turn to society and integrate into daily life. 7. Let patients and their families learn the basics of exercise re-learning so that they can enter community rehabilitation and family rehabilitation. \"\n\n(2) Conventional rehabilitation\n\n\"Both groups received conventional treatments such as acupuncture, physiotherapy, and exercise therapy. \" (no further details provided)",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00613\",\"question\":\"What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?\"},{\"study_id\":\"ART_00613\",\"question\":\"Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00613\nQuestion: What motor function outcomes were measured immediately after the intervention, and what were the results for the motor relearning group versus the conventional rehabilitation group?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.56\nConfidence interval begin: 0.26\nConfidence interval end: 0.86\nConfidence interval percentage: 95\nSample size: 176\n\nStudy ART_00613\nQuestion: Did the conventional rehabilitation group receive the same total amount of physical rehabilitation time as the motor relearning group, or did the motor relearning group receive an additional 45 minutes per day?\nGatekeeper response: Complete Intervention/Comparator information provided.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Analysis on basic training on stroke prognosis early enhancement [\u65e9\u671f\u5f3a\u5316 \u6b65\u2f8f\u57fa\u672c\u529f\u8bad\u7ec3\u5bf9\u8111\u5352\u4e2d\u7684\u9884\u540e\u5206\u6790]",
+          "wald_z": -3.658599,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00614",
+          "article_type": "included_study",
+          "citation": "Meng Qingling, Fu Changzhong, Liu Hao, Fan Yunhui, Li Liqun. Effects of early limb task function or strength training on limb function and living ability of patients with cerebral infarction hemiplegia [\u65e9\u671f\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005 \u80a2\u4f53\u529f\u80fd\u548c\u2f63\u6d3b\u80fd\u2f12\u7684\u5f71\u54cd]. Chin Journal of Clinical Rational Drug Use 2015;8(11):144-5. [DOI: 10. 15887 /j. cnki. 13-1389 / r.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00614": {
+                "article_id": "ART_00614",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00614\nFollow-up question: What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.24\nConfidence interval begin: -0.17\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 90",
+                      "selected_category": "Results"
+                    },
+                    "question": "What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.24\nConfidence interval begin: -0.17\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 90",
+                    "revealed_section": "results",
+                    "study_id": "ART_00614"
+                  },
+                  {
+                    "category": "Intervention/Comparator",
+                    "category_key": "intervention_comparator",
+                    "classification": "prior",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Intervention/Comparator\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00614\nFollow-up question: Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Complete Intervention/Comparator information provided.",
+                      "selected_category": "Intervention/Comparator"
+                    },
+                    "question": "Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?",
+                    "response": "Complete Intervention/Comparator information provided.",
+                    "revealed_section": "",
+                    "study_id": "ART_00614"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00614\n\nParticipants:\nStudy population (number randomised): 30\n\nInclusion criteria:\n\n- Aged > 18 years old\n\n- Ischaemic stroke\n\n- Time after ischaemic stroke from 4 weeks to 3 years\n\n- Lack of contraindications to rehabilitation\n\n- Able to walk\n\nExclusion criteria:\n\n- < 18 years old\n\n- Haemorrhagic stroke or TIA\n\n- Time after ischaemic stroke < 4 weeks or > 3 years\n\n- Contraindications to rehabilitation\n\n- Unable to walk\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to compare the outcomes of a study of post-stroke gait re-education using the Bobath neuro\u2011developmental treatment (NDT-Bobath) method and the traditional approach\n\nDesign: parallel-group RCT\n\nCountry: Poland\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Bobath + traditional\n\n\"therapy was conducted by the same physical therapist with more than fifteen years of experience in neurorehabilitation, and NDT-Bobath skills confirmed by basic and advanced courses in NDT- Bobath for adults, and additionally, to broaden knowledge and experience in the NDT-Bobath approach, by NDT-Bobath for children and NDT-Bobath Baby courses\"\n\n(2) Traditional (no description provided)\n\n\"each patient underwent the same number of therapeutic sessions (ten) through two weeks (ten days of the therapy)\" Mikolajewska 2017",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?",
+                      "study_id": "ART_00614"
+                    },
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?",
+                      "study_id": "ART_00614"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00614\",\"question\":\"What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?\"},{\"study_id\":\"ART_00614\",\"question\":\"Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00614\n\nParticipants:\nStudy population (number randomised): 30\n\nInclusion criteria:\n\n- Aged > 18 years old\n\n- Ischaemic stroke\n\n- Time after ischaemic stroke from 4 weeks to 3 years\n\n- Lack of contraindications to rehabilitation\n\n- Able to walk\n\nExclusion criteria:\n\n- < 18 years old\n\n- Haemorrhagic stroke or TIA\n\n- Time after ischaemic stroke < 4 weeks or > 3 years\n\n- Contraindications to rehabilitation\n\n- Unable to walk\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to compare the outcomes of a study of post-stroke gait re-education using the Bobath neuro\u2011developmental treatment (NDT-Bobath) method and the traditional approach\n\nDesign: parallel-group RCT\n\nCountry: Poland\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Bobath + traditional\n\n\"therapy was conducted by the same physical therapist with more than fifteen years of experience in neurorehabilitation, and NDT-Bobath skills confirmed by basic and advanced courses in NDT- Bobath for adults, and additionally, to broaden knowledge and experience in the NDT-Bobath approach, by NDT-Bobath for children and NDT-Bobath Baby courses\"\n\n(2) Traditional (no description provided)\n\n\"each patient underwent the same number of therapeutic sessions (ten) through two weeks (ten days of the therapy)\" Mikolajewska 2017",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00614\",\"question\":\"What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?\"},{\"study_id\":\"ART_00614\",\"question\":\"Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00614\nQuestion: What motor function outcomes were measured immediately after the 2-week intervention, and what were the between-group results for Bobath plus traditional therapy versus traditional therapy alone?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.24\nConfidence interval begin: -0.17\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 90\n\nStudy ART_00614\nQuestion: Can you describe the content of the Bobath plus traditional therapy and the traditional therapy, especially whether either programme involved repeated practice of functional tasks such as walking, transfers, reaching, or activities of daily living?\nGatekeeper response: Complete Intervention/Comparator information provided.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Effects of early limb task function or strength training on limb function and living ability of patients with cerebral infarction hemiplegia [\u65e9\u671f\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005 \u80a2\u4f53\u529f\u80fd\u548c\u2f63\u6d3b\u80fd\u2f12\u7684\u5f71\u54cd]",
+          "wald_z": -1.133473,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00615",
+          "article_type": "included_study",
+          "citation": "Pandian S, Arya KN, Kumar D. Does motor training of the nonparetic side influences balance and function in chronic stroke? A pilot RCT. The Scientific World Journal 2014;769726:1-8. [DOI: 10.1155/2014/769726]",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00615": {
+                "article_id": "ART_00615",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00615\n\nParticipants:\nStudy population (number randomised): 86\n\nInclusion criteria:\n\n- \"diagnosed according to diagnostic criteria established in the Fourth National Cerebral Vascular\n\nDisease Conference in 1995\"\n\nExclusion criteria:\n\n- Not reported\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to evaluate the effectiveness of early rehabilitation in acute stroke\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Rehabilitation (n = 50)\n\n\"Both groups received routine treatment in department of internal neurology. Cerebral edema [was] controlled by 20% mannitol and support treatment. In rehabilitation group, superearly stage, flaccid paralysis and recovery stage rehabilitation care were performed based on routine internal medicine treatment\"\n\n\"(i) Super early stage care: Carefully observe and keep stable life signs and improve basical care within the first 3 days. Keep functional position, including flexion and abduct of shoulder joint, extension of the elbow, dorsal extension of wrist, extension or light flexion of fingers, flexion of knee and hip joint and keep ankle joint in medium position. Turn the body over in regular time and change position, healthy side lateral recumbent position and injured side lateral recumbent position. Still, the patients were required to take injured side lateral recumbent position as much as possible to simulate feeling of the injury side and is advantageble to motion of the healthy side of the body\" Pang 2003\n\n\"(ii) Flaccid paralysis stage care: After 3 weeks\u2019 basic treatment, proximal to distal massaging can be taken based on stable life signs and maintaining functional position. After that, proper short time passive flexion and extension were practiced within the limit of the various articular motion. Motion sequence is started from the bigger joint to the smaller one and stick to from little to large range, proper and step by step principle. Violence was avoided to prevent soft tissue injured. Motion is according to the fatigue status of the patients, with 2 or 3 times a day and 30 min each time\"\n\n\"(iii) Early rehabilitation care: It is important to perform ADL exercises 3 to 4 weeks after injury. The patients were required to practice initiative and passive motion, including position transversion, balance and functional exercise of upper extremities and hand, overload exercise of the lower extremities and flexion and extension of the hip, knee and ankle joint and language exercise, with 1 time per day and 30 to 60 min each time\"\n\nLength of intervention period: 4 weeks\n\nNumber of sessions and length of individual sessions: dependent on phase of recovery\n\nIntervention provider: not stated\n\n(2) No physical rehabilitation group (n = 36)\n\n\"Patients in the control group were taken routine care during the experiment\" The individual components delivered are listed in Table 28. Based on the individual components, this intervention is categorised as comprising no intervention.\n\nLength of intervention period: no intervention\n\nNumber of sessions and length of individual sessions: no intervention\n\nIntervention provider: no intervention",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Does motor training of the nonparetic side influences balance and function in chronic stroke? A pilot RCT",
+          "wald_z": -5.263274,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00616",
+          "article_type": "included_study",
+          "citation": "Wang Leilei, Luo Xin, Hu Feifei. Effect of acupuncture plus rehabilitation based on task-oriented training on lower limb motor function in Brunnstrom stage III stroke. Modern Journal of Integrated Traditional Chinese and Western Medicine 2020;29(26):2881-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00616": {
+                "article_id": "ART_00616",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00616\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: Fugl-Meyer assessment\n\nMeasures of balance: Berg Balance Scale\n\nMeasures of gait velocity: NR\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: NR\n\nTime points when outcomes were assessed: before and after treatment, and 3 weeks after discharge\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 4.74\nConfidence interval begin: 4.19\nConfidence interval end: 5.28\nConfidence interval percentage: 95\nSample size: 200",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Effect of acupuncture plus rehabilitation based on task-oriented training on lower limb motor function in Brunnstrom stage III stroke",
+          "wald_z": -17.046292,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00617",
+          "article_type": "included_study",
+          "citation": "Zhang Huiyu. Analysis of the effect of goal-oriented functional exercise on rehabilitation of patients with cerebral hemorrhage. Modern Nurse 2021;28(8):20-2.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00617": {
+                "article_id": "ART_00617",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00617\n\nParticipants:\nStudy population (number randomised): 166\n\nInclusion criteria:\n\n- Met the diagnostic criteria of the 4th National Academic Conference on Cerebrovascular Disease\n\n- All cases were confirmed by head CT\n\nExclusion criteria:\n\n- Not reported\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: detailed in Table 10\n\nMethods:\nStudy aim: to explore the effect of neurorehabilitation in the treatment of cerebral infarction\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Rehabilitation\n\n\"Treatments include: \u2460Place in a good posture; \u2461 passive movement of joints; Zhang Jianhong 2013 \u2462 Bobath technology [4]; \u2463Brunstrom technology; \u2464ROOD technique; 2 to 3 times/d, 0.5 to 1 h/d, the treatment time is 5 weeks. \"\n\n(2) No physical rehabilitation\n\n\"Self-training without regulated rehabilitation. The observation period was 5 weeks.\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Analysis of the effect of goal-oriented functional exercise on rehabilitation of patients with cerebral hemorrhage",
+          "wald_z": -7.966305,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00618_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00618",
+          "article_type": "included_study",
+          "citation": "Arya KN, Pandian S, Sharma A, Kumar V, Kashyap VK. Interlimb coupling in poststroke rehabilitation: a pilot randomized controlled trial. Topics in Stroke Rehabilitation 2020;27(4):272-89.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00618": {
+                "article_id": "ART_00618",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00618\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: Motor Assessment Scale\n\nMeasures of balance: NR\n\nMeasures of gait velocity: gait speed\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: Timed Up and Go over 2 metres (TUG2m), step test\n\nTime points when outcomes were assessed: \"Baseline outcome measures were taken on two occasions prior to the intervention phase and meaned (base). The baseline was compared to outcomes taken at the end of intervention (OM3) and a 48 hour retention test (OM4)\"\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 1.14\nConfidence interval begin: 0.54\nConfidence interval end: 1.75\nConfidence interval percentage: 95\nSample size: 50",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "31707972",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Interlimb coupling in poststroke rehabilitation: a pilot randomized controlled trial",
+          "wald_z": -3.693155,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00619",
+          "article_type": "included_study",
+          "citation": "Guo Liyun, Tian Zeli, Wang Luping, Xu Haixia. Influence of task-oriented training combined with muscle strength training on motor function of hemiplegia patients with stroke sequelae. Chinese Journal of Rehabilitation Medicine 2013;28(7):642-4.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00619": {
+                "article_id": "ART_00619",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00619\nFollow-up question: What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 2.59\nConfidence interval begin: 1.75\nConfidence interval end: 3.43\nConfidence interval percentage: 95\nSample size: 42",
+                      "selected_category": "Results"
+                    },
+                    "question": "What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 2.59\nConfidence interval begin: 1.75\nConfidence interval end: 3.43\nConfidence interval percentage: 95\nSample size: 42",
+                    "revealed_section": "results",
+                    "study_id": "ART_00619"
+                  },
+                  {
+                    "category": "Intervention/Comparator",
+                    "category_key": "intervention_comparator",
+                    "classification": "prior",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Intervention/Comparator\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00619\nFollow-up question: Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Complete Intervention/Comparator information provided.",
+                      "selected_category": "Intervention/Comparator"
+                    },
+                    "question": "Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?",
+                    "response": "Complete Intervention/Comparator information provided.",
+                    "revealed_section": "",
+                    "study_id": "ART_00619"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00619\n\nParticipants:\nStudy population (number randomised): 80\n\nInclusion criteria:\n\n- Met the diagnostic criteria for stroke according to the 4th National Academic Conference on Cerebrovascular Diseases\n\n- Confirmed by CT or MRI\n\nGuo Z 2015\n\nExclusion criteria:\n\n- Large cerebral infarction\n\n- Unclear consciousness\n\n- Severe liver and kidney complications\n\n- Malignant tumours\n\n- Poor compliance or unable to complete the whole course of treatment\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to evaluate the effect of special muscle strength exercises and lower limb balance training on the recovery of lower limb function in patients with post-stroke hemiplegia\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Physical rehabilitation\n\n\"Physical rehabilitation training guided by the community health service center affiliated to the hospital. The training program is guided by specialized personnel. Lower extremity rehabilitation training mainly includes muscle strength and coordination function training of affected limbs. The details are as follows. (1) Limb flexion and extension training: In the first step, assist the patient to lie supine on the bed to repeatedly practice the flexion and extension of the legs, gradually transition to the sitting position according to the progress of muscle strength, and then gradually perform standing flexion and extension exercises with the assistance of medical staff. (2) Lateral step training: After assisting the patient to stand, the healthy limb first, step in a straight line, move laterally to the unaffected side, and the affected limb retracts the leg and follows the line. (3) Crosswalking training: With the assistance of medical staff, patients practice cross-footing training. (4)\n\nSquat training: With the help of fixed armrests, patients perform lower limb squatting and lifting exercises. (5) Weight-bearing training: The patient is in an upright position, and with the help of the armrest, the unaffected limb performs a back-and-forth swing exercise to gradually exercise the weight-bearing function of the affected limb. The above training follows the order of passive-assistance-active, with gradual transition, 2 times each time, 30min each time. The duration of treatment was 6 months. \"\n\n(2) Standard care\n\n\"the control group was given routine post-stroke rehabilitation guidance on the basis of drug control after discharge\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?",
+                      "study_id": "ART_00619"
+                    },
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?",
+                      "study_id": "ART_00619"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00619\",\"question\":\"What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?\"},{\"study_id\":\"ART_00619\",\"question\":\"Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00619\n\nParticipants:\nStudy population (number randomised): 80\n\nInclusion criteria:\n\n- Met the diagnostic criteria for stroke according to the 4th National Academic Conference on Cerebrovascular Diseases\n\n- Confirmed by CT or MRI\n\nGuo Z 2015\n\nExclusion criteria:\n\n- Large cerebral infarction\n\n- Unclear consciousness\n\n- Severe liver and kidney complications\n\n- Malignant tumours\n\n- Poor compliance or unable to complete the whole course of treatment\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to evaluate the effect of special muscle strength exercises and lower limb balance training on the recovery of lower limb function in patients with post-stroke hemiplegia\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Physical rehabilitation\n\n\"Physical rehabilitation training guided by the community health service center affiliated to the hospital. The training program is guided by specialized personnel. Lower extremity rehabilitation training mainly includes muscle strength and coordination function training of affected limbs. The details are as follows. (1) Limb flexion and extension training: In the first step, assist the patient to lie supine on the bed to repeatedly practice the flexion and extension of the legs, gradually transition to the sitting position according to the progress of muscle strength, and then gradually perform standing flexion and extension exercises with the assistance of medical staff. (2) Lateral step training: After assisting the patient to stand, the healthy limb first, step in a straight line, move laterally to the unaffected side, and the affected limb retracts the leg and follows the line. (3) Crosswalking training: With the assistance of medical staff, patients practice cross-footing training. (4)\n\nSquat training: With the help of fixed armrests, patients perform lower limb squatting and lifting exercises. (5) Weight-bearing training: The patient is in an upright position, and with the help of the armrest, the unaffected limb performs a back-and-forth swing exercise to gradually exercise the weight-bearing function of the affected limb. The above training follows the order of passive-assistance-active, with gradual transition, 2 times each time, 30min each time. The duration of treatment was 6 months. \"\n\n(2) Standard care\n\n\"the control group was given routine post-stroke rehabilitation guidance on the basis of drug control after discharge\"",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00619\",\"question\":\"What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?\"},{\"study_id\":\"ART_00619\",\"question\":\"Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00619\nQuestion: What motor function outcome(s) were measured immediately after the 6-month intervention, and what were the results for the intervention and control groups?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 2.59\nConfidence interval begin: 1.75\nConfidence interval end: 3.43\nConfidence interval percentage: 95\nSample size: 42\n\nStudy ART_00619\nQuestion: Was the control group given the same amount of therapist contact or rehabilitation time as the intervention group, or was it only routine rehabilitation guidance after discharge?\nGatekeeper response: Complete Intervention/Comparator information provided.\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Influence of task-oriented training combined with muscle strength training on motor function of hemiplegia patients with stroke sequelae",
+          "wald_z": -6.043222,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00620_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00620",
+          "article_type": "included_study",
+          "citation": "Kim SM, Han EY, Kim BR, Hyun CW. Clinical application of circuit training for subacute stroke patients: a preliminary study. Journal of Physical Therapy Science 2016;28:169-74. [DOI: 10.1589/jpts.28.169]",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00620_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00620": {
+                "article_id": "ART_00620",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Intervention/Comparator",
+                    "category_key": "intervention_comparator",
+                    "classification": "prior",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Intervention/Comparator\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00620\nFollow-up question: Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Complete Intervention/Comparator information provided.",
+                      "selected_category": "Intervention/Comparator"
+                    },
+                    "question": "Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?",
+                    "response": "Complete Intervention/Comparator information provided.",
+                    "revealed_section": "",
+                    "study_id": "ART_00620"
+                  },
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00620\nFollow-up question: What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.25\nConfidence interval begin: -0.63\nConfidence interval end: 1.13\nConfidence interval percentage: 95\nSample size: 20",
+                      "selected_category": "Results"
+                    },
+                    "question": "What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.25\nConfidence interval begin: -0.63\nConfidence interval end: 1.13\nConfidence interval percentage: 95\nSample size: 20",
+                    "revealed_section": "results",
+                    "study_id": "ART_00620"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00620\n\nParticipants:\nStudy population (number randomised): 30 Kim 2017\n\nInclusion criteria:\n\n- Stroke diagnosed by CT or MRI\n\n- Within 6 months after stroke\n\n- Able to walk at least 10 m alone or with an aid, but without standby assistance\n\nExclusion criteria:\n\n- Atrial fibrillation\n\n- Uncontrolled hypertension\n\n- Symptoms of unstable cardiac disease\n\n- Recent pulmonary embolism\n\n- Subacute systemic illness or infection\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to investigate the effects of the task-oriented circuit training on balance and gait ability in subacute patients with stroke\n\nDesign: parallel-group RCT\n\nCountry: Korea, Rep.\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Task-oriented circuit training\n\n\"Subjects in the intervention group participated in a task-oriented circuit training at the rehabilitation centre, for a total of 50 minutes, five times a week, for 4 weeks. The length of intervention was 4 weeks, 5 sessions of weekly training, for a total of 20 sessions. All training sessions were organized into groups, with at least 2\u20133 people/group, and were conducted by two physical therapists (with 3 years of experience in stroke rehabilitation). Task-oriented circuit training program was modified according to the studies by Dean et al.6, and Outermans et al.9, and incorporated 10 workstations. It consisted of task-oriented activities for improving balance, walking competency, and respiration ability. At all stations patients practiced for 3 minutes, and this session was followed by a 1 minute transfer to the next station. And stretching time (5 minutes) was offered before and after the exercise. The total exercise time was 50 minutes.These core practice activities were: sit to stand; stepping; tandem standing; one leg standing; and reaching; walking practice included obstacles, reaching, slope and stairs. These core activities were individually adjusted for each subject by the treating therapist. Progress was assessed as required, such that the level of difficulty, complexity, and dosage (number of repetitions) matched the ability of each individual 10). The Borg Scale of Perceived Exertion was used to adjust the effort intensity in order to maintain an \u201chard\u201d level 11). Details about exercise intensity and/or repetitions performed at each station were recorded for each participant.\"\n\n(2) Task-oriented exercise\n\n\"The control group was performed through exercise focused on task-oriented exercise, such as strengthening exercise (resistance exercise), standing balance (using varying methods), and functional activities for gait improvement.\"\n\n\"Both the groups received neuro-developmental treatment (postural control exercise, resistance exercise, and functionalactivity exercise) for approximately 1 hour per day. In addition, they received some other therapies, including occupationaland speech therapy, as needed.\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?",
+                      "study_id": "ART_00620"
+                    },
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?",
+                      "study_id": "ART_00620"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00620\",\"question\":\"Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?\"},{\"study_id\":\"ART_00620\",\"question\":\"What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00620\n\nParticipants:\nStudy population (number randomised): 30 Kim 2017\n\nInclusion criteria:\n\n- Stroke diagnosed by CT or MRI\n\n- Within 6 months after stroke\n\n- Able to walk at least 10 m alone or with an aid, but without standby assistance\n\nExclusion criteria:\n\n- Atrial fibrillation\n\n- Uncontrolled hypertension\n\n- Symptoms of unstable cardiac disease\n\n- Recent pulmonary embolism\n\n- Subacute systemic illness or infection\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to investigate the effects of the task-oriented circuit training on balance and gait ability in subacute patients with stroke\n\nDesign: parallel-group RCT\n\nCountry: Korea, Rep.\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Task-oriented circuit training\n\n\"Subjects in the intervention group participated in a task-oriented circuit training at the rehabilitation centre, for a total of 50 minutes, five times a week, for 4 weeks. The length of intervention was 4 weeks, 5 sessions of weekly training, for a total of 20 sessions. All training sessions were organized into groups, with at least 2\u20133 people/group, and were conducted by two physical therapists (with 3 years of experience in stroke rehabilitation). Task-oriented circuit training program was modified according to the studies by Dean et al.6, and Outermans et al.9, and incorporated 10 workstations. It consisted of task-oriented activities for improving balance, walking competency, and respiration ability. At all stations patients practiced for 3 minutes, and this session was followed by a 1 minute transfer to the next station. And stretching time (5 minutes) was offered before and after the exercise. The total exercise time was 50 minutes.These core practice activities were: sit to stand; stepping; tandem standing; one leg standing; and reaching; walking practice included obstacles, reaching, slope and stairs. These core activities were individually adjusted for each subject by the treating therapist. Progress was assessed as required, such that the level of difficulty, complexity, and dosage (number of repetitions) matched the ability of each individual 10). The Borg Scale of Perceived Exertion was used to adjust the effort intensity in order to maintain an \u201chard\u201d level 11). Details about exercise intensity and/or repetitions performed at each station were recorded for each participant.\"\n\n(2) Task-oriented exercise\n\n\"The control group was performed through exercise focused on task-oriented exercise, such as strengthening exercise (resistance exercise), standing balance (using varying methods), and functional activities for gait improvement.\"\n\n\"Both the groups received neuro-developmental treatment (postural control exercise, resistance exercise, and functionalactivity exercise) for approximately 1 hour per day. In addition, they received some other therapies, including occupationaland speech therapy, as needed.\"",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00620\",\"question\":\"Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?\"},{\"study_id\":\"ART_00620\",\"question\":\"What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00620\nQuestion: Was the control group's additional task-oriented exercise delivered for the same total dose as the task-oriented circuit training group, and did it include less functional task training than the intervention?\nGatekeeper response: Complete Intervention/Comparator information provided.\n\nStudy ART_00620\nQuestion: What motor function outcomes were measured immediately after the 4-week intervention, and were there statistically significant between-group differences favoring task-oriented circuit training?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.25\nConfidence interval begin: -0.63\nConfidence interval end: 1.13\nConfidence interval percentage: 95\nSample size: 20\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "26957751",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Clinical application of circuit training for subacute stroke patients: a preliminary study",
+          "wald_z": -0.556808,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00621_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00621",
+          "article_type": "included_study",
+          "citation": "Langhammer B, Stranghelle JK. Bobath or motor relearning programme? A comparison of two different approaches of physiotherapy in stroke rehabilitation: a randomized controlled study. Clinical Rehabilitation 2000;14:361-9.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00621": {
+                "article_id": "ART_00621",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00621\nFollow-up question: Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.29\nConfidence interval begin: -0.25\nConfidence interval end: 0.84\nConfidence interval percentage: 95\nSample size: 53",
+                      "selected_category": "Results"
+                    },
+                    "question": "Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.29\nConfidence interval begin: -0.25\nConfidence interval end: 0.84\nConfidence interval percentage: 95\nSample size: 53",
+                    "revealed_section": "results",
+                    "study_id": "ART_00621"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00621\n\nParticipants:\nStudy population (number randomised): 75\n\nInclusion criteria:\n\n- First-time-ever stroke with neurological signs\n\n- CT confirmed stroke\n\n- Voluntary participation\n\nExclusion criteria:\n\n- > 1 stroke incident\n\n- Subarachnoid bleeding\n\n- Tumour\n\n- Other serious illness\n\n- Brainstem or cerebellar stroke\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: \"to find out if there were any differences in improvement and maintenance of motor function, activity of daily living and grip strength between patients with first-ever stroke receiving two different strategies of physical exercise during the first year after stroke\"\n\nDesign: parallel-group RCT\n\nCountry: Norway\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Exercise training (n = 35)\n\n\"The subsequent training for the intensive exercise group included a functional exercise programme with emphasis on high intensity of endurance, strength and balance. The individualized training programmes were aimed at functional improvements but with variations, for example: getting up from a chair, walking indoors, Nordic walking outdoors, stationary bicycling, and stair walking, where the physiotherapist monitored the levels of intensity through Borg\u2019s Scale or through the pulse rate. A protocol with suggestions of types of exercises and levels of intensity was developed in discussion with all physiotherapists involved. This protocol was intended as a guideline. The goal of these exercises was to improve and maintain motor function, activities of daily living and grip strength. Patients in the intensive exercise group were also encouraged to maintain a high activity level apart from that in the training sessions\"\n\nLength of intervention period: 12 months\n\nNumber of sessions and length of individual sessions: \"Arrangements were made for patients allocated to the intensive exercise group to have physiotherapy during four periods, with a minimum of 20 hours every third month, in the first year after the stroke. The intervention sessions started immediately after discharge, two or three times a week if the patient was at home or attending a private physiotherapy practice, and daily if he or she was in a rehabilitation ward. This intervention was repeated after three months, six months and one year\"\n\nIntervention provider: physiotherapists\n\n(2) Usual physiotherapy (n = 40)\n\n\"If the patients in the regular exercise group were considered to be in need of follow-up treatment or rehabilitation they were assigned to that, but not on a regular basis. No specific treatment was recommended to this group. On the other hand, the same encouragement to maintain a high activity level besides the training, if any, was given to the regular exercise group\". A greater proportion of participants in the usual physiotherapy group undertook self-training.\n\nLength of intervention period: 12 months\n\nNumber of sessions and length of individual sessions: \"The regular exercise group patients were given follow-up treatment according to their needs, as considered by the rehabilitation staff at the stroke unit/rehabilitation department and by the rehabilitation team in the community after discharge\"\n\nIntervention provider: physiotherapists",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?",
+                      "study_id": "ART_00621"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00621\",\"question\":\"Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00621\n\nParticipants:\nStudy population (number randomised): 75\n\nInclusion criteria:\n\n- First-time-ever stroke with neurological signs\n\n- CT confirmed stroke\n\n- Voluntary participation\n\nExclusion criteria:\n\n- > 1 stroke incident\n\n- Subarachnoid bleeding\n\n- Tumour\n\n- Other serious illness\n\n- Brainstem or cerebellar stroke\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: \"to find out if there were any differences in improvement and maintenance of motor function, activity of daily living and grip strength between patients with first-ever stroke receiving two different strategies of physical exercise during the first year after stroke\"\n\nDesign: parallel-group RCT\n\nCountry: Norway\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Exercise training (n = 35)\n\n\"The subsequent training for the intensive exercise group included a functional exercise programme with emphasis on high intensity of endurance, strength and balance. The individualized training programmes were aimed at functional improvements but with variations, for example: getting up from a chair, walking indoors, Nordic walking outdoors, stationary bicycling, and stair walking, where the physiotherapist monitored the levels of intensity through Borg\u2019s Scale or through the pulse rate. A protocol with suggestions of types of exercises and levels of intensity was developed in discussion with all physiotherapists involved. This protocol was intended as a guideline. The goal of these exercises was to improve and maintain motor function, activities of daily living and grip strength. Patients in the intensive exercise group were also encouraged to maintain a high activity level apart from that in the training sessions\"\n\nLength of intervention period: 12 months\n\nNumber of sessions and length of individual sessions: \"Arrangements were made for patients allocated to the intensive exercise group to have physiotherapy during four periods, with a minimum of 20 hours every third month, in the first year after the stroke. The intervention sessions started immediately after discharge, two or three times a week if the patient was at home or attending a private physiotherapy practice, and daily if he or she was in a rehabilitation ward. This intervention was repeated after three months, six months and one year\"\n\nIntervention provider: physiotherapists\n\n(2) Usual physiotherapy (n = 40)\n\n\"If the patients in the regular exercise group were considered to be in need of follow-up treatment or rehabilitation they were assigned to that, but not on a regular basis. No specific treatment was recommended to this group. On the other hand, the same encouragement to maintain a high activity level besides the training, if any, was given to the regular exercise group\". A greater proportion of participants in the usual physiotherapy group undertook self-training.\n\nLength of intervention period: 12 months\n\nNumber of sessions and length of individual sessions: \"The regular exercise group patients were given follow-up treatment according to their needs, as considered by the rehabilitation staff at the stroke unit/rehabilitation department and by the rehabilitation team in the community after discharge\"\n\nIntervention provider: physiotherapists",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00621\",\"question\":\"Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00621\nQuestion: Were the total amount of therapist contact time and session frequency in the usual physiotherapy group equal to those in the intensive functional exercise training group, and what were the immediate post-intervention motor function results for each group?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.29\nConfidence interval begin: -0.25\nConfidence interval end: 0.84\nConfidence interval percentage: 95\nSample size: 53\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "10945420",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Bobath or motor relearning programme? A comparison of two different approaches of physiotherapy in stroke rehabilitation: a randomized controlled study",
+          "wald_z": -1.042917,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00622",
+          "article_type": "included_study",
+          "citation": "extraction failed",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00622": {
+                "article_id": "ART_00622",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00622\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: NR\n\nMeasures of balance: Berg Balance Scale\n\nMeasures of gait velocity: Timed Up and Go Test, 6-minute walk test\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: Timed Up and Go Cognitive Test, Swedish version of the Activities-specific Balance Confidence Scale, Short Form 36 (SF-36) questionnaire\n\nTime points when outcomes were assessed: 1 week and 6 weeks after intervention\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.40\nConfidence interval begin: -0.80\nConfidence interval end: 0.00\nConfidence interval percentage: 95\nSample size: 99",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "extraction failed",
+          "wald_z": 1.959964,
+          "wald_z_category": "COM-Z1"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00623",
+          "article_type": "included_study",
+          "citation": "extraction failed",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00623": {
+                "article_id": "ART_00623",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00623\n\nOutcomes:\nIndependence in ADL scales: NR\n\nMotor function scales: NR\n\nMeasures of balance: Berg Balance Scale\n\nMeasures of gait velocity: gait speed\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: NR\n\nTime points when outcomes were assessed: \"evaluations were conducted by trained evaluators at baseline, and on completion of the intervention (mean four days)\"\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.12\nConfidence interval begin: -0.91\nConfidence interval end: 1.16\nConfidence interval percentage: 95\nSample size: 15",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "extraction failed",
+          "wald_z": -0.227242,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00624",
+          "article_type": "included_study",
+          "citation": "Shuai J-Y, Liu Y. Observation of curative effect of motor relearning therapy on functional recovery of stroke patients with hemiplegia. China Rehabilitation 2013;28(6):437-8.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00624": {
+                "article_id": "ART_00624",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nStudy ID: ART_00624\nFollow-up question: What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.66\nConfidence interval begin: 0.14\nConfidence interval end: 1.17\nConfidence interval percentage: 95\nSample size: 62",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?",
+                    "response": "Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.66\nConfidence interval begin: 0.14\nConfidence interval end: 1.17\nConfidence interval percentage: 95\nSample size: 62",
+                    "revealed_section": "results",
+                    "study_id": "ART_00624"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00624\n\nParticipants:\nStudy population (number randomised): 20\n\nInclusion criteria:\n\n- Aged 18 years+\n\n- Experienced single disabling stroke in the previous 3 to 9 months\n\n- Able to walk 10 m (with/without aid or 'standby assistance')\n\n- Gait speed of 0.05 to 1.2 m/s\n\nExclusion criteria:\n\n- Behaviour that may interfere with participation in a group setting (e.g. agitation, aggression)\n\n- Significant cognitive deficit (MMSE \u2264 23)\n\n- Unable to follow a 1-step English verbal command\n\n- Unable to provide informed consent\n\n- Medically unsuitable\n\n- Participating in another study\n\n- Excessive pain or another condition that could impact results (e.g. substance abuse, significant\n\nmental illnesses such as major depression)\n\n- Contra-indications to TMS (e.g. pacemaker, artificial heart valves, other metal implants, pregnancy, skull abnormalities, history of seizures or epilepsy or taking medications that may lower\n\nseizure threshold)\n\n- Cautions or contra-indications to blood sampling (e.g. fear of needles, reception of a blood product or blood transfusion, on medications which adversely affect blood coagulation)\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: \"to determine if Strength for Task Training (STT) has potential as an effective rehabilitation strategy to improve walking ability in people following stroke and to establish the feasibility of the research methods planned to conduct a larger Randomised Clinical Trial\"\n\nDesign: multi-arm RCT (4-arms) (mixed methods)\n\nCountry: New Zealand\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: yes (acknowledgements state: \"A special mention goes to those people who participated in the Stroke Advisory Group and those who contributed to the pilot study....\")\n\nIntervention/Comparator:\n(1) Strength and task-specific training Strength for task training (STT)\n\n\"The STT intervention was designed to harness the priming effects of strength training and maximise the effects of strength and task-specific training for improving locomotor abilities\" Progressive resisted strength training (PRST) is undertaken immediately prior to task-specific training (TST) of locomotor skills. \"Participants complete up to three circuits of seven exercise stations during the hour, with each station comprising one set of the PRST exercise, a maximum transition time of 30 seconds followed by two minutes of TST of a related locomotor ability.\"\n\nExercise stations: 1. Quadriceps (seated leg press); sit-to-stand-to-sit 2. Hamstrings (Westminster Pulley); walking backwards 3. Hip extensors (Westminster Pulley); stairs/getting off floor 4. Hip abductors (Theraband); walking sideways 5. Hip flexors (rotary hip); walking (comfortable speed) 6. Plantarflexors (supine leg press); walking (fast speed)/ramps 7. Dorsiflexors/evertors (Theraband); obstacles\n\n(2) Strength training Progressive resisted strength training (PRST)\n\n\"received only the strength training component of the STT programme\"\n\n(3) Task-specific training (TST)\n\n\"received only the task-specific training component of the intervention\"\n\n(4) Usual care (UCC)\n\n\"The UCC group continued to receive standard rehabilitation through public and private health care services; no effort was made to influence the type or amount of rehabilitation these participants received. It should be noted that in the context of the NZ healthcare system people with stroke are likely to be receiving minimal or no active rehabilitation at 3-9months post-stroke\"\n\n\"Participants who were allocated to the STT, PRST or TST groups were scheduled to attend a group based exercise programme for twelve weeks, whilst the UCC group kept a record of any physical rehabilitation or organised exercise they engaged induring the intervention phase\". Three times per week for 1 hour.\n\nComparisons of relevance to this review: (1) vs (4); (2) vs (3)",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?",
+                      "study_id": "ART_00624"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00624\",\"question\":\"What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00624\n\nParticipants:\nStudy population (number randomised): 20\n\nInclusion criteria:\n\n- Aged 18 years+\n\n- Experienced single disabling stroke in the previous 3 to 9 months\n\n- Able to walk 10 m (with/without aid or 'standby assistance')\n\n- Gait speed of 0.05 to 1.2 m/s\n\nExclusion criteria:\n\n- Behaviour that may interfere with participation in a group setting (e.g. agitation, aggression)\n\n- Significant cognitive deficit (MMSE \u2264 23)\n\n- Unable to follow a 1-step English verbal command\n\n- Unable to provide informed consent\n\n- Medically unsuitable\n\n- Participating in another study\n\n- Excessive pain or another condition that could impact results (e.g. substance abuse, significant\n\nmental illnesses such as major depression)\n\n- Contra-indications to TMS (e.g. pacemaker, artificial heart valves, other metal implants, pregnancy, skull abnormalities, history of seizures or epilepsy or taking medications that may lower\n\nseizure threshold)\n\n- Cautions or contra-indications to blood sampling (e.g. fear of needles, reception of a blood product or blood transfusion, on medications which adversely affect blood coagulation)\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: \"to determine if Strength for Task Training (STT) has potential as an effective rehabilitation strategy to improve walking ability in people following stroke and to establish the feasibility of the research methods planned to conduct a larger Randomised Clinical Trial\"\n\nDesign: multi-arm RCT (4-arms) (mixed methods)\n\nCountry: New Zealand\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: yes (acknowledgements state: \"A special mention goes to those people who participated in the Stroke Advisory Group and those who contributed to the pilot study....\")\n\nIntervention/Comparator:\n(1) Strength and task-specific training Strength for task training (STT)\n\n\"The STT intervention was designed to harness the priming effects of strength training and maximise the effects of strength and task-specific training for improving locomotor abilities\" Progressive resisted strength training (PRST) is undertaken immediately prior to task-specific training (TST) of locomotor skills. \"Participants complete up to three circuits of seven exercise stations during the hour, with each station comprising one set of the PRST exercise, a maximum transition time of 30 seconds followed by two minutes of TST of a related locomotor ability.\"\n\nExercise stations: 1. Quadriceps (seated leg press); sit-to-stand-to-sit 2. Hamstrings (Westminster Pulley); walking backwards 3. Hip extensors (Westminster Pulley); stairs/getting off floor 4. Hip abductors (Theraband); walking sideways 5. Hip flexors (rotary hip); walking (comfortable speed) 6. Plantarflexors (supine leg press); walking (fast speed)/ramps 7. Dorsiflexors/evertors (Theraband); obstacles\n\n(2) Strength training Progressive resisted strength training (PRST)\n\n\"received only the strength training component of the STT programme\"\n\n(3) Task-specific training (TST)\n\n\"received only the task-specific training component of the intervention\"\n\n(4) Usual care (UCC)\n\n\"The UCC group continued to receive standard rehabilitation through public and private health care services; no effort was made to influence the type or amount of rehabilitation these participants received. It should be noted that in the context of the NZ healthcare system people with stroke are likely to be receiving minimal or no active rehabilitation at 3-9months post-stroke\"\n\n\"Participants who were allocated to the STT, PRST or TST groups were scheduled to attend a group based exercise programme for twelve weeks, whilst the UCC group kept a record of any physical rehabilitation or organised exercise they engaged induring the intervention phase\". Three times per week for 1 hour.\n\nComparisons of relevance to this review: (1) vs (4); (2) vs (3)",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00624\",\"question\":\"What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00624\nQuestion: What were the immediate post-intervention motor function outcomes for the functional task training intervention(s) compared with the equal-dose strength training comparator, and were any differences statistically significant?\nGatekeeper response: Results:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: 0.66\nConfidence interval begin: 0.14\nConfidence interval end: 1.17\nConfidence interval percentage: 95\nSample size: 62\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Observation of curative effect of motor relearning therapy on functional recovery of stroke patients with hemiplegia",
+          "wald_z": -2.511799,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00625",
+          "article_type": "included_study",
+          "citation": "Wang RY, Chen HI, Chen CY, Yang YR. Efficacy of Bobath versus orthopaedic approach on impairment and function at different motor recovery stages after stroke: a randomized controlled study. Clinical Rehabilitation 2005;19:155-64.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00625": {
+                "article_id": "ART_00625",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00625\n\nParticipants:\nStudy population (number randomised): 130\n\nInclusion criteria:\n\n- Acute cerebral apoplexy, hospitalised for the first time\n\n- Met the standards set by the 4th National Cerebrovascular Disease Conference\n\n- Confirmed with CT or MRI\n\nExclusion criteria:\n\n- Any condition that precludes participation in intervention\n\n- Normal limb function\n\nParticipants: detailed in Table 28\n\nPROGRESS-plus: summarised in Table 10\n\nMethods:\nStudy aim: to explore the effect of early rehabilitation of ADL on patients with stroke\n\nDesign: parallel-group RCT\n\nCountry: China\n\nStudy recruitment and setting: see Table 7\n\nInvolvement of patients/public/professionals/others: no\n\nIntervention/Comparator:\n(1) Rehabilitation\n\n\"the patients start rehabilitation exercises with Bobath technique, 2 times/d, once for 30 minutes, by the same doctor in the rehabilitation. The specific rehabilitation exercise method is as follows. 1.2.1 Recumbent position (1) Keep the patient in a correct supine position, prop up the affected shoulder, perform elbow extension and wrist joint movements of the upper limb, flexion and adduction of the lower limb, knee joint, dorsiflexion of the foot. The body position should be changed regularly. (2) Passive activities of the joints of the affected limbs of the patient. (3) Let the patient Wang 2013 take the initiative to turn over and move the body. (4) Bridge exercise training. (5) Carry out the activity training of the trunk part. (6) The patient can independently complete the position from the supine position to the sitting position. 1.2.2 Seating (1) Sitting balance training allows the patient to maintain a correct sitting posture and independently complete the movement from a supine position to a sitting position. (2) For sitting and standing transfer, the center of gravity should be evenly distributed on both sides during the process of sitting and standing, and the training of standing up, sitting down, leaving the bed with weight, and transferring the center of gravity should be paid attention to during the training process. Exercise of the affected limb. 1.2.3 (1) Standing balance training. (2) Carry out weight-bearing training for the lower limbs on the affected side. (3) Extend the medullary joint, flex the knee joint and touch the ground on the affected lower limb, and train up and down the stairs. 1.2.4 Walking training and training up and down stairs Under the condition of weight bearing on the lower limb of the affected side, the normal side of the limb makes a small step forward and backward, trains the balance and the step movement of the knee joint without raising the medulla joint, and the back bends the heel to the ground, up and down Stair training.\"\n\n(2) No physical rehabilitation\n\n\"All 130 cases of stroke (ischemic, hemorrhagic) were treated by conventional neurology\"",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "16541939",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Efficacy of Bobath versus orthopaedic approach on impairment and function at different motor recovery stages after stroke: a randomized controlled study",
+          "wald_z": 1.425428,
+          "wald_z_category": "COM-Z1"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00626",
+          "article_type": "included_study",
+          "citation": "Wang Wenwei, Wang Lu, Li Lingjin et al. Application of gait training based on Bobath concept framework in rehabilitation of stroke patients in convalescent phase. Chinese Journal of Rehabilitation Medicine 2012;27(12):1124-8.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00626": {
+                "article_id": "ART_00626",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. Direct each follow-up question to one individual study using its study_id. Do not provide a category or label for follow-up questions. Ask each follow-up question in natural language. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?\n\nStudy context:\nStudy ID: ART_00626\n\nOutcomes:\nIndependence in ADL scales: Barthel Index\n\nMotor function scales: NR\n\nMeasures of balance: NR\n\nMeasures of gait velocity: NR\n\nLength of stay: NR\n\nAdverse events: NR\n\nOther measures: NR\n\nTime points when outcomes were assessed: Before and after treatment\n\nResults:\nEffect measure: standardized mean difference\nUnit: not applicable\nPolarity: higher favors intervention\nComparator effect: 0.0\nEffect estimate: -0.20\nConfidence interval begin: -0.64\nConfidence interval end: 0.24\nConfidence interval percentage: 95\nSample size: 80",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Application of gait training based on Bobath concept framework in rehabilitation of stroke patients in convalescent phase",
+          "wald_z": 0.890893,
+          "wald_z_category": "COM-Z0"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "m",
+        "error": "",
+        "raw_response": "m"
+      },
+      "pmid": "39932103",
+      "question": "In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?",
+      "review_id": "CSR_0279",
+      "source_mc_answer": "m"
+    }
+  ],
+  "task": "evaluation"
+}

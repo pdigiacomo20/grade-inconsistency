@@ -23,8 +23,17 @@ from pipeline.evaluations import clean_answer, compute_metrics, evaluations_dir
 ANSWER_RE = re.compile(r"\b([ynm])\b", re.IGNORECASE)
 GROUND_TRUTH_ANSWER = "m"
 MULTITURN_CHAR_DETAIL_TYPE = "multiturn_char"
+COMPLETE_CHAR_DETAIL_TYPE = "complete_char"
 GATEKEEPER_UNAVAILABLE = "Information is not available."
+GATEKEEPER_TYPE_CATEGORICAL = "categorical_gatkeeper"
+GATEKEEPER_TYPE_FREE_RESPONSE = "free_response"
+GATEKEEPER_TYPE_ALIASES = {
+    "categorical_gatekeeper": GATEKEEPER_TYPE_CATEGORICAL,
+    GATEKEEPER_TYPE_CATEGORICAL: GATEKEEPER_TYPE_CATEGORICAL,
+    GATEKEEPER_TYPE_FREE_RESPONSE: GATEKEEPER_TYPE_FREE_RESPONSE,
+}
 MULTITURN_CATEGORIES = ("Methods", "Intervention/Comparator", "Participants", "Outcomes", "Results")
+COMPLETE_CHAR_SECTION_NAMES = ("methods", "intervention_comparator", "participants", "outcomes", "results")
 CATEGORY_KEY_BY_LABEL = {
     "Methods": "methods",
     "Intervention/Comparator": "intervention_comparator",
@@ -53,6 +62,7 @@ class EvaluationConfig:
     detail_exposure_types: tuple[str, ...] = ("abstract",)
     irrelevant_docs_per_context: int = 0
     maximum_follow_ups: int = 4
+    gatekeeper_type: str = GATEKEEPER_TYPE_CATEGORICAL
     request_timeout_seconds: int = 120
     retry_count: int = 3
 
@@ -73,7 +83,18 @@ def load_config(path: str | Path) -> EvaluationConfig:
     values = {key: value for key, value in {**env_defaults, **raw}.items() if key in allowed}
     if isinstance(values.get("detail_exposure_types"), list):
         values["detail_exposure_types"] = tuple(str(item) for item in values["detail_exposure_types"])
+    if "gatekeeper_type" in values:
+        values["gatekeeper_type"] = normalize_gatekeeper_type(values["gatekeeper_type"])
     return EvaluationConfig(**values)
+
+
+def normalize_gatekeeper_type(value: Any) -> str:
+    normalized = str(value or "").strip().lower().replace("-", "_")
+    gatekeeper_type = GATEKEEPER_TYPE_ALIASES.get(normalized)
+    if not gatekeeper_type:
+        supported = ", ".join(sorted(GATEKEEPER_TYPE_ALIASES))
+        raise ValueError(f"Unsupported gatekeeper_type {value!r}. Supported values: {supported}")
+    return gatekeeper_type
 
 
 def dynamodb_resource(config: EvaluationConfig) -> Any:
@@ -243,6 +264,27 @@ def section_label(section_name: str) -> str:
     return labels.get(section_name, section_name)
 
 
+def complete_char_section_label(section_name: str) -> str:
+    labels = {
+        "methods": "Methods",
+        "intervention_comparator": "Intervention/Comparator",
+        "participants": "Participants",
+        "outcomes": "Outcomes measured",
+        "results": "Results",
+    }
+    return labels.get(section_name, section_name)
+
+
+def complete_char_detail(article: dict[str, Any]) -> str:
+    sections = study_detail_sections(article)
+    body = []
+    for name in COMPLETE_CHAR_SECTION_NAMES:
+        text = sections.get(name, "")
+        if text:
+            body.append(f"{complete_char_section_label(name)}:\n{text}")
+    return "\n\n".join(body)
+
+
 def normalize_multiturn_category(value: Any) -> tuple[str, str]:
     normalized = re.sub(r"[^a-z]+", " ", str(value or "").lower()).strip()
     aliases = {
@@ -331,11 +373,55 @@ def parse_multiturn_response(text: str) -> dict[str, Any]:
     return {"action": "answer", "answer": parse_answer(text), "questions": []}
 
 
+def gatekeeper_categorization_prompt(request: dict[str, str]) -> list[dict[str, str]]:
+    categories = "|".join(MULTITURN_CATEGORIES)
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are a gatekeeper that classifies study follow-up questions. "
+                "Return only JSON matching this template: "
+                "{\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}"
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Classify the follow-up question into exactly one category: {categories}.\n\n"
+                f"Study ID: {request.get('study_id', '')}\n"
+                f"Follow-up question: {request.get('question', '')}"
+            ),
+        },
+    ]
+
+
+def categorize_gatekeeper_request(request: dict[str, str], *, config: EvaluationConfig) -> tuple[str, str, dict[str, Any]]:
+    messages = gatekeeper_categorization_prompt(request)
+    gatekeeper_log: dict[str, Any] = {
+        "mode": GATEKEEPER_TYPE_FREE_RESPONSE,
+        "messages": [dict(message) for message in messages],
+        "raw_response": "",
+        "classification_raw_response": "",
+    }
+    try:
+        raw_response = model_text(messages, config=config)
+        gatekeeper_log["classification_raw_response"] = raw_response
+        data = extract_json_object(raw_response) or {}
+        category_label, category_key = normalize_multiturn_category(data.get("category") or raw_response)
+    except (RuntimeError, ValueError) as exc:
+        gatekeeper_log["error"] = str(exc)
+        return "", "", gatekeeper_log
+    gatekeeper_log["selected_category"] = category_label
+    return category_label, category_key, gatekeeper_log
+
+
 def gatekeeper_response(
     request: dict[str, str],
     *,
     study_states: dict[str, dict[str, Any]],
+    config: EvaluationConfig,
 ) -> dict[str, Any]:
+    gatekeeper_type = normalize_gatekeeper_type(config.gatekeeper_type)
     study_id = request["study_id"]
     state = study_states.get(study_id)
     if not state:
@@ -344,63 +430,91 @@ def gatekeeper_response(
             "response": GATEKEEPER_UNAVAILABLE,
             "classification": "unavailable",
             "revealed_section": "",
-            "gatekeeper": {"mode": "deterministic_category", "raw_response": GATEKEEPER_UNAVAILABLE},
+            "gatekeeper": {"mode": gatekeeper_type, "raw_response": GATEKEEPER_UNAVAILABLE},
         }
 
     category = request.get("category") or ""
     category_key = request.get("category_key") or ""
+    gatekeeper_log: dict[str, Any] = {
+        "mode": gatekeeper_type,
+        "selected_category": category,
+        "raw_response": "",
+    }
+    if gatekeeper_type == GATEKEEPER_TYPE_FREE_RESPONSE:
+        category, category_key, gatekeeper_log = categorize_gatekeeper_request(request, config=config)
     if not category_key:
         response = GATEKEEPER_UNAVAILABLE
+        gatekeeper_log["raw_response"] = gatekeeper_log.get("raw_response") or response
         return {
             **request,
+            "category": category,
+            "category_key": category_key,
             "response": response,
             "classification": "unavailable",
             "revealed_section": "",
-            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+            "gatekeeper": gatekeeper_log,
         }
 
     exposed_names = [*state["exposed_names"], *state["revealed_names"]]
     if category_key in exposed_names:
         response = f"Complete {category} information provided."
+        gatekeeper_log["raw_response"] = gatekeeper_log.get("raw_response") or response
         return {
             **request,
+            "category": category,
+            "category_key": category_key,
             "response": response,
             "classification": "prior",
             "revealed_section": "",
-            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+            "gatekeeper": gatekeeper_log,
         }
 
     if category_key in state["hidden_names"] and state["sections"].get(category_key):
         state["revealed_names"].append(category_key)
         response = f"{category}:\n{state['sections'][category_key]}"
+        gatekeeper_log["raw_response"] = gatekeeper_log.get("raw_response") or response
         return {
             **request,
+            "category": category,
+            "category_key": category_key,
             "response": response,
             "classification": "hidden",
             "revealed_section": category_key,
-            "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+            "gatekeeper": gatekeeper_log,
         }
 
     response = GATEKEEPER_UNAVAILABLE
+    gatekeeper_log["raw_response"] = gatekeeper_log.get("raw_response") or response
     return {
         **request,
+        "category": category,
+        "category_key": category_key,
         "response": response,
         "classification": "unavailable",
         "revealed_section": "",
-        "gatekeeper": {"mode": "deterministic_category", "selected_category": category, "raw_response": response},
+        "gatekeeper": gatekeeper_log,
     }
 
 
-def prompt_multiturn_initial(question: str, studies_context: str, maximum_follow_ups: int) -> str:
+def prompt_multiturn_initial(question: str, studies_context: str, maximum_follow_ups: int, gatekeeper_type: str) -> str:
     categories = ", ".join(MULTITURN_CATEGORIES)
+    if gatekeeper_type == GATEKEEPER_TYPE_FREE_RESPONSE:
+        follow_up_template = "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}"
+        category_instruction = (
+            "Do not provide a category or label for follow-up questions. "
+            "Ask each follow-up question in natural language."
+        )
+    else:
+        follow_up_template = "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\",\"question\":\"...\"}]}"
+        category_instruction = f"For each follow-up question, choose exactly one category from: {categories}."
     return (
         "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\n"
         "Use exactly one of these JSON templates and no other text:\n"
         "{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n"
-        "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\",\"question\":\"...\"}]}\n\n"
+        f"{follow_up_template}\n\n"
         "Answer choices are y=yes, n=no, and m=maybe. Ask follow-up questions only when needed. "
         "Direct each follow-up question to one individual study using its study_id. "
-        f"For each follow-up question, choose exactly one category from: {categories}. "
+        f"{category_instruction} "
         "Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. "
         f"You may ask at most {maximum_follow_ups} rounds of follow-up questions; after that, you must answer.\n\n"
         f"Question: {question}\n\n"
@@ -448,7 +562,8 @@ def run_multiturn_char(
     if not study_states:
         return {"answer": "", "raw_response": "", "error": "No usable study characteristics/results for multiturn_char.", "multiturn": {"turns": []}}
 
-    initial_prompt = prompt_multiturn_initial(question, "\n\n---\n\n".join(context_parts), config.maximum_follow_ups)
+    gatekeeper_type = normalize_gatekeeper_type(config.gatekeeper_type)
+    initial_prompt = prompt_multiturn_initial(question, "\n\n---\n\n".join(context_parts), config.maximum_follow_ups, gatekeeper_type)
     messages = [
         {"role": "system", "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly."},
         {"role": "user", "content": initial_prompt},
@@ -480,16 +595,24 @@ def run_multiturn_char(
             error = "Model requested follow-up after maximum follow-up rounds."
             break
         gatekeeper_responses = [
-            gatekeeper_response(request, study_states=study_states)
+            gatekeeper_response(request, study_states=study_states, config=config)
             for request in parsed["questions"]
         ]
         turn["gatekeeper_responses"] = gatekeeper_responses
-        response_text_for_model = "\n\n".join(
-            f"Study {item['study_id']} category: {item.get('category') or 'unavailable'}\n"
-            f"Question: {item['question']}\n"
-            f"Gatekeeper response: {item['response']}"
-            for item in gatekeeper_responses
-        )
+        if gatekeeper_type == GATEKEEPER_TYPE_FREE_RESPONSE:
+            response_text_for_model = "\n\n".join(
+                f"Study {item['study_id']}\n"
+                f"Question: {item['question']}\n"
+                f"Gatekeeper response: {item['response']}"
+                for item in gatekeeper_responses
+            )
+        else:
+            response_text_for_model = "\n\n".join(
+                f"Study {item['study_id']} category: {item.get('category') or 'unavailable'}\n"
+                f"Question: {item['question']}\n"
+                f"Gatekeeper response: {item['response']}"
+                for item in gatekeeper_responses
+            )
         messages.append({"role": "user", "content": f"Gatekeeper responses:\n{response_text_for_model}\n\nContinue with one JSON response template."})
 
     primary_state = next(iter(study_states.values()))
@@ -511,6 +634,7 @@ def run_multiturn_char(
         "error": error,
         "multiturn": {
             "maximum_follow_ups": config.maximum_follow_ups,
+            "gatekeeper_type": gatekeeper_type,
             "study_count": len(study_states),
             "studies": {
                 study_id: {
@@ -567,6 +691,8 @@ def article_detail(article: dict[str, Any], detail_type: str) -> tuple[str, str]
     normalized = normalized_detail_type(detail_type)
     if normalized == "full_text":
         return "Full text", read_full_text(article)
+    if normalized == COMPLETE_CHAR_DETAIL_TYPE:
+        return "Complete study characteristics/results", complete_char_detail(article)
     return "Abstract", read_abstract(article)
 
 
@@ -658,6 +784,7 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
             "detail_exposure_types": list(config.detail_exposure_types),
             "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
             "maximum_follow_ups": config.maximum_follow_ups,
+            "gatekeeper_type": normalize_gatekeeper_type(config.gatekeeper_type),
         },
         "outcomes": results,
     }

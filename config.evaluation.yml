@@ -20,4 +20,5 @@ detail_exposure_types:
   # - multiturn_char
 irrelevant_docs_per_context: 0
 maximum_follow_ups: 4
+gatekeeper_type: categorical_gatkeeper
 max_contexts_per_outcome: 10

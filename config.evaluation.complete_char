@@ -1,5 +1,5 @@
 task: evaluation
-run_id: doc-multiturn-char-no-dist
+run_id: complete-char
 provider: openai
 model: gpt-5.5
 evaluations_dir: data/evaluations
@@ -17,11 +17,8 @@ max_questions: 1
 # Optionally uncomment to limit the number of CSR IDs considered.
 # review_count: 10
 
-# DOC + DET + no DIST.
-# For multiturn_char, each context is one included-study document and no distractors
-# are added. Accuracy is computed against the repository's maybe target, m.
+# Complete study characteristics/results in a single-turn context.
 detail_exposure_types:
-  - multiturn_char
+  - complete_char
 irrelevant_docs_per_context: 0
-maximum_follow_ups: 4
-gatekeeper_type: free_response
+max_contexts_per_outcome: 10
