@@ -165,17 +165,19 @@ function LinkOut({ href, children }) {
 function ReviewsView({ reviews, onOpen }) {
   const [query, setQuery] = useState("");
   const [hideProtocols, setHideProtocols] = useState(true);
+  const [hideManuallyExcluded, setHideManuallyExcluded] = useState(true);
   const [hideNoInconsistency, setHideNoInconsistency] = useState(true);
   const filtered = useMemo(() => {
     const needle = normalize(query);
     return reviews.filter((review) => {
       if (hideProtocols && review.is_protocol_only) return false;
+      if (hideManuallyExcluded && review.manually_excluded) return false;
       if (hideNoInconsistency && (review.has_inconsistency === false || review.status === "no_inconsistency")) return false;
-      return [review.review_id, review.pmid, review.title, review.year, review.journal, review.status].some((value) =>
+      return [review.review_id, review.pmid, review.title, review.year, review.journal, review.status, review.manual_exclusion_reason].some((value) =>
         normalize(value).includes(needle),
       );
     });
-  }, [reviews, query, hideProtocols, hideNoInconsistency]);
+  }, [reviews, query, hideProtocols, hideManuallyExcluded, hideNoInconsistency]);
 
   return (
     <>
@@ -187,6 +189,10 @@ function ReviewsView({ reviews, onOpen }) {
         <label className="checkControl">
           <input type="checkbox" checked={hideProtocols} onChange={(event) => setHideProtocols(event.target.checked)} />
           Hide protocols only
+        </label>
+        <label className="checkControl">
+          <input type="checkbox" checked={hideManuallyExcluded} onChange={(event) => setHideManuallyExcluded(event.target.checked)} />
+          Hide manually excluded
         </label>
         <label className="checkControl">
           <input type="checkbox" checked={hideNoInconsistency} onChange={(event) => setHideNoInconsistency(event.target.checked)} />
@@ -203,6 +209,7 @@ function ReviewsView({ reviews, onOpen }) {
               <th>Journal</th>
               <th>PMC</th>
               <th>Protocol Only</th>
+              <th>Manual Exclusion</th>
               <th>Inconsistency</th>
               <th>Status</th>
             </tr>
@@ -222,6 +229,7 @@ function ReviewsView({ reviews, onOpen }) {
                   <LinkOut href={review.pmc_url}>PMC</LinkOut>
                 </td>
                 <td>{review.is_protocol_only ? <Pill tone="warn">Yes</Pill> : <Pill>No</Pill>}</td>
+                <td title={review.manual_exclusion_reason || ""}>{review.manually_excluded ? <Pill tone="warn">Yes</Pill> : <Pill>No</Pill>}</td>
                 <td>{review.has_inconsistency === false || review.status === "no_inconsistency" ? <Pill tone="warn">No</Pill> : <Pill>Yes</Pill>}</td>
                 <td>{review.status}</td>
               </tr>
@@ -265,6 +273,7 @@ function ReviewMetadata({ review }) {
     { label: "Status", value: review.status },
     { label: "PMCID", value: review.pmcid },
     { label: "License", value: review.license },
+    { label: "Manual Exclusion", value: review.manually_excluded ? "Yes" : "No" },
   ];
 
   return (
@@ -279,75 +288,203 @@ function ReviewMetadata({ review }) {
   );
 }
 
-function OutcomeTable({ outcomes, evaluationByOutcome = {} }) {
+function ManualExclusionPanel({ review, reason, onReasonChange, onSubmit, onClear, busy }) {
   return (
-    <div className="tableWrap compact">
-      <table>
-        <thead>
-          <tr>
-            <th>Outcome</th>
-            <th>SoF Table</th>
-            <th>Row</th>
-            <th>Medical Question</th>
-            <th>Consensus Answer</th>
-            <th>Benchmark Answer</th>
-            <th>Eval Parametric</th>
-            <th>Certainty</th>
-            <th>Forest Plot</th>
-            <th>Effect Measure</th>
-            <th>Unit</th>
-            <th>Polarity</th>
-            <th>Comparator Effect</th>
-            <th>Aggregated Estimate</th>
-            <th>Aggregated CI</th>
-            <th>Aggregated Sample</th>
-            <th>Included Articles</th>
-            <th>Downgrade Reasoning</th>
-          </tr>
-        </thead>
-        <tbody>
-          {outcomes.map((outcome) => (
-            <tr key={outcome.outcome_id}>
-              {(() => {
-                const evalOutcome = evaluationByOutcome[`${outcome.pmid}::${outcome.outcome_id}`] || {};
-                return (
-                  <>
-              <td>{outcome.outcome_id}</td>
-              <td>{outcome.sof_table}</td>
-              <td>{outcome.row}</td>
-              <td>{outcome.question}</td>
-              <td>{outcome.consensus_answer}</td>
-              <td>m</td>
-              <td>{evalOutcome.parametric?.answer || <span className="muted">No run</span>}</td>
-              <td>{outcome.certainty}</td>
-              <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
-              <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
-              <td>{outcome.unit_of_measure || <span className="muted">Pending</span>}</td>
-              <td>{outcome.polarity_of_measure || <span className="muted">Pending</span>}</td>
-              <td>{outcome.comparator_effect_measure || outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
-              <td>{outcome.aggregated_effect_estimate || <span className="muted">Pending</span>}</td>
-              <td>
-                {outcome.aggregated_confidence_interval_begin && outcome.aggregated_confidence_interval_end ? (
-                  <>
-                    {outcome.aggregated_confidence_interval_begin} to {outcome.aggregated_confidence_interval_end}
-                    {outcome.aggregated_confidence_interval_percentage ? ` (${outcome.aggregated_confidence_interval_percentage}%)` : ""}
-                  </>
-                ) : (
-                  <span className="muted">Pending</span>
-                )}
-              </td>
-              <td>{outcome.aggregated_sample_size || <span className="muted">Pending</span>}</td>
-              <td>{(outcome.included_articles || []).join(", ") || <span className="muted">None</span>}</td>
-              <td>{outcome.downgrade_reasoning}</td>
-                  </>
-                );
-              })()}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {outcomes.length === 0 && <div className="empty">No extracted inconsistency outcomes.</div>}
+    <section className="manualExclusionPanel">
+      <div>
+        <h2>Manual Exclusion</h2>
+        {review.manually_excluded ? (
+          <p>{review.manual_exclusion_reason || "No reason recorded."}</p>
+        ) : (
+          <p>Add a reason to hide this review from the default review list.</p>
+        )}
+      </div>
+      <div className="manualExclusionControls">
+        <input
+          value={reason}
+          onChange={(event) => onReasonChange(event.target.value)}
+          placeholder="Manual exclusion reason"
+        />
+        <button className="primaryButton" disabled={busy === "manual-exclusion"} onClick={onSubmit}>
+          {busy === "manual-exclusion" ? <RefreshCw size={16} className="spin" /> : <AlertTriangle size={16} />}
+          {review.manually_excluded ? "Update reason" : "Add exclusion"}
+        </button>
+        {review.manually_excluded ? (
+          <button className="smallButton" disabled={busy === "manual-exclusion"} onClick={onClear}>
+            <Trash2 size={14} /> Clear
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function OutcomeManualExclusionControls({ outcome, busy, onUpdate }) {
+  const [reason, setReason] = useState(outcome.manual_exclusion_reason || "");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setReason(outcome.manual_exclusion_reason || "");
+    setDirty(false);
+  }, [outcome.manual_exclusion_reason, outcome.manually_excluded]);
+
+  const save = async (manuallyExcluded = outcome.manually_excluded) => {
+    await onUpdate(outcome, {
+      manually_excluded: Boolean(manuallyExcluded),
+      reason,
+    });
+    setDirty(false);
+  };
+
+  return (
+    <div className="outcomeManualControls">
+      <label className="checkControl">
+        <input
+          type="checkbox"
+          checked={Boolean(outcome.manually_excluded)}
+          disabled={busy}
+          onChange={(event) => {
+            save(event.target.checked).catch(() => {});
+          }}
+        />
+        Exclude
+      </label>
+      <input
+        value={reason}
+        disabled={busy}
+        onBlur={() => {
+          if (dirty) save().catch(() => {});
+        }}
+        onChange={(event) => {
+          setReason(event.target.value);
+          setDirty(true);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && dirty) {
+            event.currentTarget.blur();
+          }
+        }}
+        placeholder="Manual exclusion reason"
+      />
+      {dirty ? <span className="muted">Unsaved</span> : null}
     </div>
+  );
+}
+
+function OutcomeTable({ outcomes, evaluationByOutcome = {}, onManualExclusionUpdate }) {
+  const [hideManuallyExcluded, setHideManuallyExcluded] = useState(true);
+  const [busyOutcome, setBusyOutcome] = useState("");
+  const [rowError, setRowError] = useState("");
+  const visibleOutcomes = useMemo(
+    () => outcomes.filter((outcome) => !(hideManuallyExcluded && outcome.manually_excluded)),
+    [outcomes, hideManuallyExcluded],
+  );
+
+  const updateManualExclusion = async (outcome, update) => {
+    const key = `${outcome.pmid}::${outcome.outcome_id}`;
+    setBusyOutcome(key);
+    setRowError("");
+    try {
+      await onManualExclusionUpdate(outcome, update);
+    } catch (err) {
+      setRowError(err.message);
+      throw err;
+    } finally {
+      setBusyOutcome("");
+    }
+  };
+
+  return (
+    <>
+      <div className="outcomeToolbar">
+        <label className="checkControl">
+          <input
+            type="checkbox"
+            checked={hideManuallyExcluded}
+            onChange={(event) => setHideManuallyExcluded(event.target.checked)}
+          />
+          Hide manually excluded outcomes
+        </label>
+      </div>
+      <div className="tableWrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>Outcome</th>
+              <th>Manual Exclusion</th>
+              <th>SoF Table</th>
+              <th>Row</th>
+              <th>Medical Question</th>
+              <th>Consensus Answer</th>
+              <th>Benchmark Answer</th>
+              <th>Eval Parametric</th>
+              <th>Certainty</th>
+              <th>Forest Plot</th>
+              <th>Effect Measure</th>
+              <th>Unit</th>
+              <th>Polarity</th>
+              <th>Comparator Effect</th>
+              <th>Aggregated Estimate</th>
+              <th>Aggregated CI</th>
+              <th>Aggregated Sample</th>
+              <th>Included Articles</th>
+              <th>Downgrade Reasoning</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleOutcomes.map((outcome) => (
+              <tr className={outcome.manually_excluded ? "manualExcludedRow" : ""} key={outcome.outcome_id}>
+                {(() => {
+                  const evalOutcome = evaluationByOutcome[`${outcome.pmid}::${outcome.outcome_id}`] || {};
+                  const busy = busyOutcome === `${outcome.pmid}::${outcome.outcome_id}`;
+                  return (
+                    <>
+                <td>{outcome.outcome_id}</td>
+                <td>
+                  <OutcomeManualExclusionControls
+                    outcome={outcome}
+                    busy={busy}
+                    onUpdate={updateManualExclusion}
+                  />
+                </td>
+                <td>{outcome.sof_table}</td>
+                <td>{outcome.row}</td>
+                <td>{outcome.question}</td>
+                <td>{outcome.consensus_answer}</td>
+                <td>m</td>
+                <td>{evalOutcome.parametric?.answer || <span className="muted">No run</span>}</td>
+                <td>{outcome.certainty}</td>
+                <td>{outcome.forest_plot_title || <span className="muted">Pending</span>}</td>
+                <td>{outcome.effect_measure || <span className="muted">Pending</span>}</td>
+                <td>{outcome.unit_of_measure || <span className="muted">Pending</span>}</td>
+                <td>{outcome.polarity_of_measure || <span className="muted">Pending</span>}</td>
+                <td>{outcome.comparator_effect_measure || outcome.line_of_no_effect || <span className="muted">Pending</span>}</td>
+                <td>{outcome.aggregated_effect_estimate || <span className="muted">Pending</span>}</td>
+                <td>
+                  {outcome.aggregated_confidence_interval_begin && outcome.aggregated_confidence_interval_end ? (
+                    <>
+                      {outcome.aggregated_confidence_interval_begin} to {outcome.aggregated_confidence_interval_end}
+                      {outcome.aggregated_confidence_interval_percentage ? ` (${outcome.aggregated_confidence_interval_percentage}%)` : ""}
+                    </>
+                  ) : (
+                    <span className="muted">Pending</span>
+                  )}
+                </td>
+                <td>{outcome.aggregated_sample_size || <span className="muted">Pending</span>}</td>
+                <td>{(outcome.included_articles || []).join(", ") || <span className="muted">None</span>}</td>
+                <td>{outcome.downgrade_reasoning}</td>
+                    </>
+                  );
+                })()}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rowError && <div className="error compactError">{rowError}</div>}
+        {outcomes.length === 0 && <div className="empty">No extracted inconsistency outcomes.</div>}
+        {outcomes.length > 0 && visibleOutcomes.length === 0 && <div className="empty">All extracted outcomes are manually excluded.</div>}
+      </div>
+    </>
   );
 }
 
@@ -924,6 +1061,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   const [editModes, setEditModes] = useState({});
   const [documentFiles, setDocumentFiles] = useState([]);
   const [documentInputKey, setDocumentInputKey] = useState(0);
+  const [manualExclusionReason, setManualExclusionReason] = useState("");
 
   const load = () => {
     setError("");
@@ -933,6 +1071,10 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
   };
 
   useEffect(load, [reviewId]);
+
+  useEffect(() => {
+    setManualExclusionReason(payload?.review?.manual_exclusion_reason || "");
+  }, [payload?.review?.pmid, payload?.review?.manual_exclusion_reason]);
 
   useEffect(() => {
     fetchJson("/api/evaluations")
@@ -1066,6 +1208,54 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
     setMessage(`Marked manual extraction failed for ${articleId}.`);
   };
 
+  const updateOutcomeManualExclusion = async (outcome, update) => {
+    const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/outcomes/${encodeURIComponent(outcome.outcome_id)}/manual-exclusion`, {
+      method: "PUT",
+      body: JSON.stringify(update),
+    });
+    setPayload(result);
+    if (result.review) onReviewUpdated(result.review);
+    setMessage(result.message || `Updated outcome ${outcome.outcome_id}.`);
+  };
+
+  const submitManualExclusion = async () => {
+    setBusy("manual-exclusion");
+    setError("");
+    setMessage("");
+    try {
+      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/manual-exclusion`, {
+        method: "POST",
+        body: JSON.stringify({ reason: manualExclusionReason }),
+      });
+      setPayload(result);
+      if (result.review) onReviewUpdated(result.review);
+      setMessage(result.message || "Review manually excluded.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const clearManualExclusion = async () => {
+    setBusy("manual-exclusion");
+    setError("");
+    setMessage("");
+    try {
+      const result = await fetchJson(`/api/reviews/${encodeURIComponent(reviewId)}/manual-exclusion`, {
+        method: "DELETE",
+      });
+      setPayload(result);
+      if (result.review) onReviewUpdated(result.review);
+      setManualExclusionReason("");
+      setMessage(result.message || "Manual exclusion cleared.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
   if (!payload && !error) return <div className="empty">Loading review...</div>;
   const review = payload?.review;
   const outcomes = payload?.outcomes || [];
@@ -1109,6 +1299,14 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
             </div>
           </section>
           <ReviewMetadata review={review} />
+          <ManualExclusionPanel
+            review={review}
+            reason={manualExclusionReason}
+            onReasonChange={setManualExclusionReason}
+            onSubmit={submitManualExclusion}
+            onClear={clearManualExclusion}
+            busy={busy}
+          />
           <section className="documentPanel">
             <div>
               <h2>Saved Documents</h2>
@@ -1164,7 +1362,7 @@ function ReviewDetail({ reviewId, onBack, onReviewUpdated }) {
           </section>
           {reviewEvaluation && <EvaluationAccuracyExplorer run={reviewEvaluation} />}
           <div className="sectionHeader"><h2>Extracted Outcomes</h2></div>
-          <OutcomeTable outcomes={outcomes} evaluationByOutcome={evaluationByOutcome} />
+          <OutcomeTable outcomes={outcomes} evaluationByOutcome={evaluationByOutcome} onManualExclusionUpdate={updateOutcomeManualExclusion} />
           <ArticlesTable articles={articles} onProcessPmid={processArticlePmid} onManualFailed={markArticleManualFailed} evaluationByArticle={evaluationByArticle} />
         </>
       )}

@@ -34,6 +34,52 @@ GATEKEEPER_TYPE_ALIASES = {
 }
 MULTITURN_CATEGORIES = ("Methods", "Intervention/Comparator", "Participants", "Outcomes", "Results")
 COMPLETE_CHAR_SECTION_NAMES = ("methods", "intervention_comparator", "participants", "outcomes", "results")
+MULTITURN_CATEGORY_DEFINITIONS = """Methods
+Study design:
+- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies
+- Single or multicentre study; if multicentre, number of recruiting centres
+- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant
+- Enrolment start and end dates; length of participant follow-up
+- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies
+- Methods used to prevent and address missing data
+- Likelihood of reporting and other biases
+- Source(s) of funding or other material support for the study
+- Authors' financial relationship and other potential conflicts of interest
+Statistical analysis:
+- Unit of analysis, e.g. individual participant, clinic, village, body part
+- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model
+
+Participants
+- Setting
+- Region(s) and country/countries from which study participants were recruited
+- Study eligibility criteria, including diagnostic criteria
+- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status
+
+Intervention/Comparator
+- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication
+- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention
+- Factors relevant to implementation, e.g. staff qualifications, equipment requirements
+- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned
+- Description of co-interventions
+- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care
+- Components, dose, timing, frequency
+- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure
+
+Outcomes
+For each pre-specified outcome domain in the systematic review:
+- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented
+- Measurement tool or instrument, including definition of clinical outcomes or endpoints
+- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate
+- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety
+- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety
+- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period
+- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report
+
+Results
+- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each
+- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data
+- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference
+- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup"""
 CATEGORY_KEY_BY_LABEL = {
     "Methods": "methods",
     "Intervention/Comparator": "intervention_comparator",
@@ -65,6 +111,9 @@ class EvaluationConfig:
     gatekeeper_type: str = GATEKEEPER_TYPE_CATEGORICAL
     request_timeout_seconds: int = 120
     retry_count: int = 3
+    max_tokens: int = 4096
+    model_parameters: dict[str, Any] | None = None
+    endpoint_env: str | None = None
 
 
 def load_config(path: str | Path) -> EvaluationConfig:
@@ -125,6 +174,31 @@ def response_text(data: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def chat_completion_text(data: dict[str, Any]) -> str:
+    choices = data.get("choices") or []
+    if not choices:
+        return ""
+    message = choices[0].get("message") or {}
+    content = message.get("content")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict) and item.get("text"):
+                parts.append(str(item["text"]))
+        return "\n".join(parts)
+    return str(content or "")
+
+
+def anthropic_response_text(data: dict[str, Any]) -> str:
+    parts = []
+    for item in data.get("content", []):
+        if item.get("type") == "text" and item.get("text"):
+            parts.append(str(item["text"]))
+    return "\n".join(parts)
+
+
 def parse_answer(text: str) -> str:
     answer = clean_answer(text)
     if answer:
@@ -135,6 +209,33 @@ def parse_answer(text: str) -> str:
     raise ValueError(f"Model did not return y, n, or m: {text!r}")
 
 
+def merged_model_parameters(config: EvaluationConfig) -> dict[str, Any]:
+    model = config.model.lower()
+    provider = config.provider.lower()
+    params: dict[str, Any] = {}
+    if provider == "anthropic":
+        if model.startswith("claude-fable-5"):
+            params["output_config"] = {"effort": "high"}
+        elif model.startswith("claude-haiku-4-5"):
+            params["temperature"] = 0
+    elif provider == "together":
+        params.update(
+            {
+                "temperature": 0,
+                "top_p": 1.0,
+                "repetition_penalty": 1.0,
+                "presence_penalty": 0,
+                "frequency_penalty": 0,
+            }
+        )
+    params.update(config.model_parameters or {})
+    return params
+
+
+def provider_name(config: EvaluationConfig) -> str:
+    return config.provider.strip().lower()
+
+
 def openai_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -143,6 +244,9 @@ def openai_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> 
         "model": config.model,
         "input": messages,
     }
+    if config.max_tokens:
+        payload["max_output_tokens"] = config.max_tokens
+    payload.update(merged_model_parameters(config))
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     response = requests.post(
         "https://api.openai.com/v1/responses",
@@ -155,7 +259,92 @@ def openai_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> 
     return response_text(response.json())
 
 
-def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
+def anthropic_messages(messages: list[dict[str, str]]) -> tuple[str, list[dict[str, str]]]:
+    system_parts: list[str] = []
+    request_messages: list[dict[str, str]] = []
+    for message in messages:
+        role = message.get("role", "")
+        content = message.get("content", "")
+        if role == "system":
+            system_parts.append(content)
+        elif role in {"user", "assistant"}:
+            request_messages.append({"role": role, "content": content})
+    return "\n\n".join(system_parts), request_messages
+
+
+def anthropic_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY is not set.")
+    system, request_messages = anthropic_messages(messages)
+    payload: dict[str, Any] = {
+        "model": config.model,
+        "max_tokens": config.max_tokens,
+        "messages": request_messages,
+    }
+    if system:
+        payload["system"] = system
+    payload.update(merged_model_parameters(config))
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+    }
+    response = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers=headers,
+        json=payload,
+        timeout=config.request_timeout_seconds,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
+    return anthropic_response_text(response.json())
+
+
+def together_endpoint(config: EvaluationConfig) -> str:
+    endpoint_env = config.endpoint_env or f"TOGETHER_ENDPOINT_{config.model}"
+    endpoint = os.environ.get(endpoint_env, "").strip()
+    if not endpoint:
+        raise RuntimeError(f"{endpoint_env} is not set.")
+    if endpoint.endswith("/chat/completions") or endpoint.endswith("/completions"):
+        return endpoint
+    return endpoint.rstrip("/") + "/v1/chat/completions"
+
+
+def together_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
+    api_key = os.environ.get("TOGETHER_API_KEY")
+    if not api_key:
+        raise RuntimeError("TOGETHER_API_KEY is not set.")
+    payload: dict[str, Any] = {
+        "model": config.model,
+        "messages": messages,
+        "max_tokens": config.max_tokens,
+    }
+    payload.update(merged_model_parameters(config))
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    response = requests.post(
+        together_endpoint(config),
+        headers=headers,
+        json=payload,
+        timeout=config.request_timeout_seconds,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
+    return chat_completion_text(response.json())
+
+
+def provider_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
+    provider = provider_name(config)
+    if provider == "openai":
+        return openai_text(messages, config=config)
+    if provider == "anthropic":
+        return anthropic_text(messages, config=config)
+    if provider == "together":
+        return together_text(messages, config=config)
+    raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
+
+
+def provider_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
     messages = [
         {"role": "system", "content": "Answer medical multiple choice questions with exactly one lowercase character: y, n, or m."},
         {"role": "user", "content": prompt},
@@ -163,7 +352,7 @@ def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
     last_error = ""
     for attempt in range(max(1, config.retry_count)):
         try:
-            raw_text = openai_text(messages, config=config)
+            raw_text = provider_text(messages, config=config)
             return {"answer": parse_answer(raw_text), "raw_response": raw_text, "error": ""}
         except (requests.RequestException, ValueError, RuntimeError) as exc:
             last_error = str(exc)
@@ -173,18 +362,14 @@ def openai_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
 
 
 def model_answer(prompt: str, *, config: EvaluationConfig) -> dict[str, Any]:
-    if config.provider != "openai":
-        raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
-    return openai_answer(prompt, config=config)
+    return provider_answer(prompt, config=config)
 
 
 def model_text(messages: list[dict[str, str]], *, config: EvaluationConfig) -> str:
-    if config.provider != "openai":
-        raise ValueError(f"Unsupported provider for evaluation: {config.provider}")
     last_error = ""
     for attempt in range(max(1, config.retry_count)):
         try:
-            return openai_text(messages, config=config)
+            return provider_text(messages, config=config)
         except (requests.RequestException, RuntimeError) as exc:
             last_error = str(exc)
             if attempt + 1 < max(1, config.retry_count):
@@ -388,6 +573,7 @@ def gatekeeper_categorization_prompt(request: dict[str, str]) -> list[dict[str, 
             "role": "user",
             "content": (
                 f"Classify the follow-up question into exactly one category: {categories}.\n\n"
+                f"Category definitions:\n{MULTITURN_CATEGORY_DEFINITIONS}\n\n"
                 f"Study ID: {request.get('study_id', '')}\n"
                 f"Follow-up question: {request.get('question', '')}"
             ),
@@ -499,14 +685,25 @@ def gatekeeper_response(
 def prompt_multiturn_initial(question: str, studies_context: str, maximum_follow_ups: int, gatekeeper_type: str) -> str:
     categories = ", ".join(MULTITURN_CATEGORIES)
     if gatekeeper_type == GATEKEEPER_TYPE_FREE_RESPONSE:
-        follow_up_template = "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}"
-        category_instruction = (
-            "Do not provide a category or label for follow-up questions. "
-            "Ask each follow-up question in natural language."
+        return (
+            "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\n"
+            "Use exactly one of these JSON templates and no other text:\n"
+            "{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n"
+            "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\n"
+            "Answer choices are y=yes, n=no, and m=maybe. "
+            "Answer the question only if you are confident that sufficient information is provided to make a decision. "
+            "If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. "
+            "Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. "
+            f"You may ask at most {maximum_follow_ups} rounds of follow-up questions; after that, you must answer.\n\n"
+            f"Question: {question}\n\n"
+            f"Study context:\n{studies_context}"
         )
-    else:
-        follow_up_template = "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\",\"question\":\"...\"}]}"
-        category_instruction = f"For each follow-up question, choose exactly one category from: {categories}."
+
+    follow_up_template = "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\",\"question\":\"...\"}]}"
+    category_instruction = (
+        f"For each follow-up question, choose exactly one category from: {categories}.\n\n"
+        f"Category definitions:\n{MULTITURN_CATEGORY_DEFINITIONS}"
+    )
     return (
         "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\n"
         "Use exactly one of these JSON templates and no other text:\n"
@@ -734,6 +931,11 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
     review_ids = selected_review_ids(outcomes, starting_review=config.starting_review, review_count=config.review_count)
     if review_ids is not None:
         outcomes = [outcome for outcome in outcomes if str(outcome.get("review_id") or "") in review_ids]
+    before_manual_exclusion_filter = len(outcomes)
+    outcomes = [outcome for outcome in outcomes if not outcome.get("manually_excluded")]
+    skipped_for_manual_exclusion = before_manual_exclusion_filter - len(outcomes)
+    if skipped_for_manual_exclusion:
+        print(f"Skipping {skipped_for_manual_exclusion} manually excluded outcomes.")
     before_certainty_filter = len(outcomes)
     outcomes = [outcome for outcome in outcomes if is_very_low_certainty(outcome.get("certainty"))]
     skipped_for_certainty = before_certainty_filter - len(outcomes)
@@ -780,11 +982,15 @@ def run_evaluation(config: EvaluationConfig) -> dict[str, Any]:
             "max_questions": config.max_questions,
             "target_certainty": "very low",
             "ground_truth_answer": GROUND_TRUTH_ANSWER,
+            "skipped_outcomes_manually_excluded": skipped_for_manual_exclusion,
             "skipped_outcomes_not_very_low": skipped_for_certainty,
             "detail_exposure_types": list(config.detail_exposure_types),
             "irrelevant_docs_per_context": config.irrelevant_docs_per_context,
             "maximum_follow_ups": config.maximum_follow_ups,
             "gatekeeper_type": normalize_gatekeeper_type(config.gatekeeper_type),
+            "max_tokens": config.max_tokens,
+            "model_parameters": merged_model_parameters(config),
+            "endpoint_env": config.endpoint_env,
         },
         "outcomes": results,
     }

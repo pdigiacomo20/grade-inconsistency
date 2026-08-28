@@ -1,7 +1,9 @@
 task: evaluation
 run_id: doc-multiturn-char-no-dist
-provider: openai
-model: gpt-5.5
+provider: together
+model: phdigiacomo-b8fe/my-endpoint1
+endpoint_env: TOGETHER_ENDPOINT_LLAMA_3_1_8B_INSTRUCT
+max_tokens: 4096
 evaluations_dir: data/evaluations
 
 aws_region: us-west-2
@@ -11,7 +13,7 @@ articles_table: articles
 
 # Subset controls.
 # Start at this CSR ID in CSR index order.
-starting_review: CSR_0279
+starting_review: CSR_0306
 # Evaluate at most this many outcome questions after applying starting_review.
 max_questions: 1
 # Optionally uncomment to limit the number of CSR IDs considered.

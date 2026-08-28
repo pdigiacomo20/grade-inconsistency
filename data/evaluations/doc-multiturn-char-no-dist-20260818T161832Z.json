@@ -1,0 +1,680 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "completed_outcomes": 1,
+    "created_at": "2026-08-18T16:18:32.081312+00:00",
+    "detail_exposure_types": [
+      "multiturn_char"
+    ],
+    "endpoint_env": null,
+    "filename": "doc-multiturn-char-no-dist-20260818T161832Z.json",
+    "finished_at": "2026-08-18T16:20:14.100480+00:00",
+    "gatekeeper_type": "free_response",
+    "ground_truth_answer": "m",
+    "irrelevant_docs_per_context": 0,
+    "max_questions": 1,
+    "max_tokens": 4096,
+    "maximum_follow_ups": 4,
+    "model": "phdigiacomo-b8fe/my-endpoint1",
+    "model_parameters": {
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "repetition_penalty": 1.0,
+      "temperature": 0,
+      "top_p": 1.0
+    },
+    "outcomes_table": "outcomes",
+    "provider": "together",
+    "review_count": null,
+    "run_id": "doc-multiturn-char-no-dist",
+    "skipped_outcomes_not_very_low": 0,
+    "starting_review": "CSR_0306",
+    "status": "complete",
+    "target_certainty": "very low",
+    "task": "evaluation",
+    "total_outcomes": 1
+  },
+  "metrics": {
+    "accuracy_by_article_type": {},
+    "contextual_accuracy": null,
+    "contextual_correct": 0,
+    "contextual_errors": 16,
+    "contextual_total": 0,
+    "memorization_rate": null,
+    "memorization_rate_by_article_type": {},
+    "memorization_rate_by_parametric_answer_and_article_type": {},
+    "memory_count": 0,
+    "outcome_count": 1,
+    "parametric_accuracy": null,
+    "parametric_correct": 0,
+    "parametric_distribution": {
+      "m": {
+        "count": 0,
+        "percentage": null
+      },
+      "n": {
+        "count": 0,
+        "percentage": null
+      },
+      "y": {
+        "count": 0,
+        "percentage": null
+      }
+    },
+    "parametric_total": 0,
+    "source_count": 0
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00787_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00787",
+          "article_type": "included_study",
+          "citation": "Dedes I, Sch\u00e4ffer L, Zimmermann R, Burkhardt T, Haslinger C. Outcome and risk factors of cesarean delivery with and without cesarean myomectomy in women with uterine myomatas. Maternal-Fetal Medicine 2016;295:27-32.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00787": {
+                "article_id": "ART_00787",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "27557891",
+          "raw_response": "",
+          "title": "Outcome and risk factors of cesarean delivery with and without cesarean myomectomy in women with uterine myomatas",
+          "wald_z": -0.979982,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00788_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00788",
+          "article_type": "included_study",
+          "citation": "Hassiakos D, Christopoulos P, Vitoratos N, Xarchoulakou E, Vaggos G, Papadias K. Myomectomy during cesarean section: a safe procedure? Annals of the New York Academy of Sciences 2007;1092:408-13.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00788": {
+                "article_id": "ART_00788",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "17308166",
+          "raw_response": "",
+          "title": "Myomectomy during cesarean section: a safe procedure?",
+          "wald_z": 3.266607,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00789_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00789",
+          "article_type": "included_study",
+          "citation": "Kwon DH, Song JE, Yoon KR, Lee KY. The safety of cesarean myomectomy in women with large myomas. Obstetrics and Gynecology Science 2014;57(5):367-72.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": "data/articles/full_text/ART_00789_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00789": {
+                "article_id": "ART_00789",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "25264526",
+          "raw_response": "",
+          "title": "The safety of cesarean myomectomy in women with large myomas",
+          "wald_z": -0.489991,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00790_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00790",
+          "article_type": "included_study",
+          "citation": "Lee YE, Park S, Lee KY, Song JE. Risk factors based on myoma characteristics for predicting postoperative complications following cesarean myomectomy. PLOS One 2023;18(3):e0280953.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": "data/articles/full_text/ART_00790_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00790": {
+                "article_id": "ART_00790",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "36893190",
+          "raw_response": "",
+          "title": "Risk factors based on myoma characteristics for predicting postoperative complications following cesarean myomectomy",
+          "wald_z": 2.177738,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00791_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00791",
+          "article_type": "included_study",
+          "citation": "Lin JY, Lee WL, Wang PH, Lai MJ, Chang WH, Liu WM. Uterine artery occlusion and myomectomy for treatment of pregnant women with uterine leiomyomas who are undergoing cesarean section. Journal of Obstetrics and Gynaecology Research 2010;36:284-90.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00791": {
+                "article_id": "ART_00791",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "20492378",
+          "raw_response": "",
+          "title": "Uterine artery occlusion and myomectomy for treatment of pregnant women with uterine leiomyomas who are undergoing cesarean section",
+          "wald_z": 0.933316,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00792_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00792",
+          "article_type": "included_study",
+          "citation": "Akbas M, Mihmanli V, Bulut B, Yuksel IT, Karahisar G, Demirayak G. Myomectomy for intramural fibroids during caesarean section: a therapeutic dilemma. Journal of Obstetrics and Gynaecology 2016;37(2):141-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00792": {
+                "article_id": "ART_00792",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "27924663",
+          "raw_response": "",
+          "title": "Myomectomy for intramural fibroids during caesarean section: a therapeutic dilemma",
+          "wald_z": 2.613285,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "answer": "",
+          "article_id": "ART_00793",
+          "article_type": "included_study",
+          "citation": "G\u00fcrsoy A, Atasayan K, Tekbas ED, \u0130lter E. The dilemma of cesarean myomectomy: is it safe or not? Journal of Experimental and Clinical Medicine 2021;38(4):410-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00793": {
+                "article_id": "ART_00793",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": null,
+          "raw_response": "",
+          "title": "The dilemma of cesarean myomectomy: is it safe or not?",
+          "wald_z": 0.093332,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00794_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00794",
+          "article_type": "included_study",
+          "citation": "Hat\u0131rnaz \u015e, G\u00fcler O, Ba\u015fbu\u011f A, \u00c7etinkaya MB, Kanat-Pekta\u015f M, Bakay K, et al. A comparative multicentric study on serosal and endometrial myomectomy during cesarean section: surgical outcomes. Journal of Investigative Surgery 2020;34(7):687-94.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00794": {
+                "article_id": "ART_00794",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "32064967",
+          "raw_response": "",
+          "title": "A comparative multicentric study on serosal and endometrial myomectomy during cesarean section: surgical outcomes",
+          "wald_z": 3.919928,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00795_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00795",
+          "article_type": "included_study",
+          "citation": "Jafarzade A, Aghayeva S, Ekiz UO, Biri A, Mungan T. Postoperative results of myomectomy performed during caesarean section in a tertiary care center: a retrospective study. Annali Italiani di Chirurgia 2023;94:493-7.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00795": {
+                "article_id": "ART_00795",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "38051501",
+          "raw_response": "",
+          "title": "Postoperative results of myomectomy performed during caesarean section in a tertiary care center: a retrospective study",
+          "wald_z": 3.015329,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00796_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00796",
+          "article_type": "included_study",
+          "citation": "Kaymak O, Ustunyurt E, Okyay RE, Kalyoncu S, Mollamahmutoglu L. Myomectomy during cesarean section. International Journal of Gynecology and Obstetrics 2004;89:90-3.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": "data/articles/full_text/ART_00796_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00796": {
+                "article_id": "ART_00796",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "41112989",
+          "raw_response": "",
+          "title": "Myomectomy during cesarean section",
+          "wald_z": 0.725913,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "answer": "",
+          "article_id": "ART_00797",
+          "article_type": "included_study",
+          "citation": "\u00d6zcan A, Kopuz A, Turan V, Sahin C, T\u00f6z E, Aksoy S, et al. Cesarean myomectomy for solitary uterine fibroids: is it a safe procedure? Ginekologia Polska 2016;87(1):54-8.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00797": {
+                "article_id": "ART_00797",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "27306469",
+          "raw_response": "",
+          "title": "Cesarean myomectomy for solitary uterine fibroids: is it a safe procedure?",
+          "wald_z": 1.851077,
+          "wald_z_category": "COM-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00798_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00798",
+          "article_type": "included_study",
+          "citation": "Senturk MB, Polat M, Dogan O, Pulatoglu C, Yardlmcl OD, Karakus R, Tayyar AT. Outcome of cesarean myomectomy: is it a safe procedure? Geburtshilfe und Frauenheilkunde 2017;77(11):1200-6.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": "data/articles/full_text/ART_00798_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00798": {
+                "article_id": "ART_00798",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "29200476",
+          "raw_response": "",
+          "title": "Outcome of cesarean myomectomy: is it a safe procedure?",
+          "wald_z": -1.714968,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00799_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00799",
+          "article_type": "included_study",
+          "citation": "Shi C, Chen J, Chen A. Clinical outcome analysis of intramural myoma greater than 8 cm in diameter removed during caesarean section: a retrospective study. BMC Women's Health 2023;23(1):60.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": "data/articles/full_text/ART_00799_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00799": {
+                "article_id": "ART_00799",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "36774454",
+          "raw_response": "",
+          "title": "Clinical outcome analysis of intramural myoma greater than 8 cm in diameter removed during caesarean section: a retrospective study",
+          "wald_z": 2.351957,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00800_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00800",
+          "article_type": "included_study",
+          "citation": "Topcu HO, Iskender CT, Timur H, Kaymak O, Memur T, Danisman N. Outcomes after cesarean myomectomy versus cesarean alone among pregnant women with uterine leiomyomas. International Journal of Gynaecology and Obstetrics 2015;130(3):244-6.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00800": {
+                "article_id": "ART_00800",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "26021769",
+          "raw_response": "",
+          "title": "Outcomes after cesarean myomectomy versus cesarean alone among pregnant women with uterine leiomyomas",
+          "wald_z": 0,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00801_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00801",
+          "article_type": "included_study",
+          "citation": "Wang HM, Shen RG, Yang HJ, Tian YC, Zhang CL, Dai YM. Safety analysis of cesarean myomectomy in twin pregnancies with intramural myomas. Chinese Journal of Obstetrics and Gynecology 2022;57(11):843-9.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00801": {
+                "article_id": "ART_00801",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "36456481",
+          "raw_response": "",
+          "title": "Safety analysis of cesarean myomectomy in twin pregnancies with intramural myomas",
+          "wald_z": -2.30584,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00802_abstract.txt",
+          "answer": "",
+          "article_id": "ART_00802",
+          "article_type": "included_study",
+          "citation": "El-Refaie W, Hassan M, Abdelhafez MS. Myomectomy during cesarean section: a retrospective cohort study. Journal of Gynecology Obstetrics and Human Reproduction 2020;49:101900.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00802": {
+                "article_id": "ART_00802",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": []
+          },
+          "pmid": "32860969",
+          "raw_response": "",
+          "title": "Myomectomy during cesarean section: a retrospective cohort study",
+          "wald_z": 1.143312,
+          "wald_z_category": "COM-Z1"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "",
+        "error": "TOGETHER_ENDPOINT_phdigiacomo-b8fe/my-endpoint1 is not set.",
+        "raw_response": ""
+      },
+      "pmid": "39868519",
+      "question": "Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?",
+      "review_id": "CSR_0306",
+      "source_mc_answer": "m"
+    }
+  ],
+  "task": "evaluation"
+}

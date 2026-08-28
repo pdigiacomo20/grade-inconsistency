@@ -1,0 +1,279 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "completed_outcomes": 1,
+    "created_at": "2026-08-09T17:49:05.576552+00:00",
+    "detail_exposure_types": [
+      "complete_char"
+    ],
+    "filename": "complete-char-20260809T174905Z.json",
+    "finished_at": "2026-08-09T17:50:01.996108+00:00",
+    "gatekeeper_type": "categorical_gatkeeper",
+    "ground_truth_answer": "m",
+    "irrelevant_docs_per_context": 0,
+    "max_questions": 1,
+    "maximum_follow_ups": 4,
+    "model": "gpt-5.5",
+    "outcomes_table": "outcomes",
+    "provider": "openai",
+    "review_count": null,
+    "run_id": "complete-char",
+    "skipped_outcomes_not_very_low": 0,
+    "starting_review": "CSR_0279",
+    "status": "complete",
+    "target_certainty": "very low",
+    "task": "evaluation",
+    "total_outcomes": 1
+  },
+  "metrics": {
+    "accuracy_by_article_type": {
+      "included_study": {
+        "accuracy": 0.3,
+        "correct_count": 3,
+        "incorrect_count": 7
+      }
+    },
+    "contextual_accuracy": 0.3,
+    "contextual_correct": 3,
+    "contextual_errors": 0,
+    "contextual_total": 10,
+    "memorization_rate": 0.4,
+    "memorization_rate_by_article_type": {
+      "included_study": {
+        "memorization_rate": 0.4,
+        "memory_count": 4,
+        "source_count": 6
+      }
+    },
+    "memorization_rate_by_parametric_answer_and_article_type": {
+      "n": {
+        "included_study": {
+          "memorization_rate": 0.4,
+          "memory_count": 4,
+          "source_count": 6
+        }
+      }
+    },
+    "memory_count": 4,
+    "outcome_count": 1,
+    "parametric_accuracy": 0.0,
+    "parametric_correct": 0,
+    "parametric_distribution": {
+      "m": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "n": {
+        "count": 1,
+        "percentage": 1.0
+      },
+      "y": {
+        "count": 0,
+        "percentage": 0.0
+      }
+    },
+    "parametric_total": 1,
+    "source_count": 6
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00607_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00607",
+          "article_type": "included_study",
+          "citation": "Aloraini AM. Effects of constraint-induced movement therapy for the lower extremity among individuals post-stroke: a randomized controlled clinical trial. NeuroRehabilitation 2022;51(3):421-31. [DOI: 10.3233/NRE-220139]",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "pmid": "35964211",
+          "raw_response": "n",
+          "title": "Effects of constraint-induced movement therapy for the lower extremity among individuals post-stroke: a randomized controlled clinical trial",
+          "wald_z": 2.691294,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00608",
+          "article_type": "included_study",
+          "citation": "Chen Guijun, Liu Yijing. Influence of early limb function exercise on hemiplegia patients with cerebral infarction [\u65e9\u671f \u80a2\u4f53\u529f\u80fd\u953b\u70bc\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u75c5\u2f08\u7684\u5f71\u54cd]. Chinese Nursing Research 2014;28(5):1846-7.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "pmid": null,
+          "raw_response": "n",
+          "title": "Influence of early limb function exercise on hemiplegia patients with cerebral infarction [\u65e9\u671f \u80a2\u4f53\u529f\u80fd\u953b\u70bc\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u75c5\u2f08\u7684\u5f71\u54cd]",
+          "wald_z": 0.623625,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00609",
+          "article_type": "included_study",
+          "citation": "Chen Peishun, Zhong Tao, Tang Xiumei, Yang Huixian, Tan Bidong, Su Rutong, et al. Effects of functional exercise training on lower limb muscle strength and muscle tone in stroke patients with hemiplegia. Nerve Injury and Functional Reconstruction (translated from Chinese) 2014;9(2):161-2. [DOI: 10.3870/sjsscj.2014.02.022]",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": null,
+          "raw_response": "m",
+          "title": "Effects of functional exercise training on lower limb muscle strength and muscle tone in stroke patients with hemiplegia",
+          "wald_z": -7.460508,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00610",
+          "article_type": "included_study",
+          "citation": "Ding Yanying, Liu Wanyan. Patients with hemiplegic cerebral infarction in early stage of targeted limb task function. The effect of strength training. [\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005\u5728\u65e9\u671f\u2f8f\u9488 \u5bf9\u6027\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u7684\u6548\u679c]. China Prac Med 2015;10(17):271-3. [DOI: 10.14163/j.cnki.11-5547/r.2015.17.186]",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "pmid": null,
+          "raw_response": "n",
+          "title": "Patients with hemiplegic cerebral infarction in early stage of targeted limb task function",
+          "wald_z": 0.703577,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00611_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00611",
+          "article_type": "included_study",
+          "citation": "van de Port I, Wevers LE, Lindeman E, Kwakkel G. Effects of circuit training as alternative to usual physiotherapy after stroke: randomised controlled trial. BMJ 2012;344:e2672.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00611_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": "22577186",
+          "raw_response": "y",
+          "title": "Effects of circuit training as alternative to usual physiotherapy after stroke: randomised controlled trial",
+          "wald_z": -2.997592,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00612_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00612",
+          "article_type": "included_study",
+          "citation": "Langhammer B, Lindmark B, Stanghelle JK. Stroke patients and long-term training: is it worthwhile? A randomized comparison of two different training strategies after rehabilitation. Clinical Rehabilitation 2007;21(6):495-510.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "pmid": "17613581",
+          "raw_response": "n",
+          "title": "Stroke patients and long-term training: is it worthwhile? A randomized comparison of two different training strategies after rehabilitation",
+          "wald_z": 0.752309,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00613",
+          "article_type": "included_study",
+          "citation": "Li Q, Zhong C, Li W, Guo C, Gao Y, Yin J. Analysis on basic training on stroke prognosis early enhancement [\u65e9\u671f\u5f3a\u5316 \u6b65\u2f8f\u57fa\u672c\u529f\u8bad\u7ec3\u5bf9\u8111\u5352\u4e2d\u7684\u9884\u540e\u5206\u6790]. Progress in Modern Biomedicine 2013;13(27):5306-9.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": null,
+          "raw_response": "y",
+          "title": "Analysis on basic training on stroke prognosis early enhancement [\u65e9\u671f\u5f3a\u5316 \u6b65\u2f8f\u57fa\u672c\u529f\u8bad\u7ec3\u5bf9\u8111\u5352\u4e2d\u7684\u9884\u540e\u5206\u6790]",
+          "wald_z": -3.658599,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00614",
+          "article_type": "included_study",
+          "citation": "Meng Qingling, Fu Changzhong, Liu Hao, Fan Yunhui, Li Liqun. Effects of early limb task function or strength training on limb function and living ability of patients with cerebral infarction hemiplegia [\u65e9\u671f\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005 \u80a2\u4f53\u529f\u80fd\u548c\u2f63\u6d3b\u80fd\u2f12\u7684\u5f71\u54cd]. Chin Journal of Clinical Rational Drug Use 2015;8(11):144-5. [DOI: 10. 15887 /j. cnki. 13-1389 / r.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": null,
+          "raw_response": "m",
+          "title": "Effects of early limb task function or strength training on limb function and living ability of patients with cerebral infarction hemiplegia [\u65e9\u671f\u80a2\u4f53\u4efb\u52a1\u529f\u80fd\u6216\u2f12\u91cf\u8bad\u7ec3\u5bf9\u8111\u6897\u6b7b\u504f\u762b\u60a3\u8005 \u80a2\u4f53\u529f\u80fd\u548c\u2f63\u6d3b\u80fd\u2f12\u7684\u5f71\u54cd]",
+          "wald_z": -1.133473,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00615",
+          "article_type": "included_study",
+          "citation": "Pandian S, Arya KN, Kumar D. Does motor training of the nonparetic side influences balance and function in chronic stroke? A pilot RCT. The Scientific World Journal 2014;769726:1-8. [DOI: 10.1155/2014/769726]",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": null,
+          "raw_response": "m",
+          "title": "Does motor training of the nonparetic side influences balance and function in chronic stroke? A pilot RCT",
+          "wald_z": -5.263274,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00616",
+          "article_type": "included_study",
+          "citation": "Wang Leilei, Luo Xin, Hu Feifei. Effect of acupuncture plus rehabilitation based on task-oriented training on lower limb motor function in Brunnstrom stage III stroke. Modern Journal of Integrated Traditional Chinese and Western Medicine 2020;29(26):2881-5.",
+          "detail_exposure_type": "complete_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "pmid": null,
+          "raw_response": "y",
+          "title": "Effect of acupuncture plus rehabilitation based on task-oriented training on lower limb motor function in Brunnstrom stage III stroke",
+          "wald_z": -17.046292,
+          "wald_z_category": "INT-Z2+"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "n",
+        "error": "",
+        "raw_response": "n"
+      },
+      "pmid": "39932103",
+      "question": "In adults with stroke, does physical rehabilitation focused on functional task training improve motor function immediately after the intervention relative to an equal dose of another physical rehabilitation programme with less or no functional task training?",
+      "review_id": "CSR_0279",
+      "source_mc_answer": "m"
+    }
+  ],
+  "task": "evaluation"
+}

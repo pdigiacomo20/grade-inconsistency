@@ -1,0 +1,1790 @@
+{
+  "metadata": {
+    "articles_table": "articles",
+    "completed_outcomes": 1,
+    "created_at": "2026-08-09T18:35:01.060101+00:00",
+    "detail_exposure_types": [
+      "multiturn_char"
+    ],
+    "filename": "doc-multiturn-char-no-dist-20260809T183501Z.json",
+    "finished_at": "2026-08-09T18:37:08.528922+00:00",
+    "gatekeeper_type": "free_response",
+    "ground_truth_answer": "m",
+    "irrelevant_docs_per_context": 0,
+    "max_questions": 1,
+    "maximum_follow_ups": 4,
+    "model": "gpt-5.5",
+    "outcomes_table": "outcomes",
+    "provider": "openai",
+    "review_count": null,
+    "run_id": "doc-multiturn-char-no-dist",
+    "skipped_outcomes_not_very_low": 0,
+    "starting_review": "CSR_0306",
+    "status": "complete",
+    "target_certainty": "very low",
+    "task": "evaluation",
+    "total_outcomes": 1
+  },
+  "metrics": {
+    "accuracy_by_article_type": {
+      "included_study": {
+        "accuracy": 0.1875,
+        "correct_count": 3,
+        "incorrect_count": 13
+      }
+    },
+    "contextual_accuracy": 0.1875,
+    "contextual_correct": 3,
+    "contextual_errors": 0,
+    "contextual_total": 16,
+    "memorization_rate": 0.75,
+    "memorization_rate_by_article_type": {
+      "included_study": {
+        "memorization_rate": 0.75,
+        "memory_count": 12,
+        "source_count": 4
+      }
+    },
+    "memorization_rate_by_parametric_answer_and_article_type": {
+      "n": {
+        "included_study": {
+          "memorization_rate": 0.75,
+          "memory_count": 12,
+          "source_count": 4
+        }
+      }
+    },
+    "memory_count": 12,
+    "outcome_count": 1,
+    "parametric_accuracy": 0.0,
+    "parametric_correct": 0,
+    "parametric_distribution": {
+      "m": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "n": {
+        "count": 1,
+        "percentage": 1.0
+      },
+      "y": {
+        "count": 0,
+        "percentage": 0.0
+      }
+    },
+    "parametric_total": 1,
+    "source_count": 4
+  },
+  "outcomes": [
+    {
+      "benchmark_mc_answer": "m",
+      "certainty": "Very low",
+      "consensus_answer": "",
+      "contexts": [
+        {
+          "abstract_path": "data/articles/abstracts/ART_00787_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00787",
+          "article_type": "included_study",
+          "citation": "Dedes I, Sch\u00e4ffer L, Zimmermann R, Burkhardt T, Haslinger C. Outcome and risk factors of cesarean delivery with and without cesarean myomectomy in women with uterine myomatas. Maternal-Fetal Medicine 2016;295:27-32.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00787": {
+                "article_id": "ART_00787",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00787\nFollow-up question: What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.20\nConfidence interval begin: -0.60\nConfidence interval end: 0.20\nConfidence interval percentage: 95\nSample size: 162",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.20\nConfidence interval begin: -0.60\nConfidence interval end: 0.20\nConfidence interval percentage: 95\nSample size: 162",
+                    "revealed_section": "results",
+                    "study_id": "ART_00787"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00787\n\nParticipants:\n162 participants (intervention 48; control 114)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis of intrauterine fibroids from antenatal ultrasound in third trimester\n* Undergoing an elective caesarean birth\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in Switzerland |\n| **Study duration** | January 2005 to April 2014              |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?",
+                      "study_id": "ART_00787"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00787\",\"question\":\"What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00787\n\nParticipants:\n162 participants (intervention 48; control 114)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis of intrauterine fibroids from antenatal ultrasound in third trimester\n* Undergoing an elective caesarean birth\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in Switzerland |\n| **Study duration** | January 2005 to April 2014              |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00787\",\"question\":\"What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00787\nQuestion: What were the haemoglobin decline/change values from the start of caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any measure of variance and statistical comparison if reported?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.20\nConfidence interval begin: -0.60\nConfidence interval end: 0.20\nConfidence interval percentage: 95\nSample size: 162\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "27557891",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Outcome and risk factors of cesarean delivery with and without cesarean myomectomy in women with uterine myomatas",
+          "wald_z": -0.979982,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00788_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00788",
+          "article_type": "included_study",
+          "citation": "Hassiakos D, Christopoulos P, Vitoratos N, Xarchoulakou E, Vaggos G, Papadias K. Myomectomy during cesarean section: a safe procedure? Annals of the New York Academy of Sciences 2007;1092:408-13.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00788": {
+                "article_id": "ART_00788",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00788\nFollow-up question: What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.20\nConfidence interval begin: 0.08\nConfidence interval end: 0.32\nConfidence interval percentage: 95\nSample size: 141",
+                      "selected_category": "Results"
+                    },
+                    "question": "What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.20\nConfidence interval begin: 0.08\nConfidence interval end: 0.32\nConfidence interval percentage: 95\nSample size: 141",
+                    "revealed_section": "results",
+                    "study_id": "ART_00788"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00788\n\nParticipants:\n141 participants (intervention 47; control 94)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior or during operation (method of antenatal diagnosis unstated but visual during operation)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective case- control        |\n| **Location**       | This study was conducted in Greece |\n| **Study duration** | January 1995 to December 2004      |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?",
+                      "study_id": "ART_00788"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00788\",\"question\":\"What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00788\n\nParticipants:\n141 participants (intervention 47; control 94)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior or during operation (method of antenatal diagnosis unstated but visual during operation)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective case- control        |\n| **Location**       | This study was conducted in Greece |\n| **Study duration** | January 1995 to December 2004      |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00788\",\"question\":\"What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00788\nQuestion: What was the change/decline in haemoglobin from the start of caesarean section to 1 day or 24 hours after birth in the caesarean myomectomy group versus the caesarean section alone group (including mean/SD or other summary statistics and any p-value)?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.20\nConfidence interval begin: 0.08\nConfidence interval end: 0.32\nConfidence interval percentage: 95\nSample size: 141\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "17308166",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Myomectomy during cesarean section: a safe procedure?",
+          "wald_z": 3.266607,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00789_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00789",
+          "article_type": "included_study",
+          "citation": "Kwon DH, Song JE, Yoon KR, Lee KY. The safety of cesarean myomectomy in women with large myomas. Obstetrics and Gynecology Science 2014;57(5):367-72.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00789_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00789": {
+                "article_id": "ART_00789",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00789\nFollow-up question: What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.10\nConfidence interval begin: -0.50\nConfidence interval end: 0.30\nConfidence interval percentage: 95\nSample size: 161",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.10\nConfidence interval begin: -0.50\nConfidence interval end: 0.30\nConfidence interval percentage: 95\nSample size: 161",
+                    "revealed_section": "results",
+                    "study_id": "ART_00789"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00789\n\nParticipants:\n161 participants (intervention 65; control 96)\n\nPregnant women with:\n\n* A singleton pregnancy\n* The diagnosis and method of diagnosis of intrauterine fibroids was not stated\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in South Korea |\n| **Study duration** | January 2003 to December 2010           |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. After delivery of the baby and the placenta, myomectomy was performed. A linear incision was made on the myoma using monopolar cautery and then myoma was enucleated from normal uterine muscle. Bipolar cautery was used for the intraoperative bleeding control during the myoma removal and vasoconstrictive agents were not used intraoperatively. The uterine defect was sutured in a minimum of 2 layers with absorbable 1-0 Vicryl. The uterine serosa was closed utilizing absorbable 2-0 Vicryl. Bimanual uterine compression was made to enhance the uterine contraction and intravenous carbetocin was infused intraoperatively, Oxytocin was continued intravenously during the postoperative period to prevent the massive bleeding.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?",
+                      "study_id": "ART_00789"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00789\",\"question\":\"What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00789\n\nParticipants:\n161 participants (intervention 65; control 96)\n\nPregnant women with:\n\n* A singleton pregnancy\n* The diagnosis and method of diagnosis of intrauterine fibroids was not stated\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in South Korea |\n| **Study duration** | January 2003 to December 2010           |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. After delivery of the baby and the placenta, myomectomy was performed. A linear incision was made on the myoma using monopolar cautery and then myoma was enucleated from normal uterine muscle. Bipolar cautery was used for the intraoperative bleeding control during the myoma removal and vasoconstrictive agents were not used intraoperatively. The uterine defect was sutured in a minimum of 2 layers with absorbable 1-0 Vicryl. The uterine serosa was closed utilizing absorbable 2-0 Vicryl. Bimanual uterine compression was made to enhance the uterine contraction and intravenous carbetocin was infused intraoperatively, Oxytocin was continued intravenously during the postoperative period to prevent the massive bleeding.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00789\",\"question\":\"What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00789\nQuestion: What were the reported haemoglobin decline values (from pre-caesarean/start of caesarean to 1 day or 24 hours after birth) for the caesarean myomectomy and caesarean section alone groups, including any measure of variability and statistical comparison if available?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.10\nConfidence interval begin: -0.50\nConfidence interval end: 0.30\nConfidence interval percentage: 95\nSample size: 161\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "25264526",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "The safety of cesarean myomectomy in women with large myomas",
+          "wald_z": -0.489991,
+          "wald_z_category": "INT-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00790_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00790",
+          "article_type": "included_study",
+          "citation": "Lee YE, Park S, Lee KY, Song JE. Risk factors based on myoma characteristics for predicting postoperative complications following cesarean myomectomy. PLOS One 2023;18(3):e0280953.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00790_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00790": {
+                "article_id": "ART_00790",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00790\nFollow-up question: What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.04\nConfidence interval end: 0.76\nConfidence interval percentage: 95\nSample size: 292",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.04\nConfidence interval end: 0.76\nConfidence interval percentage: 95\nSample size: 292",
+                    "revealed_section": "results",
+                    "study_id": "ART_00790"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00790\n\nParticipants:\n292 participants (intervention 119; control 173)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis or method of diagnosis for intrauterine fibroids was not stated.\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in South Korea |\n| **Study duration** | January 2007 to March 2019              |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. Following placental delivery and suture of the uterine incision, myomectomy was performed. A linear incision in the serosa and myometrium was made over the myoma and the myoma was enucleated from its bed. Bipolar cautery was used for hemostasis; however, local injection of vasoconstrictive agents was not used. The remaining defect was sutured to at least two layers with 1\u20130 absorbable Vicryl (Ethicon, US) sutures. The uterine serosa was sutured using 2\u20130 absorbable Vicryl sutures. Manual uterine compression and intravenous carbetocin were administered intraoperatively to improve uterine contraction. Oxytocin was administered intravenously postoperatively to enhance uterine involution.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?",
+                      "study_id": "ART_00790"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00790\",\"question\":\"What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00790\n\nParticipants:\n292 participants (intervention 119; control 173)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis or method of diagnosis for intrauterine fibroids was not stated.\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                             |\n| ------------------ | --------------------------------------- |\n| **Study design**   | Retrospective cohort study              |\n| **Location**       | This study was conducted in South Korea |\n| **Study duration** | January 2007 to March 2019              |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. Following placental delivery and suture of the uterine incision, myomectomy was performed. A linear incision in the serosa and myometrium was made over the myoma and the myoma was enucleated from its bed. Bipolar cautery was used for hemostasis; however, local injection of vasoconstrictive agents was not used. The remaining defect was sutured to at least two layers with 1\u20130 absorbable Vicryl (Ethicon, US) sutures. The uterine serosa was sutured using 2\u20130 absorbable Vicryl sutures. Manual uterine compression and intravenous carbetocin were administered intraoperatively to improve uterine contraction. Oxytocin was administered intravenously postoperatively to enhance uterine involution.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00790\",\"question\":\"What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00790\nQuestion: What were the haemoglobin decline values (from preoperative/start of caesarean section to 1 day or 24 hours postpartum) for the caesarean myomectomy group versus the caesarean section alone group, including any measure of variance or P value?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.04\nConfidence interval end: 0.76\nConfidence interval percentage: 95\nSample size: 292\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "36893190",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Risk factors based on myoma characteristics for predicting postoperative complications following cesarean myomectomy",
+          "wald_z": 2.177738,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00791_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00791",
+          "article_type": "included_study",
+          "citation": "Lin JY, Lee WL, Wang PH, Lai MJ, Chang WH, Liu WM. Uterine artery occlusion and myomectomy for treatment of pregnant women with uterine leiomyomas who are undergoing cesarean section. Journal of Obstetrics and Gynaecology Research 2010;36:284-90.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00791": {
+                "article_id": "ART_00791",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00791\nFollow-up question: What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.11\nConfidence interval end: 0.31\nConfidence interval percentage: 95\nSample size: 72",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.11\nConfidence interval end: 0.31\nConfidence interval percentage: 95\nSample size: 72",
+                    "revealed_section": "results",
+                    "study_id": "ART_00791"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00791\n\nParticipants:\n72 participants (intervention 36; control 36)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation by ultrasound either antenatally or the first intrapartum scan.\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Prospective cohort study.          |\n| **Location**       | This study was conducted in Taiwan |\n| **Study duration** | March 1999 to December 2003        |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated). Diluted vasopressin (1:60) was injected into the myometrium around the myoma nodules and into the myoma tissue.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?",
+                      "study_id": "ART_00791"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00791\",\"question\":\"What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00791\n\nParticipants:\n72 participants (intervention 36; control 36)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation by ultrasound either antenatally or the first intrapartum scan.\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Prospective cohort study.          |\n| **Location**       | This study was conducted in Taiwan |\n| **Study duration** | March 1999 to December 2003        |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated). Diluted vasopressin (1:60) was injected into the myometrium around the myoma nodules and into the myoma tissue.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00791\",\"question\":\"What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00791\nQuestion: What were the haemoglobin levels at the start of caesarean section and at 1 day/24 hours after birth, or the mean haemoglobin decline/change over that period, for the caesarean myomectomy and caesarean section alone groups?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.11\nConfidence interval end: 0.31\nConfidence interval percentage: 95\nSample size: 72\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "20492378",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Uterine artery occlusion and myomectomy for treatment of pregnant women with uterine leiomyomas who are undergoing cesarean section",
+          "wald_z": 0.933316,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00792_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00792",
+          "article_type": "included_study",
+          "citation": "Akbas M, Mihmanli V, Bulut B, Yuksel IT, Karahisar G, Demirayak G. Myomectomy for intramural fibroids during caesarean section: a therapeutic dilemma. Journal of Obstetrics and Gynaecology 2016;37(2):141-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00792": {
+                "article_id": "ART_00792",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00792\nFollow-up question: What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.10\nConfidence interval end: 0.70\nConfidence interval percentage: 95\nSample size: 126",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.10\nConfidence interval end: 0.70\nConfidence interval percentage: 95\nSample size: 126",
+                    "revealed_section": "results",
+                    "study_id": "ART_00792"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00792\n\nParticipants:\n126 participants (intervention 63; control 63)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                       |\n| ------------------ | --------------------------------- |\n| **Study design**   | Retrospective cohort study.       |\n| **Location**       | The study was conducted in Turkey |\n| **Study duration** | January 2005 to April 2014        |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                      "study_id": "ART_00792"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00792\",\"question\":\"What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00792\n\nParticipants:\n126 participants (intervention 63; control 63)\n\nPregnant women with:\n\n* A singleton pregnancy\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                       |\n| ------------------ | --------------------------------- |\n| **Study design**   | Retrospective cohort study.       |\n| **Location**       | The study was conducted in Turkey |\n| **Study duration** | January 2005 to April 2014        |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00792\",\"question\":\"What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00792\nQuestion: What were the haemoglobin declines (or pre- and 24-hour/day-1 post-operative haemoglobin values) for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.10\nConfidence interval end: 0.70\nConfidence interval percentage: 95\nSample size: 126\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "27924663",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Myomectomy for intramural fibroids during caesarean section: a therapeutic dilemma",
+          "wald_z": 2.613285,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00793",
+          "article_type": "included_study",
+          "citation": "G\u00fcrsoy A, Atasayan K, Tekbas ED, \u0130lter E. The dilemma of cesarean myomectomy: is it safe or not? Journal of Experimental and Clinical Medicine 2021;38(4):410-5.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00793": {
+                "article_id": "ART_00793",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00793\n\nOutcomes:\n* Requirement for blood transfusion\n* Change in haemoglobin\n* Length of hospitalisation\n* Postpartum fever\n* Additional uterotonics or tranexamic acid\n\nResults:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.02\nConfidence interval begin: -0.40\nConfidence interval end: 0.44\nConfidence interval percentage: 95\nSample size: 80",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": null,
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "The dilemma of cesarean myomectomy: is it safe or not?",
+          "wald_z": 0.093332,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00794_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00794",
+          "article_type": "included_study",
+          "citation": "Hat\u0131rnaz \u015e, G\u00fcler O, Ba\u015fbu\u011f A, \u00c7etinkaya MB, Kanat-Pekta\u015f M, Bakay K, et al. A comparative multicentric study on serosal and endometrial myomectomy during cesarean section: surgical outcomes. Journal of Investigative Surgery 2020;34(7):687-94.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00794": {
+                "article_id": "ART_00794",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00794\n\nOutcomes:\n* Requirement for blood transfusion\n* Change in haemoglobin\n* Length of operation duration\n* Major surgery at time of procedure\n* Postpartum fever\n* Additional uterotonics or tranexamic acid\n* Postpartum haemoglobin concentration\n\nResults:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.32\nConfidence interval begin: 0.16\nConfidence interval end: 0.48\nConfidence interval percentage: 95\nSample size: 360",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "32064967",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "A comparative multicentric study on serosal and endometrial myomectomy during cesarean section: surgical outcomes",
+          "wald_z": 3.919928,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00795_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00795",
+          "article_type": "included_study",
+          "citation": "Jafarzade A, Aghayeva S, Ekiz UO, Biri A, Mungan T. Postoperative results of myomectomy performed during caesarean section in a tertiary care center: a retrospective study. Annali Italiani di Chirurgia 2023;94:493-7.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00795": {
+                "article_id": "ART_00795",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00795\nFollow-up question: What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.14\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 270",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.14\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 270",
+                    "revealed_section": "results",
+                    "study_id": "ART_00795"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00795\n\nParticipants:\n270 participants (intervention 49; control 96)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation by transabdominal or transvaginal ultrasound\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Trial duration** | January 2020 to January 2022       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. After the fetus was taken, the incision was repaired. Then, myomectomy was performed. Electrocoagulation was used during myomectomy, and defects were repaired with 1-0.0-Vicryl and 2-0-Vicryl for myoma site suturing.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?",
+                      "study_id": "ART_00795"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00795\",\"question\":\"What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00795\n\nParticipants:\n270 participants (intervention 49; control 96)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation by transabdominal or transvaginal ultrasound\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Trial duration** | January 2020 to January 2022       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. After the fetus was taken, the incision was repaired. Then, myomectomy was performed. Electrocoagulation was used during myomectomy, and defects were repaired with 1-0.0-Vicryl and 2-0-Vicryl for myoma site suturing.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00795\",\"question\":\"What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00795\nQuestion: What were the haemoglobin values (mean and SD) before caesarean section and at 24 hours/1 day after birth in the caesarean myomectomy and caesarean section alone groups, or alternatively what was the mean haemoglobin decline in each group?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.40\nConfidence interval begin: 0.14\nConfidence interval end: 0.66\nConfidence interval percentage: 95\nSample size: 270\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "38051501",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Postoperative results of myomectomy performed during caesarean section in a tertiary care center: a retrospective study",
+          "wald_z": 3.015329,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00796_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00796",
+          "article_type": "included_study",
+          "citation": "Kaymak O, Ustunyurt E, Okyay RE, Kalyoncu S, Mollamahmutoglu L. Myomectomy during cesarean section. International Journal of Gynecology and Obstetrics 2004;89:90-3.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00796_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00796": {
+                "article_id": "ART_00796",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00796\nFollow-up question: What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.17\nConfidence interval end: 0.37\nConfidence interval percentage: 95\nSample size: 120",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.17\nConfidence interval end: 0.37\nConfidence interval percentage: 95\nSample size: 120",
+                    "revealed_section": "results",
+                    "study_id": "ART_00796"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00796\n\nParticipants:\n120 participants (intervention 40; control 80)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior or during operation (antenatal diagnosis by ultrasound, introperative diagnosis made visually)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective case- control        |\n| **Location**       | This study was conducted in Turkey |\n| **Trial duration** | January 2000 to April 2003         |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. Linear incision was made over the myoma and electro-cautery was used to remove the myomas with minimal blood loss. Myometrial closure was accomplished in one or two layers using interrupted absorbable sutures (1\u20140 caliber vicryl). The serosa was sutured using a continuous absorbable suture (2\u20140 or 3\u20140 caliber vicryl).\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?",
+                      "study_id": "ART_00796"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00796\",\"question\":\"What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00796\n\nParticipants:\n120 participants (intervention 40; control 80)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior or during operation (antenatal diagnosis by ultrasound, introperative diagnosis made visually)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective case- control        |\n| **Location**       | This study was conducted in Turkey |\n| **Trial duration** | January 2000 to April 2003         |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy. Linear incision was made over the myoma and electro-cautery was used to remove the myomas with minimal blood loss. Myometrial closure was accomplished in one or two layers using interrupted absorbable sutures (1\u20140 caliber vicryl). The serosa was sutured using a continuous absorbable suture (2\u20140 or 3\u20140 caliber vicryl).\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00796\",\"question\":\"What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00796\nQuestion: What were the mean decline in haemoglobin from before/start of caesarean section to 1 day/24 hours after birth in the caesarean myomectomy group and in the caesarean section alone group (including any SD/SE/CI and p-value if reported)?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.10\nConfidence interval begin: -0.17\nConfidence interval end: 0.37\nConfidence interval percentage: 95\nSample size: 120\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "41112989",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Myomectomy during cesarean section",
+          "wald_z": 0.725913,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": null,
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00797",
+          "article_type": "included_study",
+          "citation": "\u00d6zcan A, Kopuz A, Turan V, Sahin C, T\u00f6z E, Aksoy S, et al. Cesarean myomectomy for solitary uterine fibroids: is it a safe procedure? Ginekologia Polska 2016;87(1):54-8.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00797": {
+                "article_id": "ART_00797",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00797\nFollow-up question: What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.17\nConfidence interval begin: -0.01\nConfidence interval end: 0.35\nConfidence interval percentage: 95\nSample size: 306",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.17\nConfidence interval begin: -0.01\nConfidence interval end: 0.35\nConfidence interval percentage: 95\nSample size: 306",
+                    "revealed_section": "results",
+                    "study_id": "ART_00797"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00797\n\nParticipants:\n306 participants (intervention 82; control 224)\n\nPregnant women with:\n\n* Time and method of diagnosis of intrauterine fibroids unstated\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Study duration** | 2010 to 2014                       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy through a transverse or longitudinal incision on the pseudocapsule of the myoma by electrocautery. Space behind the myoma and serosa was sutured with 2/0 or 0 absorbable suture material. Pedicled myomas were removed by cutting with cautery or sutures.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?",
+                      "study_id": "ART_00797"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00797\",\"question\":\"What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00797\n\nParticipants:\n306 participants (intervention 82; control 224)\n\nPregnant women with:\n\n* Time and method of diagnosis of intrauterine fibroids unstated\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Study duration** | 2010 to 2014                       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy through a transverse or longitudinal incision on the pseudocapsule of the myoma by electrocautery. Space behind the myoma and serosa was sutured with 2/0 or 0 absorbable suture material. Pedicled myomas were removed by cutting with cautery or sutures.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00797\",\"question\":\"What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00797\nQuestion: What were the haemoglobin decline values from the start of caesarean section to one day or 24 hours after birth in the caesarean myomectomy group and the caesarean section alone group, including any measure of statistical comparison (e.g., mean difference, p-value, or confidence interval)?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.17\nConfidence interval begin: -0.01\nConfidence interval end: 0.35\nConfidence interval percentage: 95\nSample size: 306\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "27306469",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Cesarean myomectomy for solitary uterine fibroids: is it a safe procedure?",
+          "wald_z": 1.851077,
+          "wald_z_category": "COM-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00798_abstract.txt",
+          "accuracy_label": "correct",
+          "answer": "m",
+          "article_id": "ART_00798",
+          "article_type": "included_study",
+          "citation": "Senturk MB, Polat M, Dogan O, Pulatoglu C, Yardlmcl OD, Karakus R, Tayyar AT. Outcome of cesarean myomectomy: is it a safe procedure? Geburtshilfe und Frauenheilkunde 2017;77(11):1200-6.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00798_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00798": {
+                "article_id": "ART_00798",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00798\nFollow-up question: What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.30\nConfidence interval end: 0.02\nConfidence interval percentage: 95\nSample size: 361",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.30\nConfidence interval end: 0.02\nConfidence interval percentage: 95\nSample size: 361",
+                    "revealed_section": "results",
+                    "study_id": "ART_00798"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00798\n\nParticipants:\n361 participants (intervention 212; control 149)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Study duration** | 2000 to 2015                       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy was performed using the classic techniques of blunt and sharp dissection. After incising the tissue over the myoma to enter the fibroid pseudo-capsule, blunt and sharp dissection was carried out using scissors. Bleeding was controlled by suturing the myoma bed with no. 1 absorbable sutures.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?",
+                      "study_id": "ART_00798"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00798\",\"question\":\"What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00798\n\nParticipants:\n361 participants (intervention 212; control 149)\n\nPregnant women with:\n\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                        |\n| ------------------ | ---------------------------------- |\n| **Study design**   | Retrospective cohort study         |\n| **Location**       | This study was conducted in Turkey |\n| **Study duration** | 2000 to 2015                       |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy was performed using the classic techniques of blunt and sharp dissection. After incising the tissue over the myoma to enter the fibroid pseudo-capsule, blunt and sharp dissection was carried out using scissors. Bleeding was controlled by suturing the myoma bed with no. 1 absorbable sutures.\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00798\",\"question\":\"What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00798\nQuestion: What were the haemoglobin decline values (from start of caesarean section/preoperative baseline to 24 hours or one day after birth) for the caesarean myomectomy group and the caesarean section alone group, including any measure of variability and/or p-value?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.14\nConfidence interval begin: -0.30\nConfidence interval end: 0.02\nConfidence interval percentage: 95\nSample size: 361\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "m",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "29200476",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"m\"}",
+          "title": "Outcome of cesarean myomectomy: is it a safe procedure?",
+          "wald_z": -1.714968,
+          "wald_z_category": "INT-Z1"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00799_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00799",
+          "article_type": "included_study",
+          "citation": "Shi C, Chen J, Chen A. Clinical outcome analysis of intramural myoma greater than 8 cm in diameter removed during caesarean section: a retrospective study. BMC Women's Health 2023;23(1):60.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": "data/articles/full_text/ART_00799_full_text.txt",
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00799": {
+                "article_id": "ART_00799",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00799\n\nOutcomes:\n* Incidence of haemorrhage\n* Change in Haemoglobin\n* Length of operation\n* Major surgery at time of procedure\n* Postpartum fever\n* Estimated blood loss\n* Side Effects\n\nResults:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.18\nConfidence interval begin: 0.03\nConfidence interval end: 0.33\nConfidence interval percentage: 95\nSample size: 190",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "36774454",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Clinical outcome analysis of intramural myoma greater than 8 cm in diameter removed during caesarean section: a retrospective study",
+          "wald_z": 2.351957,
+          "wald_z_category": "COM-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00800_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00800",
+          "article_type": "included_study",
+          "citation": "Topcu HO, Iskender CT, Timur H, Kaymak O, Memur T, Danisman N. Outcomes after cesarean myomectomy versus cesarean alone among pregnant women with uterine leiomyomas. International Journal of Gynaecology and Obstetrics 2015;130(3):244-6.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00800": {
+                "article_id": "ART_00800",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00800\n\nOutcomes:\n* Requirement for blood transfusion\n* Incidence of haemorrhage\n* Change in Haemoglobin\n* Length of Hospitalisation\n* Length of operation\n* Postpartum fever\n* Postpartum haemoglobin concentration\n\nResults:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.00\nConfidence interval begin: -0.34\nConfidence interval end: 0.34\nConfidence interval percentage: 95\nSample size: 136",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "26021769",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Outcomes after cesarean myomectomy versus cesarean alone among pregnant women with uterine leiomyomas",
+          "wald_z": 0,
+          "wald_z_category": "COM-Z0"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00801_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "y",
+          "article_id": "ART_00801",
+          "article_type": "included_study",
+          "citation": "Wang HM, Shen RG, Yang HJ, Tian YC, Zhang CL, Dai YM. Safety analysis of cesarean myomectomy in twin pregnancies with intramural myomas. Chinese Journal of Obstetrics and Gynecology 2022;57(11):843-9.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "source",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00801": {
+                "article_id": "ART_00801",
+                "initially_exposed_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "initially_hidden_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "revealed_sections": [
+                  "results"
+                ]
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "gatekeeper_responses": [
+                  {
+                    "category": "Results",
+                    "category_key": "results",
+                    "classification": "hidden",
+                    "gatekeeper": {
+                      "classification_raw_response": "{\"category\":\"Results\"}",
+                      "messages": [
+                        {
+                          "content": "You are a gatekeeper that classifies study follow-up questions. Return only JSON matching this template: {\"category\":\"Methods|Intervention/Comparator|Participants|Outcomes|Results\"}",
+                          "role": "system"
+                        },
+                        {
+                          "content": "Classify the follow-up question into exactly one category: Methods|Intervention/Comparator|Participants|Outcomes|Results.\n\nCategory definitions:\nMethods\nStudy design:\n- Parallel, factorial, crossover, cluster aspects of design for randomized trials, and/or study design features for non-randomized studies\n- Single or multicentre study; if multicentre, number of recruiting centres\n- Recruitment and sampling procedures used, including at the level of individual participants and clusters/sites if relevant\n- Enrolment start and end dates; length of participant follow-up\n- Details of random sequence generation, allocation sequence concealment, and masking for randomized trials, and methods used to prevent and control for confounding, selection biases, and information biases for non-randomized studies\n- Methods used to prevent and address missing data\n- Likelihood of reporting and other biases\n- Source(s) of funding or other material support for the study\n- Authors' financial relationship and other potential conflicts of interest\nStatistical analysis:\n- Unit of analysis, e.g. individual participant, clinic, village, body part\n- Statistical methods used if computed effect estimates are extracted from reports, including any covariates included in the statistical model\n\nParticipants\n- Setting\n- Region(s) and country/countries from which study participants were recruited\n- Study eligibility criteria, including diagnostic criteria\n- Characteristics of participants at the beginning or baseline of the study, e.g. age, sex, comorbidity, socio-economic status\n\nIntervention/Comparator\n- Description of the intervention(s) and comparison intervention(s), ideally with sufficient detail for replication\n- Components, routes of delivery, doses, timing, frequency, intervention protocols, length of intervention\n- Factors relevant to implementation, e.g. staff qualifications, equipment requirements\n- Integrity of interventions, i.e. the degree to which specified procedures or components of the intervention were implemented as planned\n- Description of co-interventions\n- Definition of control groups, e.g. no intervention, placebo, minimally active comparator, or components of usual care\n- Components, dose, timing, frequency\n- For observational studies: description of how intervention status was assessed; length of exposure, cumulative exposure\n\nOutcomes\nFor each pre-specified outcome domain in the systematic review:\n- Whether there is evidence that the outcome domain was assessed, especially important if the outcome was assessed but the results not presented\n- Measurement tool or instrument, including definition of clinical outcomes or endpoints\n- For a scale, name of the scale, upper and lower limits, and whether a high or low score is favourable, and definitions of thresholds if appropriate\n- Specific metric, e.g. post-intervention anxiety, change in anxiety from baseline to a post-intervention time point, or post-intervention presence of anxiety\n- Method of aggregation, e.g. mean and standard deviation of anxiety scores in each group, or proportion of people with anxiety\n- Timing of outcome measurements, e.g. assessments at end of eight-week intervention period, events occurring during the eight-week intervention period\n- Adverse outcomes need special attention depending on whether they are collected systematically or non-systematically, e.g. by voluntary report\n\nResults\n- For each group, and for each outcome at each time point: number of participants randomly assigned and included in the analysis; and number of participants who withdrew, were lost to follow-up or were excluded, with reasons for each\n- Summary data for each group, e.g. 2x2 table for dichotomous data; means and standard deviations for continuous data\n- Between-group estimates that quantify the effect of the intervention on the outcome, and their precision, e.g. risk ratio, odds ratio, mean difference\n- If subgroup analysis is planned, the same information would need to be extracted for each participant subgroup\n\nStudy ID: ART_00801\nFollow-up question: What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                          "role": "user"
+                        }
+                      ],
+                      "mode": "free_response",
+                      "raw_response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.60\nConfidence interval begin: -1.11\nConfidence interval end: -0.09\nConfidence interval percentage: 95\nSample size: 145",
+                      "selected_category": "Results"
+                    },
+                    "question": "What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                    "response": "Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.60\nConfidence interval begin: -1.11\nConfidence interval end: -0.09\nConfidence interval percentage: 95\nSample size: 145",
+                    "revealed_section": "results",
+                    "study_id": "ART_00801"
+                  }
+                ],
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00801\n\nParticipants:\n145 participants (intervention 49; control 96)\n\nPregnant women with:\n\n* Twins pregnancy\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                      |\n| ------------------ | -------------------------------- |\n| **Study design**   | Retrospective cohort study       |\n| **Location**       | The study was conducted in China |\n| **Study duration** | January 2013 to December 2021    |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy following birth of baby (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "follow_up",
+                  "answer": "",
+                  "questions": [
+                    {
+                      "category": "",
+                      "category_key": "",
+                      "question": "What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?",
+                      "study_id": "ART_00801"
+                    }
+                  ]
+                },
+                "raw_response": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00801\",\"question\":\"What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\"}]}",
+                "round": 1
+              },
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00801\n\nParticipants:\n145 participants (intervention 49; control 96)\n\nPregnant women with:\n\n* Twins pregnancy\n* Diagnosis of intrauterine fibroids made prior to operation (method of diagnosis unstated)\n* Undergoing a caesarean birth (emergency or elective not stated).\n\nMethods:\n| Characteristic     | Description                      |\n| ------------------ | -------------------------------- |\n| **Study design**   | Retrospective cohort study       |\n| **Location**       | The study was conducted in China |\n| **Study duration** | January 2013 to December 2021    |\n\nIntervention/Comparator:\nCaesarean myomectomy vs caesarean section alone.\n\n* **Intervention:** Caesarean myomectomy following birth of baby (procedure detail not stated)\n* **Control:** Caesarean section",
+                      "role": "user"
+                    },
+                    {
+                      "content": "{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00801\",\"question\":\"What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\"}]}",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Gatekeeper responses:\nStudy ART_00801\nQuestion: What were the haemoglobin values (or change/decline in haemoglobin) from the start/preoperative caesarean section to 1 day or 24 hours after birth for the caesarean myomectomy group and the caesarean section alone group, including any statistical comparison?\nGatekeeper response: Results:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: -0.60\nConfidence interval begin: -1.11\nConfidence interval end: -0.09\nConfidence interval percentage: 95\nSample size: 145\n\nContinue with one JSON response template.",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "y",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+                "round": 2
+              }
+            ]
+          },
+          "pmid": "36456481",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"y\"}",
+          "title": "Safety analysis of cesarean myomectomy in twin pregnancies with intramural myomas",
+          "wald_z": -2.30584,
+          "wald_z_category": "INT-Z2+"
+        },
+        {
+          "abstract_path": "data/articles/abstracts/ART_00802_abstract.txt",
+          "accuracy_label": "incorrect",
+          "answer": "n",
+          "article_id": "ART_00802",
+          "article_type": "included_study",
+          "citation": "El-Refaie W, Hassan M, Abdelhafez MS. Myomectomy during cesarean section: a retrospective cohort study. Journal of Gynecology Obstetrics and Human Reproduction 2020;49:101900.",
+          "detail_exposure_type": "multiturn_char",
+          "error": "",
+          "full_text_path": null,
+          "irrelevant_doc_count": 0,
+          "memorization_label": "memory",
+          "multiturn": {
+            "gatekeeper_type": "free_response",
+            "maximum_follow_ups": 4,
+            "studies": {
+              "ART_00802": {
+                "article_id": "ART_00802",
+                "initially_exposed_sections": [
+                  "outcomes",
+                  "results"
+                ],
+                "initially_hidden_sections": [
+                  "participants",
+                  "methods",
+                  "intervention_comparator"
+                ],
+                "revealed_sections": []
+              }
+            },
+            "study_count": 1,
+            "turns": [
+              {
+                "llm_request": {
+                  "messages": [
+                    {
+                      "content": "You answer medical multiple-choice questions. Follow the requested JSON response templates exactly.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Respond to the following medical multiple-choice question with either a final answer or follow-up questions.\nUse exactly one of these JSON templates and no other text:\n{\"action\":\"answer\",\"answer\":\"y|n|m\"}\n{\"action\":\"follow_up\",\"questions\":[{\"study_id\":\"ART_00001\",\"question\":\"...\"}]}\n\nAnswer choices are y=yes, n=no, and m=maybe. Answer the question only if you are confident that sufficient information is provided to make a decision. If asking follow-up question(s), direct each follow-up question to one individual study using its study_id. Ask as many follow-up questions as are necessary, including additional follow-ups if prior answers are insufficient. You may ask at most 4 rounds of follow-up questions; after that, you must answer.\n\nQuestion: Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?\n\nStudy context:\nStudy ID: ART_00802\n\nOutcomes:\n* Requirement for blood transfusion\n* Change in Haemoglobin\n* Length of hospitalisation\n* Length of operation duration\n* Major surgery at time of procedure\n* Postpartum haemoglobin concentration\n\nResults:\nEffect measure: mean difference\nUnit: g/dL\nPolarity: lower favors intervention\nComparator effect: 0.0\nEffect estimate: 0.07\nConfidence interval begin: -0.05\nConfidence interval end: 0.19\nConfidence interval percentage: 95\nSample size: 178",
+                      "role": "user"
+                    }
+                  ]
+                },
+                "parsed": {
+                  "action": "answer",
+                  "answer": "n",
+                  "questions": []
+                },
+                "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+                "round": 1
+              }
+            ]
+          },
+          "pmid": "32860969",
+          "raw_response": "{\"action\":\"answer\",\"answer\":\"n\"}",
+          "title": "Myomectomy during cesarean section: a retrospective cohort study",
+          "wald_z": 1.143312,
+          "wald_z_category": "COM-Z1"
+        }
+      ],
+      "ground_truth_answer": "m",
+      "outcome_id": 1,
+      "parametric": {
+        "answer": "n",
+        "error": "",
+        "raw_response": "n"
+      },
+      "pmid": "39868519",
+      "question": "Does caesarean myomectomy reduce the decline in haemoglobin relative to caesarean section alone in pregnant women at 24 weeks\u2019 gestation or later with uterine fibroids, from the start of the caesarean section to one day or 24 hours after birth?",
+      "review_id": "CSR_0306",
+      "source_mc_answer": "m"
+    }
+  ],
+  "task": "evaluation"
+}

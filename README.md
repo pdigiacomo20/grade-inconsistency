@@ -22,7 +22,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 `reviews`
 
 - Primary key: `pmid`
-- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `status`, `license`, `license_missing_since`, `license_missing_reason`, `plain_language_summary`, `saved_documents`, `sof_raw_extraction_text`, `studies_raw_extraction_text`, `characteristics_raw_extraction_text`, `excluded_raw_extraction_text`
+- Important columns: `review_id`, `title`, `year`, `journal`, `pmcid`, `pmc_url`, `pubmed_url`, `is_protocol_only`, `manually_excluded`, `manual_exclusion_reason`, `manual_excluded_at`, `status`, `license`, `license_missing_since`, `license_missing_reason`, `plain_language_summary`, `saved_documents`, `sof_raw_extraction_text`, `studies_raw_extraction_text`, `characteristics_raw_extraction_text`, `excluded_raw_extraction_text`
 
 `license_missing_reason=pre_v4_migration` identifies reviews that existed before the v4 License field was added and still need License metadata filled in.
 
@@ -30,7 +30,7 @@ Browser workflow for semi-automated extraction from 2025 open-access Cochrane sy
 
 - Partition key: `pmid`
 - Sort key: `outcome_id`
-- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `unit_of_measure`, `polarity_of_measure`, `comparator_effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`. `consensus_answer`, `mc_answer`, `certainty`, and `line_of_no_effect` are compatibility fields; new manual SoF extraction output no longer has to include them.
+- Important columns: `review_id`, `sof_table`, `row`, `question`, `consensus_answer`, `mc_answer`, `certainty`, `downgrade_reasoning`, `forest_plot_title`, `effect_measure`, `unit_of_measure`, `polarity_of_measure`, `comparator_effect_measure`, `line_of_no_effect`, `aggregated_effect_estimate`, `aggregated_confidence_interval_begin`, `aggregated_confidence_interval_end`, `aggregated_confidence_interval_percentage`, `aggregated_sample_size`, `included_articles`, `manually_excluded`, `manual_exclusion_reason`, `manual_excluded_at`. `consensus_answer`, `mc_answer`, `certainty`, and `line_of_no_effect` are compatibility fields; new manual SoF extraction output no longer has to include them.
 
 `articles`
 
@@ -118,6 +118,7 @@ Main routes:
 - `POST /api/reviews/{CSR_ID}/extract-studies`
 - `POST /api/reviews/{CSR_ID}/extract-characteristics`
 - `POST /api/reviews/{CSR_ID}/extract-excluded`
+- `PUT /api/reviews/{CSR_ID}/outcomes/{OUTCOME_ID}/manual-exclusion`
 - `GET /api/outcomes`
 - `GET /api/evaluations`
 - `GET /api/evaluations/{FILENAME}`
@@ -140,8 +141,11 @@ python -m pipeline.evaluate --config config.evaluation.yml
 Key evaluation config fields:
 
 - `run_id`: prefix used for the saved JSON filename.
-- `model`: OpenAI model to evaluate.
-- `provider`: currently `openai`.
+- `model`: model ID to evaluate.
+- `provider`: `openai`, `anthropic`, or `together`.
+- `max_tokens`: maximum output tokens for evaluation calls, default `4096`.
+- `model_parameters`: optional provider-specific request parameters merged into the model call.
+- `endpoint_env`: optional environment variable name for a Together custom endpoint. If unset, Together reads `TOGETHER_ENDPOINT_{model}`.
 - `evaluations_dir`: directory for run JSON files, default `data/evaluations`.
 - `starting_review`: first CSR ID to process, for example `CSR_0011`.
 - `review_count`: number of CSR IDs to process in CSR index order.
@@ -158,6 +162,10 @@ The evaluation only processes outcome rows whose certainty field contains `very 
 `complete_char` provides the same study characteristics/results sections up front in a single context: `Methods`, `Intervention/Comparator`, `Participants`, `Outcomes measured`, and `Results`. It uses the normal single-answer prompt and does not ask the evaluated model for follow-up questions.
 
 Each run writes `{run_id}-{timestamp}.json`. The frontend `Evaluations` tab lists saved runs and shows accuracy and memorization metrics. A CSR detail page can also select a run to show the parametric answer per outcome and contextual answer per associated article.
+
+Anthropic uses `ANTHROPIC_API_KEY` from `.env`. For Claude Fable 5, set `provider: anthropic` and `model: claude-fable-5`; the evaluator sends `output_config: {effort: high}` and does not send `temperature`, `top_p`, `top_k`, or tools. For Claude Haiku 4.5, set `model: claude-haiku-4-5-20251001`; the evaluator sends `temperature: 0` and no tools.
+
+Together uses `TOGETHER_API_KEY` and an endpoint environment variable from `.env`. For `model: Llama-3.1-8B-Instruct`, the default endpoint variable is `TOGETHER_ENDPOINT_LLAMA-3.1-8B-Instruct`; its value should be either the full OpenAI-compatible chat completions URL or the endpoint base URL. Base URLs are called as `{base}/v1/chat/completions`.
 
 ## Run Frontend
 
@@ -186,11 +194,11 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 7. Use GPT with the `Extract Studies`, `Extract Characteristics`, and `Extract Excluded` prompts. `Extract Studies` automatically computes Wald-Z categories for included studies.
 8. Paste each GPT output into the matching panel and submit it.
 9. For a completed step, click `Edit extraction` to reload the saved raw extraction text, edit it, and submit it again.
-10. Review extracted outcomes and associated articles below the input boxes. Associated articles default to the `Included` tab; use the `Excluded` tab for excluded studies and the `Full`, `Results`, `Characteristics`, and `Citation` presets to change article-table columns.
+10. Review extracted outcomes and associated articles below the input boxes. Extracted outcomes default to hiding manually excluded rows; clear `Hide manually excluded outcomes` to show them, edit row-level exclusion reasons, or clear row exclusions. Associated articles default to the `Included` tab; use the `Excluded` tab for excluded studies and the `Full`, `Results`, `Characteristics`, and `Citation` presets to change article-table columns.
 11. Review automatically matched PMIDs in the article table.
 12. For unresolved associated articles, enter the PMID and click `Process PMID`, or click `Manual extract failed` if no PMID can be found.
 
-The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise it stores a top-level `License` value on the review and each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Unit of measure`, `Polarity of measure`, `Comparator effect measure`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract Characteristics` stores `Plain language summary` on the review and updates included study rows by exact study label; each non-failed study must include YYYMethods, YYYParticipants, YYYInterventions, YYYOutcomes, and YYYRisk of Bias sections. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path.
+The backend rejects `Extract Studies` if `Extract SoF` has not already produced matching outcome rows. `Extract SoF` accepts the exact no-extraction responses `No inconsistency` and `Inconsistency not very low`; otherwise it stores a top-level `License` value on the review and each output block must include `SoF table`, `Row`, and `Medical question`, with `Downgrade reasoning` optional. `Extract Studies` must include `Effect measure`, `Unit of measure`, `Polarity of measure`, `Comparator effect measure`, aggregate metrics, and per-study effect estimate, confidence interval, sample size, citation, title, and relaxed search fields. `Extract Characteristics` stores `Plain language summary` on the review and updates included study rows by exact study label; each non-failed study must include YYYMethods, YYYParticipants, YYYInterventions, YYYOutcomes, and YYYRisk of Bias sections. `Extract Excluded` creates `excluded_study` article rows and runs the same PubMed enrichment path. New evaluation runs skip outcome rows marked `manually_excluded`.
 
 ## Run Remotely Over SSH
 

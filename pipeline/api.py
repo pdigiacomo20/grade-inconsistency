@@ -45,6 +45,15 @@ class ProcessPmidRequest(BaseModel):
     pmid: str
 
 
+class ManualExclusionRequest(BaseModel):
+    reason: str
+
+
+class OutcomeManualExclusionRequest(BaseModel):
+    manually_excluded: bool
+    reason: str = ""
+
+
 def get_store() -> DynamoStore:
     return DynamoStore(
         region_name=os.getenv("AWS_REGION", "us-west-2"),
@@ -368,6 +377,34 @@ def get_review(review_id: str) -> dict[str, Any]:
     return _review_payload(store, review)
 
 
+@app.post("/api/reviews/{review_id}/manual-exclusion")
+def manually_exclude_review(review_id: str, payload: ManualExclusionRequest) -> dict[str, Any]:
+    reason = payload.reason.strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="Manual exclusion reason is required.")
+
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    now = datetime.now(UTC).isoformat()
+    review["manually_excluded"] = True
+    review["manual_exclusion_reason"] = reason
+    review["manual_excluded_at"] = now
+    review["updated_at"] = now
+    store.put_review(review)
+    return _review_payload(store, review, {"message": "Review manually excluded."})
+
+
+@app.delete("/api/reviews/{review_id}/manual-exclusion")
+def clear_manual_review_exclusion(review_id: str) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    for key in ("manually_excluded", "manual_exclusion_reason", "manual_excluded_at"):
+        review.pop(key, None)
+    review["updated_at"] = datetime.now(UTC).isoformat()
+    store.put_review(review)
+    return _review_payload(store, review, {"message": "Manual exclusion cleared."})
+
+
 @app.post("/api/reviews/{review_id}/documents")
 def upload_review_documents(review_id: str, files: list[UploadFile] = File(...)) -> dict[str, Any]:
     if not files:
@@ -437,6 +474,28 @@ def list_outcomes() -> dict[str, Any]:
             )
         )
     return {"outcomes": outcomes}
+
+
+@app.put("/api/reviews/{review_id}/outcomes/{outcome_id}/manual-exclusion")
+def update_outcome_manual_exclusion(review_id: str, outcome_id: int, payload: OutcomeManualExclusionRequest) -> dict[str, Any]:
+    store = get_store()
+    review = _review_or_404(store, review_id)
+    outcome = store.get_outcome(str(review["pmid"]), outcome_id)
+    if not outcome:
+        raise HTTPException(status_code=404, detail="Outcome not found")
+
+    now = datetime.now(UTC).isoformat()
+    reason = payload.reason.strip()
+    if payload.manually_excluded:
+        outcome["manually_excluded"] = True
+        outcome["manual_exclusion_reason"] = reason
+        outcome["manual_excluded_at"] = outcome.get("manual_excluded_at") or now
+    else:
+        for key in ("manually_excluded", "manual_exclusion_reason", "manual_excluded_at"):
+            outcome.pop(key, None)
+    outcome["updated_at"] = now
+    store.put_outcome(outcome)
+    return _review_payload(store, review, {"outcome": _hydrate_outcome(store, outcome), "message": "Outcome manual exclusion updated."})
 
 
 @app.get("/api/evaluations")

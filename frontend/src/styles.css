@@ -164,7 +164,7 @@ table {
 }
 
 .compact table {
-  min-width: 2850px;
+  min-width: 3150px;
 }
 
 .articlesTableWrap {
@@ -226,6 +226,44 @@ td {
 
 .articlesTable tbody tr:hover td.stickyColumn {
   background: #f8fafc;
+}
+
+.manualExcludedRow td {
+  background: #fffaf0;
+}
+
+.manualExcludedRow:hover td {
+  background: #fff6e3;
+}
+
+.outcomeToolbar {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 10px;
+}
+
+.outcomeManualControls {
+  display: grid;
+  gap: 8px;
+  min-width: 280px;
+}
+
+.outcomeManualControls input[type="text"],
+.outcomeManualControls input:not([type]) {
+  border: 1px solid #cfd7e2;
+  border-radius: 6px;
+  color: #202124;
+  font: inherit;
+  min-height: 34px;
+  min-width: 0;
+  outline: 0;
+  padding: 6px 8px;
+  width: 100%;
+}
+
+.outcomeManualControls .muted {
+  font-size: 12px;
 }
 
 .titleCell {
@@ -715,7 +753,8 @@ pre {
 .extractPanel,
 .notesPanel,
 .resetPanel,
-.documentPanel {
+.documentPanel,
+.manualExclusionPanel {
   background: #ffffff;
   border: 1px solid #d8dee6;
   border-radius: 8px;
@@ -731,6 +770,33 @@ pre {
   flex-direction: row;
   justify-content: space-between;
   margin: 14px 0;
+}
+
+.manualExclusionPanel {
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 14px 0;
+}
+
+.manualExclusionControls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.manualExclusionControls input {
+  border: 1px solid #cfd7e2;
+  border-radius: 6px;
+  color: #202124;
+  font: inherit;
+  min-height: 38px;
+  min-width: min(100%, 420px);
+  outline: 0;
+  padding: 7px 10px;
+  width: 420px;
 }
 
 .resetPanel {
@@ -984,6 +1050,8 @@ textarea {
   .headerActions,
   .documentPanel,
   .documentControls,
+  .manualExclusionPanel,
+  .manualExclusionControls,
   .resetPanel,
   .savedDocumentLinks,
   .articleControls {
@@ -1013,6 +1081,10 @@ textarea {
 
   select {
     min-width: 0;
+    width: 100%;
+  }
+
+  .manualExclusionControls input {
     width: 100%;
   }
 }
